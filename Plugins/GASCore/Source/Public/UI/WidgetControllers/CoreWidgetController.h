@@ -1,13 +1,50 @@
-// © 2025 Heathrow (Derman). All rights reserved.This project is the intellectual property of Heathrow (Derman) and is protected by copyright law. Unauthorized reproduction, distribution, or use of this material is strictly prohibited.Unreal Engine and its associated trademarks are used under license from Epic Games.
+// © 2025 Heathrow (Derman). All rights reserved.
+// This project is the intellectual property of Heathrow (Derman) and is protected by copyright law.
+// Unauthorized reproduction, distribution, or use of this material is strictly prohibited.
+// Unreal Engine and its associated trademarks are used under license from Epic Games.
+//
+// Summary:
+//   Base UObject for all GAS-oriented widget controllers.
+//   It centralizes references to gameplay systems (PlayerController, PlayerState, ASC, AttributeSet)
+//   and provides a consistent lifecycle for UI initialization and reactive updates.
+//
+// Pattern (UI MVC):
+//   - Model: GAS (AbilitySystemComponent + AttributeSet)
+//   - Controller: UCoreWidgetController (reads model, broadcasts to UI)
+//   - View: UUserWidget-derived widgets (bind to controller delegates, display only)
+//
+// Responsibilities of derived controllers:
+//   - Override BroadcastInitialValues() to push current attribute values (e.g., health/mana) on init
+//   - Override BindCallbacksToDependencies() to subscribe to ASC/AttributeSet delegates and rebroadcast
+//   - Optionally emit UI messages via MessageWidgetRowDelegate when model events occur
+//
+// Usage:
+//   1) Construct controller (C++/Blueprint).
+//   2) Call SetWidgetControllerParams() with valid references (PC, PS, ASC, AttributeSet).
+//   3) In your widget (e.g., UAuraUserWidget-like), call SetWidgetController(this controller),
+//      then trigger WidgetControllerSet (BP event) to bind UI handlers.
+//   4) After bindings, call BroadcastInitialValues() once to initialize UI state.
+//
+// Lifetime & Safety Notes:
+//   - Ensure AbilitySystemComponent and AttributeSet are valid before binding in derived classes.
+//   - If using AddLambda with [this] captures in derived controllers, ensure the controller outlives bindings
+//     or use weak captures/handles to avoid dangling references.
+//   - MessageWidgetRowDelegate broadcasts whole rows; keep row structs lightweight.
+//
+// Related types:
+//   - FUIMessageWidgetRow: DataTable row mapping a GameplayTag to message content/widget/icon.
+//   - UCoreAbilitySystemComponent: can broadcast effect asset tags to drive UI messages.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "UObject/Object.h"
+#include "Engine/DataTable.h" // FTableRowBase
 #include "CoreWidgetController.generated.h"
 
 class UCoreUserWidget;
+class UTexture2D;
 class UAttributeSet;
 class UAbilitySystemComponent;
 
@@ -15,76 +52,81 @@ class UAbilitySystemComponent;
  * FWidgetControllerParams
  *
  * Struct for passing references to all systems a GAS widget controller needs.
- * - Marked as BlueprintType for usage in Blueprints, allowing designers to initialize widget controllers.
- * - Contains references (TObjectPtr) to the player's controller, state, ability system, and attribute set.
+ * - BlueprintType: designers can initialize controllers from Blueprints.
+ * - Members are TObjectPtr<> for GC awareness.
  */
 USTRUCT(BlueprintType)
 struct FWidgetControllerParams
 {
-    GENERATED_BODY()
+	GENERATED_BODY()
 
-	/** Default constructor.
-     *  All member pointers initialize to nullptr, ensuring a safe state.
-     */
-    FWidgetControllerParams() = default;
+	/** Default constructor: initializes pointers to nullptr (safe default). */
+	FWidgetControllerParams() = default;
 
-    /**
-     * Parameterized constructor for initializing all system references at once.
-     * @param InPlayerController         Pointer to the APlayerController owning the widget.
-     * @param InPlayerState              Pointer to the APlayerState for persistent data.
-     * @param InAbilitySystemComponent   Pointer to the UAbilitySystemComponent for GAS.
-     * @param InAttributeSet             Pointer to the UAttributeSet for character attributes.
-     */
-    explicit FWidgetControllerParams(APlayerController* InPlayerController,
-                                    APlayerState* InPlayerState,
-                                    UAbilitySystemComponent* InAbilitySystemComponent,
-                                    UAttributeSet* InAttributeSet)
-        : PlayerController(InPlayerController)
-        , PlayerState(InPlayerState)
-        , AbilitySystemComponent(InAbilitySystemComponent)
-        , AttributeSet(InAttributeSet)
-    {}
-
-    /** Pointer to the player's controller. Used for input, HUD, and actor communication.
-	 * Can be nullptr if not yet set.
-	 * Marked as EditAnywhere and BlueprintReadWrite for maximum designer flexibility.
+	/**
+	 * Parameterized constructor for initializing all system references at once.
+	 * @param InPlayerController         Owner player controller (HUD/input).
+	 * @param InPlayerState              Persistent/replicated player state.
+	 * @param InAbilitySystemComponent   GAS component (abilities/effects/tags).
+	 * @param InAttributeSet             Attributes (health, mana, etc.).
 	 */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WidgetController")
-    TObjectPtr<APlayerController> PlayerController = nullptr;
+	explicit FWidgetControllerParams(APlayerController* InPlayerController,
+	                                 APlayerState* InPlayerState,
+	                                 UAbilitySystemComponent* InAbilitySystemComponent,
+	                                 UAttributeSet* InAttributeSet)
+	    : PlayerController(InPlayerController)
+	    , PlayerState(InPlayerState)
+	    , AbilitySystemComponent(InAbilitySystemComponent)
+	    , AttributeSet(InAttributeSet)
+	{}
 
-    /** Pointer to the player's state. Holds persistent and replicated player info.
-	 * Editable and readable in Blueprints.
-	 */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WidgetController")
-    TObjectPtr<APlayerState> PlayerState = nullptr;
+	/** Owner player controller; may be null until possession/creation completes. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WidgetController")
+	TObjectPtr<APlayerController> PlayerController = nullptr;
 
-    /** Pointer to the Gameplay Ability System component.
-	 * Provides access to abilities, effects, and GAS interfaces.
-	 */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WidgetController")
-    TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent = nullptr;
+	/** Player state for identity/score/persistent data. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WidgetController")
+	TObjectPtr<APlayerState> PlayerState = nullptr;
 
-    /** Pointer to the Attribute Set for the player/character.
-	 * Holds all gameplay-modifiable stats (health, mana, etc.).
-	 */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WidgetController")
-    TObjectPtr<UAttributeSet> AttributeSet = nullptr;
+	/** GAS component for abilities, effects, and gameplay tags. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WidgetController")
+	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent = nullptr;
+
+	/** Attribute set instance holding gameplay-modifiable stats. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WidgetController")
+	TObjectPtr<UAttributeSet> AttributeSet = nullptr;
 };
 
+/**
+ * FUIMessageWidgetRow
+ *
+ * Row type for UI message DataTables.
+ * A GameplayTag addresses a message payload
+ * (localized text, a widget class, and an optional image) to drive notifications/toasts.
+ *
+ * Typical usage:
+ * - In a controller, listen for "UI.Message.*" tags from the ASC (e.g., effect asset tags).
+ * - Look up the row by tag (row name == tag's FName).
+ * - Broadcast row via MessageWidgetRowDelegate for the HUD to render.
+ */
 USTRUCT(BlueprintType)
 struct FUIMessageWidgetRow : public FTableRowBase
 {
 	GENERATED_BODY()
 
+	/** The unique tag for this message (e.g., UI.Message.HealthPotion). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI|Message")
 	FGameplayTag MessageTag;
 
+	/** Localized user-facing message text. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI|Message")
 	FText MessageText;
 
+	/** Optional widget class to render the message. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI|Message")
 	TSubclassOf<UCoreUserWidget> MessageWidget;
 
+	/** Optional icon displayed with the message. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI|Message")
 	TObjectPtr<UTexture2D> MessageImage;
 
@@ -97,15 +139,14 @@ struct FUIMessageWidgetRow : public FTableRowBase
 	}
 };
 
+/** Broadcasts a message widget row to the UI (e.g., HUD overlay). */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUIMessageWidgetRowSignature, FUIMessageWidgetRow, MessageWidgetRow);
 
 /**
  * UCoreWidgetController
  *
- * Base UObject class for all GAS widget controllers.
- * - Designed to be extended for specific widget types.
- * - Manages references to all core gameplay systems for the UI.
- * - Exposes initialization via a single struct parameter.
+ * Base class for GAS widget controllers. Manages references to gameplay systems
+ * and defines a standard initialization contract for derived controllers.
  */
 UCLASS()
 class GASCORE_API UCoreWidgetController : public UObject
@@ -113,44 +154,51 @@ class GASCORE_API UCoreWidgetController : public UObject
 	GENERATED_BODY()
 
 public:
-
 	/**
 	 * Initializes all references at once from a single struct.
-	 * Call this after construction and before using the widget controller.
-	 * @param InWidgetControllerParams   Struct with all required system references.
+	 * Call immediately after constructing the controller and before any UI binding.
+	 * Safe to call multiple times to refresh references (e.g., on pawn possession changes).
 	 */
 	UFUNCTION(BlueprintCallable, Category = "WidgetController")
 	void SetWidgetControllerParams(const FWidgetControllerParams& InWidgetControllerParams);
 
-	/** Called to broadcast the initial values of attributes to the UI. Should be overridden in child classes. */
+	/**
+	 * Broadcast the initial values of attributes to the UI.
+	 * Derived classes should override and push current values (e.g., health/mana)
+	 * after widgets have bound to the controller's delegates.
+	 */
 	virtual void BroadcastInitialValues();
 
-	/** Called to bind attribute change callbacks/delegates to the ability system. Should be overridden in child classes. */
+	/**
+	 * Bind attribute/effect change callbacks to the GAS systems.
+	 * Derived classes should override and subscribe to ASC/AttributeSet delegates
+	 * to forward updates to widgets via controller delegates.
+	 */
 	virtual void BindCallbacksToDependencies();
 
 protected:
-
-	/** Pointer to the player's controller (HUD/UI, input, etc.).
-	 * Only accessible to child classes, not externally modifiable in Blueprints.
-	 */
+	/** Owning player controller (HUD/input). */
 	UPROPERTY(BlueprintReadOnly, Category = "Core|Widget Controller")
 	TObjectPtr<APlayerController> PlayerController;
 
-	/** Pointer to the player's state (score, identity, etc.). */
+	/** Owning player state (persistent/replicated player info). */
 	UPROPERTY(BlueprintReadOnly, Category = "Core|Widget Controller")
 	TObjectPtr<APlayerState> PlayerState;
 
-	/** Pointer to the Ability System Component (GAS). */
+	/** Ability System Component (GAS). */
 	UPROPERTY(BlueprintReadOnly, Category = "Core|Widget Controller")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 
-	/** Pointer to the Attribute Set with all gameplay stats. */
+	/** Attribute Set with gameplay stats. */
 	UPROPERTY(BlueprintReadOnly, Category = "Core|Widget Controller")
 	TObjectPtr<UAttributeSet> AttributeSet;
 
 public:
-
+	/**
+	 * Generic message dispatch to the UI.
+	 * Controllers can broadcast a row (looked up from a DataTable) to request
+	 * the HUD render a message/notification.
+	 */
 	UPROPERTY(BlueprintAssignable, Category = "Core|Widget Controller|UI")
 	FUIMessageWidgetRowSignature MessageWidgetRowDelegate;
-	
 };
