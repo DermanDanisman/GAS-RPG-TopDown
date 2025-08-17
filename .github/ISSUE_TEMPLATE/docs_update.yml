@@ -1,0 +1,49 @@
+name: "Docs Update"
+description: "Request an improvement or correction to the documentation"
+title: "Docs: <short description>"
+labels: ["docs"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping keep the docs current. Please fill out the details below.
+  - type: input
+    id: doc_path
+    attributes:
+      label: "Document path"
+      description: "Which file(s) need updates? e.g., docs/gameplay-effects.md"
+      placeholder: "docs/<file>.md"
+    validations:
+      required: true
+  - type: textarea
+    id: issue
+    attributes:
+      label: "What's wrong or missing?"
+      description: "Describe what's outdated, inaccurate, or unclear."
+      placeholder: "Explain the gap or problem…"
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: "Proposed change"
+      description: "Suggest wording or outline the update."
+      placeholder: "Proposed text, section outline, or bullets…"
+    validations:
+      required: false
+  - type: input
+    id: code_refs
+    attributes:
+      label: "Related code/commits/PRs"
+      description: "Links to code or commits that the doc should reflect."
+      placeholder: "https://github.com/.../commit/..."
+    validations:
+      required: false
+  - type: input
+    id: version
+    attributes:
+      label: "Engine / Plugin version (if relevant)"
+      placeholder: "UE 5.x, plugin v0.x"
+    validations:
+      required: false
