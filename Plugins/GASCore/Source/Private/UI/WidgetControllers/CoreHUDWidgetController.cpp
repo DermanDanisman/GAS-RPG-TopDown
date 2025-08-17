@@ -71,6 +71,9 @@ void UCoreHUDWidgetController::BindCallbacksToDependencies()
 			{
 				const FString Msg = FString::Printf(TEXT("Incoming GE Tag: %s"), *Tag.ToString());
 				GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, Msg);
+
+				FUIMessageWidgetRow* MessageRow = GetDataTableRowByTag<FUIMessageWidgetRow>(MessageWidgetDataTable, Tag);
+				
 				
 				FGameplayTag MessageTag = FGameplayTag::RequestGameplayTag(FName("UI.Message"));
 				if (Tag.MatchesTag(MessageTag))
@@ -78,7 +81,6 @@ void UCoreHUDWidgetController::BindCallbacksToDependencies()
 					const FString MatchedMsg = FString::Printf(TEXT("Matched GE Tag: %s"), *Tag.ToString());
 					GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, MatchedMsg);
 				}
-				
 			}
 		}
 	);

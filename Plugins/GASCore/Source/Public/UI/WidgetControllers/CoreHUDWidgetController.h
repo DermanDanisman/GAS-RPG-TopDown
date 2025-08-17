@@ -58,4 +58,19 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category="HUD Widget Controller|UI")
 	TObjectPtr<UDataTable> MessageWidgetDataTable;
+
+	template<typename T>
+	T* GetDataTableRowByTag(UDataTable* DataTable, const FGameplayTag& Tag);
 };
+
+template <typename T>
+T* UCoreHUDWidgetController::GetDataTableRowByTag(UDataTable* DataTable, const FGameplayTag& Tag)
+{
+	if (IsValid(DataTable))
+	{
+		T* MessageRow = DataTable->FindRow<T>(Tag.GetTagName(), TEXT(""));
+		if (IsValid(MessageRow))
+			return MessageRow;
+	}
+	return nullptr;
+}
