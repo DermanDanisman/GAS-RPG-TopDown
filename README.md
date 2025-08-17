@@ -1,72 +1,69 @@
 # GAS-RPG-TopDown
 
-A UE5 top-down RPG project focused on learning and applying the Gameplay Ability System (GAS). The repo also includes a companion plugin design (docs only for now) to streamline reusing common GAS patterns in other projects.
+A UE5 top‑down RPG project focused on learning and applying the Gameplay Ability System (GAS). The repo includes a living documentation set and a companion plugin design (WIP) to streamline reusing common GAS patterns in other projects.
 
-This documentation distills lessons from the Udemy course “Unreal Engine 5 GAS Top-Down RPG” and adapts them into a production-minded structure with code patterns, replication choices, UI architecture, and effect/attribute handling.
+> Docs are living and will evolve as the course progresses. If you spot anything outdated or unclear, please open a "Docs Update" issue or a PR.
 
 ## Highlights
 
-- GAS-first architecture with:
+- GAS‑first architecture:
   - Ability System Component (ASC)
-  - Attribute Set with boilerplate accessors
-  - Effects (Instant, Duration, Infinite, Periodic, Stacking)
-  - Gameplay Tags and asset tag routing to UI
-- Multiplayer-ready replication choices (Mixed for Player, Minimal for AI)
-- MVC-style UI using a Widget Controller that broadcasts data to widgets via delegates
-- Reusable “Effect Actor” Blueprint/C++ pattern for pickups, areas, and periodic/infinite effects
+  - Attribute Set with accessor macros
+  - Gameplay Effects (Instant, Duration, Infinite, Periodic, Stacking)
+  - Gameplay Tags and routing of effect asset tags to UI
+- Multiplayer‑ready defaults (Mixed replication for Player ASC, Minimal for AI)
+- MVC‑style UI with a Widget Controller broadcasting values to widgets via delegates
+- Reusable "Effect Actor" pattern for pickups and areas (Instant/Duration/Infinite)
+
+## Documentation
+
+Start here: docs/README.md
+
+Key topics:
+- Setup: docs/setup.md
+- Architecture: docs/architecture.md
+- Attributes & Accessors: docs/attributes-and-accessors.md
+- UI & Widget Controller: docs/ui-widget-controller.md
+- Gameplay Effects: docs/gameplay-effects.md
+- Replication & Multiplayer: docs/replication-and-multiplayer.md
+- Gameplay Tags: docs/gameplay-tags.md
+- Debugging & Tools: docs/debugging-and-tools.md
+- Course notes mapping: docs/course-notes.md
+- Plugin design (WIP): docs/plugin/overview.md, docs/plugin/api.md
 
 ## Quick Start
 
 1) Enable plugins:
-- GameplayAbilities
-- GameplayTasks
-- GameplayTags
-
-2) Add modules to your .Build.cs:
+   - GameplayAbilities, GameplayTags, GameplayTasks
+2) Build modules (YourProject.Build.cs):
 ```csharp
 PrivateDependencyModuleNames.AddRange(new string[] {
-  "GameplayAbilities",
-  "GameplayTags",
-  "GameplayTasks"
+  "GameplayAbilities", "GameplayTags", "GameplayTasks"
 });
 ```
+3) Player architecture:
+   - PlayerState owns ASC + AttributeSet (NetUpdateFrequency ≈ 100; ASC ReplicationMode = Mixed)
+   - Enemies: ASC + AttributeSet on Character (ReplicationMode = Minimal)
+4) Initialize ASC actor info once Owner/Avatar are valid.
+5) HUD/UI: create Overlay Widget + Overlay Widget Controller; call SetWidgetController() then BroadcastInitialValues().
+6) Verify with console: `showdebug abilitysystem`.
 
-3) Player setup:
-- Create a PlayerState (e.g., AuraPlayerState)
-- Add ASC + AttributeSet to PlayerState (NetUpdateFrequency ~100)
-- Init ASC actor info (Owner: PlayerState, Avatar: Character)
-- ASC replication mode: Mixed (player), Minimal (AI)
+## Patterns Used
 
-4) UI setup:
-- Base UUserWidget (AuraUserWidget) with SetWidgetController()
-- Base Widget Controller (AuraWidgetController) with references to PlayerController, PlayerState, ASC, AttributeSet
-- HUD initializes and wires Overlay Widget + Controller
-- Overlay/Globe widgets bind to controller delegates (OnHealthChanged, OnMaxHealthChanged, etc.)
+- UI MVC with Widget Controller
+  - Controller holds PlayerController, PlayerState, ASC, AttributeSet; broadcasts initial and reactive values via delegates.
+  - Widgets bind to controller delegates in `WidgetControllerSet` and remain display‑only.
+- Effect Actor
+  - Data‑driven Blueprint/C++ actor applying Instant/Duration/Infinite effects on overlap. Supports policies for apply/remove and periodic ticking.
 
-5) Effects:
-- Use Gameplay Effects (GE) for attribute changes
-- Prefer specs (MakeOutgoingSpec + ApplyX) and optionally Blueprints (ASC Blueprint Library)
-- Use Instant for permanent base changes; Duration/Infinite for temporary current-value changes; Periodic for HoT/DoT; configure stacking
+## Debugging
 
-## Repository Layout
+- Console: `showdebug abilitysystem` to inspect Owner/Avatar, attributes, and tags.
+- Quick logs: `GEngine->AddOnScreenDebugMessage` or UE_LOG.
 
-- docs/
-  - setup.md
-  - architecture.md
-  - attributes-and-accessors.md
-  - ui-widget-controller.md
-  - gameplay-effects.md
-  - replication-and-multiplayer.md
-  - gameplay-tags.md
-  - debugging-and-tools.md
-  - course-notes.md
-  - plugin/
-    - overview.md
-    - api.md
+## Contributing
 
-## Learning Mode
-
-The docs include a course-notes.md mapping your transcripts to practical implementation steps. Use that to plan tasks and cross-reference the why behind each pattern choice.
+See CONTRIBUTING.md. Small, incremental doc PRs are welcome.
 
 ## License
 
