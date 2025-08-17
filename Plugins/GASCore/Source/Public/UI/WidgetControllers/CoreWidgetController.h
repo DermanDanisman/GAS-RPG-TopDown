@@ -97,6 +97,8 @@ struct FUIMessageWidgetRow : public FTableRowBase
 	}
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUIMessageWidgetRowSignature, FUIMessageWidgetRow, MessageWidgetRow);
+
 /**
  * UCoreWidgetController
  *
@@ -145,5 +147,10 @@ protected:
 	/** Pointer to the Attribute Set with all gameplay stats. */
 	UPROPERTY(BlueprintReadOnly, Category = "Core|Widget Controller")
 	TObjectPtr<UAttributeSet> AttributeSet;
+
+public:
+
+	UPROPERTY(BlueprintAssignable, Category = "Core|Widget Controller|UI")
+	FUIMessageWidgetRowSignature MessageWidgetRowDelegate;
 	
 };

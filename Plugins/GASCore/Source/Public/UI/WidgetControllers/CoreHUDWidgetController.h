@@ -66,11 +66,5 @@ protected:
 template <typename T>
 T* UCoreHUDWidgetController::GetDataTableRowByTag(UDataTable* DataTable, const FGameplayTag& Tag)
 {
-	if (IsValid(DataTable))
-	{
-		T* MessageRow = DataTable->FindRow<T>(Tag.GetTagName(), TEXT(""));
-		if (IsValid(MessageRow))
-			return MessageRow;
-	}
-	return nullptr;
+	return DataTable->FindRow<T>(Tag.GetTagName(), TEXT(""));
 }

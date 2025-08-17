@@ -69,17 +69,18 @@ void UCoreHUDWidgetController::BindCallbacksToDependencies()
 		{
 			for (const FGameplayTag& Tag : AssetTags)
 			{
-				const FString Msg = FString::Printf(TEXT("Incoming GE Tag: %s"), *Tag.ToString());
-				GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, Msg);
-
-				FUIMessageWidgetRow* MessageRow = GetDataTableRowByTag<FUIMessageWidgetRow>(MessageWidgetDataTable, Tag);
-				
-				
 				FGameplayTag MessageTag = FGameplayTag::RequestGameplayTag(FName("UI.Message"));
+				// "UI.Message.HealthPotion".MatchesTag("UI.Message") will return True,
+				// "UI.Message".MatchesTag("UI.Message.HealthPotion") will return False
 				if (Tag.MatchesTag(MessageTag))
 				{
-					const FString MatchedMsg = FString::Printf(TEXT("Matched GE Tag: %s"), *Tag.ToString());
-					GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, MatchedMsg);
+					FUIMessageWidgetRow* MessageRow = GetDataTableRowByTag<FUIMessageWidgetRow>(MessageWidgetDataTable, Tag);
+					if (MessageRow->MessageTag.IsValid())
+					{
+						const FString MatchedMsg = FString::Printf(TEXT("GE Tag: %s, Message Tag: %s"), *Tag.ToString(), *MessageRow->MessageTag.ToString());
+						GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, MatchedMsg);
+						MessageWidgetRowDelegate.Broadcast(*MessageRow);
+					}
 				}
 			}
 		}

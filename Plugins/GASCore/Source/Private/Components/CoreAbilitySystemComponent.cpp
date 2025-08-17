@@ -6,13 +6,7 @@
 
 void UCoreAbilitySystemComponent::BindASCDelegates()
 {
-	if (OnAppliedToSelfHandle.IsValid())
-	{
-		return; // already bound
-	}
-
-	OnAppliedToSelfHandle = OnGameplayEffectAppliedDelegateToSelf.AddUObject(
-		this, &UCoreAbilitySystemComponent::HandleGameplayEffectAppliedToSelf);
+	OnGameplayEffectAppliedDelegateToSelf.AddUObject(this, &UCoreAbilitySystemComponent::HandleGameplayEffectAppliedToSelf);
 }
 
 void UCoreAbilitySystemComponent::HandleGameplayEffectAppliedToSelf(UAbilitySystemComponent* AbilitySystemComponent,
@@ -20,7 +14,5 @@ void UCoreAbilitySystemComponent::HandleGameplayEffectAppliedToSelf(UAbilitySyst
 {
 	FGameplayTagContainer GameplayTagContainer;
 	GameplayEffectSpec.GetAllAssetTags(GameplayTagContainer);
-	
-	if (!GameplayTagContainer.IsEmpty())
-		OnEffectAssetTags.Broadcast(GameplayTagContainer);
+	OnEffectAssetTags.Broadcast(GameplayTagContainer);
 }

@@ -23,9 +23,4 @@ protected:
 
 	void HandleGameplayEffectAppliedToSelf(UAbilitySystemComponent* AbilitySystemComponent,
 		const FGameplayEffectSpec& GameplayEffectSpec, FActiveGameplayEffectHandle ActiveGameplayEffectHandle);
-
-private:
-
-	// Prevent double-binding and allow unbinding
-	FDelegateHandle OnAppliedToSelfHandle;
 };
