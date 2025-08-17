@@ -1,0 +1,76 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "Charcters/TDEnemyCharacter.h"
+
+#include "HighlightActor.h"
+#include "Attributes/CoreAttributeSet.h"
+#include "Components/CoreAbilitySystemComponent.h"
+#include "RPG_TopDown/RPG_TopDown.h"
+
+
+// Sets default values
+ATDEnemyCharacter::ATDEnemyCharacter()
+{
+	// Set mesh collision to respond to the custom highlight channel.
+	GetMesh()->SetCollisionResponseToChannel(HIGHLIGHTABLE, ECR_Block);
+
+	// Create the Ability System Component for the AI enemy.
+	// Unlike player characters, AI own their own ASC and AttributeSet.
+	AbilitySystemComponent = CreateDefaultSubobject<UCoreAbilitySystemComponent>("AbilitySystemComponent");
+	AbilitySystemComponent->SetIsReplicated(true); // Enable replication for multiplayer.
+	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
+
+	// Create the Attribute Set for this AI character.
+	AttributeSet = CreateDefaultSubobject<UCoreAttributeSet>("AttributeSet");
+}
+
+// Called when the game starts or when spawned
+void ATDEnemyCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// Initialize the Ability System with this actor as both owner and avatar.
+	// For AI, this is done here since AI owns its own ASC/AttributeSet.
+	InitializeAbilityActorInfo();
+}
+
+void ATDEnemyCharacter::InitializeAbilityActorInfo()
+{
+	// --- AI-controlled character setup ---
+	// AI characters own their own ASC and AttributeSet.
+	if (AbilitySystemComponent)
+	{
+		// Initialize the ASC's actor info, using this character as both owner and avatar.
+		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+		Cast<UCoreAbilitySystemComponent>(AbilitySystemComponent)->BindASCDelegates();
+	}
+}
+
+void ATDEnemyCharacter::HighlightActor()
+{
+	// Mark as highlighted for internal logic or UI.
+	bHighlighted = true;
+
+	// Enable custom depth rendering for outline/FX.
+	GetMesh()->SetRenderCustomDepth(true);
+	GetMesh()->SetCustomDepthStencilValue(CUSTOM_DEPTH_RED);
+
+	// Also highlight the weapon mesh.
+	WeaponMesh->SetRenderCustomDepth(true);
+	WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_RED);
+}
+
+void ATDEnemyCharacter::UnHighlightActor()
+{
+	// Unmark as highlighted.
+	bHighlighted = false;
+
+	// Disable custom depth rendering.
+	GetMesh()->SetRenderCustomDepth(false);
+	WeaponMesh->SetRenderCustomDepth(false);
+}
+
+
+
+
