@@ -194,31 +194,31 @@ public:
 	// =========================
 
 	/** Current Strength value - how much Strength the character currently has */
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Strength, Category="Attributes|Primary")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Strength, Category="GASCore|Attributes|Primary")
 	FGameplayAttributeData Strength;
 	/** Generates attribute accessors (getter/setter/initter) for Strength */
 	ATTRIBUTE_ACCESSORS(UCoreAttributeSet, Strength);
 
 	/** Current Dexterity value - how much Dexterity the character currently has */
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Dexterity, Category="Attributes|Primary")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Dexterity, Category="GASCore|Attributes|Primary")
 	FGameplayAttributeData Dexterity;
 	/** Generates attribute accessors (getter/setter/initter) for Dexterity */
 	ATTRIBUTE_ACCESSORS(UCoreAttributeSet, Dexterity);
 
 	/** Current Intelligence value - how much Intelligence the character currently has */
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Intelligence, Category="Attributes|Primary")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Intelligence, Category="GASCore|Attributes|Primary")
 	FGameplayAttributeData Intelligence;
 	/** Generates attribute accessors (getter/setter/initter) for Intelligence */
 	ATTRIBUTE_ACCESSORS(UCoreAttributeSet, Intelligence);
 
 	/** Current Endurance value - how much Endurance the character currently has */
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Endurance, Category="Attributes|Primary")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Endurance, Category="GASCore|Attributes|Primary")
 	FGameplayAttributeData Endurance;
 	/** Generates attribute accessors (getter/setter/initter) for Endurance */
 	ATTRIBUTE_ACCESSORS(UCoreAttributeSet, Endurance);
 
 	/** Current Vigor value - how much Vigor the character currently has */
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Vigor, Category="Attributes|Primary")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Vigor, Category="GASCore|Attributes|Primary")
 	FGameplayAttributeData Vigor;
 	/** Generates attribute accessors (getter/setter/initter) for Vigor */
 	ATTRIBUTE_ACCESSORS(UCoreAttributeSet, Vigor);
@@ -267,37 +267,37 @@ public:
 	// =========================
 
 	/** Current health value - how much health the character currently has */
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Health, Category="Attributes|Vitals")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Health, Category="GASCore|Attributes|Vitals")
 	FGameplayAttributeData Health;
 	/** Generates attribute accessors (getter/setter/initter) for Health */
 	ATTRIBUTE_ACCESSORS(UCoreAttributeSet, Health);
 
 	/** Maximum health value - upper bound for Health */
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_MaxHealth, Category="Attributes|Vitals")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_MaxHealth, Category="GASCore|Attributes|Vitals")
 	FGameplayAttributeData MaxHealth;
 	/** Generates attribute accessors for MaxHealth */
 	ATTRIBUTE_ACCESSORS(UCoreAttributeSet, MaxHealth);
 
 	/** Current mana value - resource for casting abilities */
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Mana, Category="Attributes|Vitals")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Mana, Category="GASCore|Attributes|Vitals")
 	FGameplayAttributeData Mana;
 	/** Generates attribute accessors for Mana */
 	ATTRIBUTE_ACCESSORS(UCoreAttributeSet, Mana);
 	
 	/** Maximum mana value - upper bound for Mana */
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_MaxMana, Category="Attributes|Vitals")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_MaxMana, Category="GASCore|Attributes|Vitals")
 	FGameplayAttributeData MaxMana;
 	/** Generates attribute accessors for MaxMana */
 	ATTRIBUTE_ACCESSORS(UCoreAttributeSet, MaxMana);
 
 	/** Current stamina value - resource for physical actions like sprinting */
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Stamina, Category="Attributes|Vitals")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Stamina, Category="GASCore|Attributes|Vitals")
 	FGameplayAttributeData Stamina;
 	/** Generates attribute accessors for Stamina */
 	ATTRIBUTE_ACCESSORS(UCoreAttributeSet, Stamina);
 
 	/** Maximum stamina value - upper bound for Stamina */
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_MaxStamina, Category="Attributes|Vitals")
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_MaxStamina, Category="GASCore|Attributes|Vitals")
 	FGameplayAttributeData MaxStamina;
 	/** Generates attribute accessors for MaxStamina */
 	ATTRIBUTE_ACCESSORS(UCoreAttributeSet, MaxStamina);

@@ -5,6 +5,7 @@
 
 #include "Attributes/CoreAttributeSet.h"
 #include "Components/CoreAbilitySystemComponent.h"
+#include "Components/CorePrimaryAttributeInitComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Player/TDPlayerController.h"
 #include "Player/TDPlayerState.h"
@@ -83,6 +84,8 @@ void ATDPlayerCharacter::InitializeAbilityActorInfo()
 					TDHUD->InitializeHUD(TDPlayerController, TDPlayerState, AbilitySystemComponent, AttributeSet);
 				}
 			}
+
+			PrimaryAttributeInitComponent->InitializePrimaryAttributes(AbilitySystemComponent);
 		}
 	}
 }

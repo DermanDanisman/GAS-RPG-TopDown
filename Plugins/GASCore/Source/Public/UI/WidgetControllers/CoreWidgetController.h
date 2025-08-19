@@ -81,19 +81,19 @@ struct FWidgetControllerParams
 	{}
 
 	/** Owner player controller; may be null until possession/creation completes. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WidgetController")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GASCore|WidgetController")
 	TObjectPtr<APlayerController> PlayerController = nullptr;
 
 	/** Player state for identity/score/persistent data. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WidgetController")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GASCore|WidgetController")
 	TObjectPtr<APlayerState> PlayerState = nullptr;
 
 	/** GAS component for abilities, effects, and gameplay tags. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WidgetController")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GASCore|WidgetController")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent = nullptr;
 
 	/** Attribute set instance holding gameplay-modifiable stats. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WidgetController")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GASCore|WidgetController")
 	TObjectPtr<UAttributeSet> AttributeSet = nullptr;
 };
 
@@ -114,7 +114,7 @@ public:
 	 * Call immediately after constructing the controller and before any UI binding.
 	 * Safe to call multiple times to refresh references (e.g., on pawn possession changes).
 	 */
-	UFUNCTION(BlueprintCallable, Category = "WidgetController")
+	UFUNCTION(BlueprintCallable, Category = "GASCore|WidgetController")
 	void SetWidgetControllerParams(const FWidgetControllerParams& InWidgetControllerParams);
 
 	/**
@@ -133,18 +133,18 @@ public:
 
 protected:
 	/** Owning player controller (HUD/input). */
-	UPROPERTY(BlueprintReadOnly, Category = "Core|Widget Controller")
+	UPROPERTY(BlueprintReadOnly, Category = "GASCore|Widget Controller")
 	TObjectPtr<APlayerController> PlayerController;
 
 	/** Owning player state (persistent/replicated player info). */
-	UPROPERTY(BlueprintReadOnly, Category = "Core|Widget Controller")
+	UPROPERTY(BlueprintReadOnly, Category = "GASCore|Widget Controller")
 	TObjectPtr<APlayerState> PlayerState;
 
 	/** Ability System Component (GAS). */
-	UPROPERTY(BlueprintReadOnly, Category = "Core|Widget Controller")
+	UPROPERTY(BlueprintReadOnly, Category = "GASCore|Widget Controller")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 
 	/** Attribute Set with gameplay stats. */
-	UPROPERTY(BlueprintReadOnly, Category = "Core|Widget Controller")
+	UPROPERTY(BlueprintReadOnly, Category = "GASCore|Widget Controller")
 	TObjectPtr<UAttributeSet> AttributeSet;
 };

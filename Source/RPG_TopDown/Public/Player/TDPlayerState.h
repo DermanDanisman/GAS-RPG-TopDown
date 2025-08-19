@@ -38,7 +38,7 @@ protected:
 	virtual void BeginPlay() override;
 	
 	/** The AbilitySystemComponent for this player, authoritatively owned and replicated. */
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 
 	/** The AttributeSet for this player, contains all replicated gameplay attributes. */

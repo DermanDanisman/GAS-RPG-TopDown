@@ -93,33 +93,33 @@ struct FCoreEffectConfig
 	GENERATED_BODY()
 
 	/** The Gameplay Effect class to apply. This drives duration policy, periodicity, and stacking behavior. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Effect")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|Effect")
 	TSubclassOf<UGameplayEffect> EffectClass;
 
 	/** When this effect should be applied relative to overlap events. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Effect")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|Effect")
 	ECoreEffectApplicationPolicy ApplicationPolicy;
 
 	/**
 	 * When this effect should be removed relative to overlap events.
 	 * Applies only to non-instant effects (HasDuration or Infinite; Periodic counts as non-instant).
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Effect")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|Effect")
 	ECoreEffectRemovalPolicy RemovalPolicy;
 
 	/** Destroy this actor immediately after a successful application of this effect (useful for consumables). */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Effect")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|Effect")
 	bool bDestroyOnEffectApplication;
 
 	/** Destroy this actor immediately after this effect is removed (e.g., on leaving an AoE fire). */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Effect")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|Effect")
 	bool bDestroyOnEffectRemoval;
 
 	/**
 	 * Effect level used when creating the outgoing spec.
 	 * Drives scalable magnitudes/tables defined in the GE (if any).
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Effect", meta = (ClampMin = "1.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|Effect", meta = (ClampMin = "1.0"))
 	float ActorLevel;
 
 	/**
@@ -127,7 +127,7 @@ struct FCoreEffectConfig
 	 * -1 = remove all stacks for the matched handle
 	 *  1 = remove a single stack (classic: leave one fire area, remove one stack)
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Effect", meta = (ClampMin = "-1"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|Effect", meta = (ClampMin = "-1"))
 	int32 StacksToRemove;
 
 	FCoreEffectConfig()
@@ -176,7 +176,7 @@ public:
 	 *
 	 * @param TargetActor The actor that began overlapping with this actor.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Gameplay Effect Actor")
+	UFUNCTION(BlueprintCallable, Category = "GASCore|Gameplay Effect Actor")
 	void OnOverlap(AActor* TargetActor);
 
 	/**
@@ -185,7 +185,7 @@ public:
 	 *
 	 * @param TargetActor The actor that ended overlapping with this actor.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Gameplay Effect Actor")
+	UFUNCTION(BlueprintCallable, Category = "GASCore|Gameplay Effect Actor")
 	void EndOverlap(AActor* TargetActor);
 
 protected:
@@ -203,7 +203,7 @@ protected:
 	 * IMPORTANT:
 	 * - For multiple Infinite effects, use distinct GE classes to avoid ambiguous tracking.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gameplay Effects", meta = (TitleProperty = "EffectClass"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|Gameplay Effects", meta = (TitleProperty = "EffectClass"))
 	TArray<FCoreEffectConfig> GameplayEffects;
 
 private:
@@ -212,7 +212,7 @@ private:
 	// -----------------------------------------------------------------------
 
 	/** Root scene component so designers can attach any collision/visual components in BP. */
-	UPROPERTY(VisibleAnywhere, Category = "Components")
+	UPROPERTY(VisibleAnywhere, Category = "GASCore|Components")
 	TObjectPtr<USceneComponent> DefaultSceneRoot;
 
 	// -----------------------------------------------------------------------

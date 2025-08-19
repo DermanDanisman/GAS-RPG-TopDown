@@ -7,6 +7,7 @@
 #include "AbilitySystemInterface.h"
 #include "TDCharacterBase.generated.h"
 
+class UCorePrimaryAttributeInitComponent;
 // Forward declaration to minimize dependencies. AttributeSet is used as a pointer member.
 class UAttributeSet;
 
@@ -61,4 +62,7 @@ protected:
 	/** The AttributeSet for this actor, containing all modifiable gameplay stats. */
 	UPROPERTY()
 	TObjectPtr<UAttributeSet> AttributeSet;
+
+	UPROPERTY(EditAnywhere, Category = "Attributes")
+	TObjectPtr<UCorePrimaryAttributeInitComponent> PrimaryAttributeInitComponent;
 };

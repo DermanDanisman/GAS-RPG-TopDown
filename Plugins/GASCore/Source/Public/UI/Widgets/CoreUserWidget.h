@@ -103,7 +103,7 @@ public:
 	 * - Check "Is Valid" on the cast result before accessing controller methods
 	 * - If cast fails, disable related UI features gracefully
 	 */
-	UFUNCTION(BlueprintPure, Category = "GAS User Widget|Widget Controller")
+	UFUNCTION(BlueprintPure, Category = "GASCore|User Widget|Widget Controller")
 	UObject* GetWidgetController() { return WidgetController; }
 
 	/**
@@ -127,7 +127,7 @@ public:
 	 * - Initialize progress bars, text displays with current values
 	 * - Set up any controller-dependent UI features
 	 */
-	UFUNCTION(BlueprintCallable, Category = "GAS User Widget|Widget Controller")
+	UFUNCTION(BlueprintCallable, Category = "GASCore|User Widget|Widget Controller")
 	void SetWidgetController(UObject* InWidgetController);
 
 protected:
@@ -164,7 +164,7 @@ protected:
 	 * - Or use binding patterns that naturally handle duplicates
 	 * - Or guard with a "binding complete" flag if appropriate
 	 */
-	UFUNCTION(BlueprintImplementableEvent, Category = "GAS User Widget|Widget Controller", meta = (DisplayName = "On Widget Controller Set"))
+	UFUNCTION(BlueprintImplementableEvent, Category = "GASCore|User Widget|Widget Controller", meta = (DisplayName = "On Widget Controller Set"))
 	void OnWidgetControllerSet();
 
 private:

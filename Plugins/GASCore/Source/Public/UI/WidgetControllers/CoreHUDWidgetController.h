@@ -47,19 +47,19 @@ struct FUIMessageWidgetRow : public FTableRowBase
 	GENERATED_BODY()
 
 	/** The unique tag for this message (e.g., UI.Message.HealthPotion). */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI|Message")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|UI|Message")
 	FGameplayTag MessageTag;
 
 	/** Localized user-facing message text. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI|Message")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|UI|Message")
 	FText MessageText;
 
 	/** Optional widget class to render the message. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI|Message")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|UI|Message")
 	TSubclassOf<UCoreUserWidget> MessageWidget;
 
 	/** Optional icon displayed with the message. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI|Message")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|UI|Message")
 	TObjectPtr<UTexture2D> MessageImage;
 
 	FUIMessageWidgetRow()
@@ -107,27 +107,27 @@ public:
 	virtual void BindCallbacksToDependencies() override;
 	
 	/** Delegate for listening to Health value changes (NewHealth). */
-	UPROPERTY(BlueprintAssignable, Category="HUD Widget Controller|Attributes")
+	UPROPERTY(BlueprintAssignable, Category="GASCore|HUD Widget Controller|Attributes")
 	FOnAttributeChangedSignature OnHealthChanged;
 
 	/** Delegate for listening to MaxHealth changes (NewMaxHealth). */
-	UPROPERTY(BlueprintAssignable, Category="HUD Widget Controller|Attributes")
+	UPROPERTY(BlueprintAssignable, Category="GASCore|HUD Widget Controller|Attributes")
 	FOnAttributeChangedSignature OnMaxHealthChanged;
 
 	/** Delegate for listening to Mana value changes (NewMana). */
-	UPROPERTY(BlueprintAssignable, Category="HUD Widget Controller|Attributes")
+	UPROPERTY(BlueprintAssignable, Category="GASCore|HUD Widget Controller|Attributes")
 	FOnAttributeChangedSignature OnManaChanged;
 
 	/** Delegate for listening to MaxMana changes (NewMaxMana). */
-	UPROPERTY(BlueprintAssignable, Category="HUD Widget Controller|Attributes")
+	UPROPERTY(BlueprintAssignable, Category="GASCore|HUD Widget Controller|Attributes")
 	FOnAttributeChangedSignature OnMaxManaChanged;
 
 	/** Delegate for listening to Stamina value changes (NewStamina). */
-	UPROPERTY(BlueprintAssignable, Category="HUD Widget Controller|Attributes")
+	UPROPERTY(BlueprintAssignable, Category="GASCore|HUD Widget Controller|Attributes")
 	FOnAttributeChangedSignature OnStaminaChanged;
 
 	/** Delegate for listening to MaxStamina changes (NewMaxStamina). */
-	UPROPERTY(BlueprintAssignable, Category="HUD Widget Controller|Attributes")
+	UPROPERTY(BlueprintAssignable, Category="GASCore|HUD Widget Controller|Attributes")
 	FOnAttributeChangedSignature OnMaxStaminaChanged;
 
 	/**
@@ -135,7 +135,7 @@ public:
 	 * Controllers can broadcast a row (looked up from a DataTable) to request
 	 * the HUD render a message/notification.
 	 */
-	UPROPERTY(BlueprintAssignable, Category = "Core|Widget Controller|UI")
+	UPROPERTY(BlueprintAssignable, Category = "GASCore|Widget Controller|UI")
 	FUIMessageWidgetRowSignature MessageWidgetRowDelegate;
 
 protected:
@@ -145,7 +145,7 @@ protected:
 	 * - Expected row key: Tag.GetTagName() (e.g., "UI.Message.HealthPotion")
 	 * - Expected struct type: FUIMessageWidgetRow (custom USTRUCT with MessageTag and display data)
 	 */
-	UPROPERTY(EditDefaultsOnly, Category="HUD Widget Controller|UI")
+	UPROPERTY(EditDefaultsOnly, Category="GASCore|HUD Widget Controller|UI")
 	TObjectPtr<UDataTable> MessageWidgetDataTable;
 
 	/**
