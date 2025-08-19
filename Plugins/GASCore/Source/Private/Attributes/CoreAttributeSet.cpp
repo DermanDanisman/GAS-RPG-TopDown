@@ -170,26 +170,6 @@ void UCoreAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 
 	FCoreEffectContext EffectProperties;
 	PopulateEffectContext(Data, EffectProperties);
-
-	// Example meta-attribute handling would go here (e.g., if you have Damage/Heal meta attributes):
-	// - Read Damage meta, subtract from Health, zero-out Damage, then clamp Health.
-	// - Same for Heal, or other meta attributes you define.
-
-	// Final authoritative clamp for Instant/Periodic changes. We SET the attribute so the clamped value persists.
-	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
-	{
-		SetHealth(FMath::Clamp(GetHealth(), 0.f, GetMaxHealth()));
-	}
-	else if (Data.EvaluatedData.Attribute == GetManaAttribute())
-	{
-		SetMana(FMath::Clamp(GetMana(), 0.f, GetMaxMana()));
-	}
-	else if (Data.EvaluatedData.Attribute == GetStaminaAttribute())
-	{
-		SetStamina(FMath::Clamp(GetStamina(), 0.f, GetMaxStamina()));
-	}
-
-	// Optional: Broadcast cues or UI updates using EffectProperties here if needed.
 }
 
 // =======================================

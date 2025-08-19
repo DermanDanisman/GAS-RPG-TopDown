@@ -2,7 +2,7 @@
 
 > This documentation is a living document. It will evolve as we progress through the course and as the codebase changes. If something is out of date or unclear, please open a "Docs Update" issue or a PR.
 
-Last updated: 2025-08-17
+Last updated: 2025-08-19
 
 ## Index
 
@@ -19,6 +19,11 @@ Last updated: 2025-08-17
 - Plugin design (WIP):
   - plugin/overview.md
   - plugin/api.md
+
+## Attribute System Deep Dives
+
+- **[Attribute Clamping Guide](attributes/attribute-clamping.md)** - Comprehensive guide to preventing attribute overflow bugs
+- **[GAS Callback Cheatsheet](cheatsheets/gas-attribute-callbacks.md)** - Quick reference for AttributeSet callback usage
 
 ## How to propose changes
 
