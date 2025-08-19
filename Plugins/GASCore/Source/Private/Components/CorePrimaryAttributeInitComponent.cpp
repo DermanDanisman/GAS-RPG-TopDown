@@ -4,6 +4,7 @@
 #include "Components/CorePrimaryAttributeInitComponent.h"
 
 #include "AbilitySystemComponent.h"
+#include "GameplayEffect.h"
 
 
 UCorePrimaryAttributeInitComponent::UCorePrimaryAttributeInitComponent()

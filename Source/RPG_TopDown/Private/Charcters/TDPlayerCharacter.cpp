@@ -85,7 +85,11 @@ void ATDPlayerCharacter::InitializeAbilityActorInfo()
 				}
 			}
 
-			PrimaryAttributeInitComponent->InitializePrimaryAttributes(AbilitySystemComponent);
+			// Apply initialization GE on the server only; clients receive replicated attributes.
+			if (HasAuthority() && PrimaryAttributeInitComponent && AbilitySystemComponent)
+			{
+				PrimaryAttributeInitComponent->InitializePrimaryAttributes(AbilitySystemComponent);
+			}
 		}
 	}
 }
