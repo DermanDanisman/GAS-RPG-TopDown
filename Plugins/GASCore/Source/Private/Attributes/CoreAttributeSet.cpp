@@ -21,65 +21,25 @@ UCoreAttributeSet::UCoreAttributeSet()
 void UCoreAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	
-	// Health attributes replication
+
+	// ===================
+	// Primary Attributes 
+	// ===================
+	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, Strength, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, Dexterity, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, Intelligence, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, Endurance, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, Vigor, COND_None, REPNOTIFY_Always);
+
+	// ===================
+	// Vital Attributes
+	// ===================
 	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, Health, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, MaxHealth, COND_None, REPNOTIFY_Always);
-	
-	// Mana attributes replication
 	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, Mana, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, MaxMana, COND_None, REPNOTIFY_Always);
-	 
-	// Stamina attributes replication
 	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, Stamina, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, MaxStamina, COND_None, REPNOTIFY_Always);
-}
-
-void UCoreAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
-{
-	Super::PreAttributeChange(Attribute, NewValue);
-
-	// Clamp Health between 0 and MaxHealth
-	// This handles CurrentValue changes from Duration/Infinite GEs, direct sets, and aggregator updates
-	if (Attribute == GetHealthAttribute())
-	{
-		NewValue = FMath::Clamp<float>(NewValue, 0.f, GetMaxHealth());
-	}
-	// Clamp Mana between 0 and MaxMana
-	else if (Attribute == GetManaAttribute())
-	{
-		NewValue = FMath::Clamp<float>(NewValue, 0.f, GetMaxMana());
-	}
-	// Clamp Stamina between 0 and MaxStamina
-	else if (Attribute == GetStaminaAttribute())
-	{
-		NewValue = FMath::Clamp<float>(NewValue, 0.f, GetMaxStamina());
-	}
-}
-
-void UCoreAttributeSet::PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const
-{
-	Super::PreAttributeBaseChange(Attribute, NewValue);
-
-	// Clamp Health.BaseValue between 0 and MaxHealth
-	// This prevents "invisible buffer" overflow from Instant/Periodic GameplayEffects
-	if (Attribute == GetHealthAttribute())
-	{
-		NewValue = FMath::Clamp<float>(NewValue, 0.f, GetMaxHealth());
-	}
-	// Clamp Mana.BaseValue between 0 and MaxMana
-	else if (Attribute == GetManaAttribute())
-	{
-		NewValue = FMath::Clamp<float>(NewValue, 0.f, GetMaxMana());
-	}
-	// Clamp Stamina.BaseValue between 0 and MaxStamina
-	else if (Attribute == GetStaminaAttribute())
-	{
-		NewValue = FMath::Clamp<float>(NewValue, 0.f, GetMaxStamina());
-	}
-	
-	// Note: When Max values change, you typically also adjust current values here or in PostGameplayEffectExecute
-	// (e.g., if MaxHealth decreases below Health, clamp Health down to new Max).
 }
 
 void UCoreAttributeSet::PopulateEffectContext(const struct FGameplayEffectModCallbackData& Data,
@@ -147,46 +107,103 @@ void UCoreAttributeSet::PopulateEffectContext(const struct FGameplayEffectModCal
 	}
 }
 
-void UCoreAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
+// Attribute clamping strategy summary:
+// - PreAttributeBaseChange: Called when BaseValue is about to change (Instant/Periodic).
+//   Clamp BaseValue inputs to avoid out-of-range base-state.
+// - PreAttributeChange: Called whenever the final CurrentValue will change (all cases).
+//   Best used to react to Max attribute changes and clamp dependent current attributes.
+// - PostGameplayEffectExecute: Called after Instant/Periodic GEs execute.
+//   Authoritative place to finalize meta-attribute handling (e.g., Damage/Heal) and clamp CurrentValue,
+//   then SetX() so subsequent calculations start from a correct, persisted value.
+
+void UCoreAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
+{
+	Super::PreAttributeChange(Attribute, NewValue);
+
+	// React to max attribute changes by clamping the corresponding current attribute.
+	// NewValue here represents the new Max value. We SET the current attribute so it persists.
+	if (Attribute == GetMaxHealthAttribute())
+	{
+		SetHealth(FMath::Clamp(GetHealth(), 0.f, NewValue));
+	}
+	else if (Attribute == GetMaxManaAttribute())
+	{
+		SetMana(FMath::Clamp(GetMana(), 0.f, NewValue));
+	}
+	else if (Attribute == GetMaxStaminaAttribute())
+	{
+		SetStamina(FMath::Clamp(GetStamina(), 0.f, NewValue));
+	}
+
+	// Important note:
+	// You COULD clamp NewValue for current attributes here (Health/Mana/Stamina), but it only clamps
+	// the in-flight evaluated result for this write. It does NOT necessarily fix underlying aggregator
+	// inputs. Prefer final authoritative clamping in PostGameplayEffectExecute instead.
+}
+
+void UCoreAttributeSet::PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const
+{
+	Super::PreAttributeBaseChange(Attribute, NewValue);
+
+	// Clamp BaseValue before it is written for Instant/Periodic effects.
+	// This keeps the base-layer sane, independent from final evaluated modifiers.
+	if (Attribute == GetHealthAttribute())
+	{
+		NewValue = FMath::Clamp<float>(NewValue, 0.f, GetMaxHealth());
+	}
+	else if (Attribute == GetManaAttribute())
+	{
+		NewValue = FMath::Clamp<float>(NewValue, 0.f, GetMaxMana());
+	}
+	else if (Attribute == GetStaminaAttribute())
+	{
+		NewValue = FMath::Clamp<float>(NewValue, 0.f, GetMaxStamina());
+	}
+
+	// Note: For Max attributes changed by buffs (duration/infinite without period), this function
+	// typically won't be called. Handle their dependent current clamps in PreAttributeChange.
+}
+
+void UCoreAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
 {
 	Super::PostGameplayEffectExecute(Data);
 
 	FCoreEffectContext EffectProperties;
 	PopulateEffectContext(Data, EffectProperties);
-
-	// FINAL AUTHORITATIVE CLAMPING:
-	// This is the safest place to use SetX() methods to modify attributes directly.
-	// Handle cases where Max attributes changed, requiring current values to be adjusted.
-	
-	// When MaxHealth changes, ensure Health doesn't exceed the new maximum
-	if (Data.EvaluatedData.Attribute == GetMaxHealthAttribute())
-	{
-		SetHealth(FMath::Clamp(GetHealth(), 0.f, GetMaxHealth()));
-	}
-	// When MaxMana changes, ensure Mana doesn't exceed the new maximum
-	else if (Data.EvaluatedData.Attribute == GetMaxManaAttribute())
-	{
-		SetMana(FMath::Clamp(GetMana(), 0.f, GetMaxMana()));
-	}
-	// When MaxStamina changes, ensure Stamina doesn't exceed the new maximum
-	else if (Data.EvaluatedData.Attribute == GetMaxStaminaAttribute())
-	{
-		SetStamina(FMath::Clamp(GetStamina(), 0.f, GetMaxStamina()));
-	}
-
-	// Extension points for future functionality:
-	// - Handle damage/heal meta-attributes if you add them, then clamp affected attributes
-	// - Broadcast UI updates or gameplay cues based on EffectProperties
-	// - Trigger death checks or other gameplay reactions
-	//
-	// Example meta-attribute handling:
-	// if (Data.EvaluatedData.Attribute == GetDamageAttribute())
-	// {
-	//     const float LocalDamage = GetDamage();
-	//     SetDamage(0.f); // Clear the meta-attribute
-	//     SetHealth(FMath::Clamp(GetHealth() - LocalDamage, 0.f, GetMaxHealth()));
-	// }
 }
+
+// =======================================
+// Primary Attributes Rep Notify Functions
+// =======================================
+
+void UCoreAttributeSet::OnRep_Strength(const FGameplayAttributeData& OldStrength) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UCoreAttributeSet, Strength, OldStrength);
+}
+
+void UCoreAttributeSet::OnRep_Dexterity(const FGameplayAttributeData& OldDexterity) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UCoreAttributeSet, Dexterity, OldDexterity);
+}
+
+void UCoreAttributeSet::OnRep_Intelligence(const FGameplayAttributeData& OldIntelligence) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UCoreAttributeSet, Intelligence, OldIntelligence);
+}
+
+void UCoreAttributeSet::OnRep_Endurance(const FGameplayAttributeData& OldEndurance) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UCoreAttributeSet, Endurance, OldEndurance);
+}
+
+void UCoreAttributeSet::OnRep_Vigor(const FGameplayAttributeData& OldVigor) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UCoreAttributeSet, Vigor, OldVigor);
+}
+
+// =======================================
+// Vital Attributes Rep Notify Functions
+// =======================================
 
 /** RepNotify: Health value updated on clients */
 void UCoreAttributeSet::OnRep_Health(const FGameplayAttributeData& OldHealth) const

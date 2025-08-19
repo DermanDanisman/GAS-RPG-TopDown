@@ -29,30 +29,54 @@
 #include "CoreWidgetController.h"
 #include "CoreHUDWidgetController.generated.h"
 
+/**
+ * FUIMessageWidgetRow
+ *
+ * Row type for UI message DataTables.
+ * A GameplayTag addresses a message payload
+ * (localized text, a widget class, and an optional image) to drive notifications/toasts.
+ *
+ * Typical usage:
+ * - In a controller, listen for "UI.Message.*" tags from the ASC (e.g., effect asset tags).
+ * - Look up the row by tag (row name == tag's FName).
+ * - Broadcast row via MessageWidgetRowDelegate for the HUD to render.
+ */
+USTRUCT(BlueprintType)
+struct FUIMessageWidgetRow : public FTableRowBase
+{
+	GENERATED_BODY()
+
+	/** The unique tag for this message (e.g., UI.Message.HealthPotion). */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI|Message")
+	FGameplayTag MessageTag;
+
+	/** Localized user-facing message text. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI|Message")
+	FText MessageText;
+
+	/** Optional widget class to render the message. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI|Message")
+	TSubclassOf<UCoreUserWidget> MessageWidget;
+
+	/** Optional icon displayed with the message. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI|Message")
+	TObjectPtr<UTexture2D> MessageImage;
+
+	FUIMessageWidgetRow()
+	{
+		MessageTag = FGameplayTag();
+		MessageText = FText();
+		MessageWidget = nullptr;
+		MessageImage = nullptr;
+	}
+};
+
+/** Broadcasts a message widget row to the UI (e.g., HUD overlay). */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUIMessageWidgetRowSignature, FUIMessageWidgetRow, MessageWidgetRow);
+
 // Declare multicast delegates for different HUD attribute changes.
 // These are BlueprintAssignable so widgets can bind in BP to receive updates.
-
-// Fires whenever Health changes (float is the new Health value)
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealthChangedSignature, float, NewHealth);
-
-// Fires whenever MaxHealth changes (float is the new MaxHealth value)
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxHealthChangedSignature, float, NewMaxHealth);
-
-// Fires whenever Mana changes (float is the new Mana value)
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnManaChangedSignature, float, NewMana);
-
-// Fires whenever MaxMana changes (float is the new MaxMana value)
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxManaChangedSignature, float, NewMaxMana);
-
-// Fires whenever Stamina changes (float is the new Stamina value)
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStaminaChangedSignature, float, NewStamina);
-
-// Fires whenever MaxStamina changes (float is the new MaxStamina value)
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxStaminaChangedSignature, float, NewMaxStamina);
-
-// Forward declaration: Expected UI DataTable row type for UI messages.
-// You likely defined this as a USTRUCT elsewhere (e.g., FUIMessageWidgetRow).
-struct FUIMessageWidgetRow;
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttributeChangedSignature, float, NewValue);
 
 /**
  * UCoreHUDWidgetController
@@ -84,27 +108,35 @@ public:
 	
 	/** Delegate for listening to Health value changes (NewHealth). */
 	UPROPERTY(BlueprintAssignable, Category="HUD Widget Controller|Attributes")
-	FOnHealthChangedSignature OnHealthChanged;
+	FOnAttributeChangedSignature OnHealthChanged;
 
 	/** Delegate for listening to MaxHealth changes (NewMaxHealth). */
 	UPROPERTY(BlueprintAssignable, Category="HUD Widget Controller|Attributes")
-	FOnMaxHealthChangedSignature OnMaxHealthChanged;
+	FOnAttributeChangedSignature OnMaxHealthChanged;
 
 	/** Delegate for listening to Mana value changes (NewMana). */
 	UPROPERTY(BlueprintAssignable, Category="HUD Widget Controller|Attributes")
-	FOnManaChangedSignature OnManaChanged;
+	FOnAttributeChangedSignature OnManaChanged;
 
 	/** Delegate for listening to MaxMana changes (NewMaxMana). */
 	UPROPERTY(BlueprintAssignable, Category="HUD Widget Controller|Attributes")
-	FOnMaxManaChangedSignature OnMaxManaChanged;
+	FOnAttributeChangedSignature OnMaxManaChanged;
 
 	/** Delegate for listening to Stamina value changes (NewStamina). */
 	UPROPERTY(BlueprintAssignable, Category="HUD Widget Controller|Attributes")
-	FOnStaminaChangedSignature OnStaminaChanged;
+	FOnAttributeChangedSignature OnStaminaChanged;
 
 	/** Delegate for listening to MaxStamina changes (NewMaxStamina). */
 	UPROPERTY(BlueprintAssignable, Category="HUD Widget Controller|Attributes")
-	FOnMaxStaminaChangedSignature OnMaxStaminaChanged;
+	FOnAttributeChangedSignature OnMaxStaminaChanged;
+
+	/**
+	 * Generic message dispatch to the UI.
+	 * Controllers can broadcast a row (looked up from a DataTable) to request
+	 * the HUD render a message/notification.
+	 */
+	UPROPERTY(BlueprintAssignable, Category = "Core|Widget Controller|UI")
+	FUIMessageWidgetRowSignature MessageWidgetRowDelegate;
 
 protected:
 

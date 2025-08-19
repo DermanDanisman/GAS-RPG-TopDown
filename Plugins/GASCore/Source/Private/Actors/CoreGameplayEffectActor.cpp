@@ -39,20 +39,7 @@ void ACoreGameplayEffectActor::BeginPlay()
 	{
 		if (IsInfinite(Config.EffectClass))
 		{
-			if (SeenInfiniteClasses.Contains(Config.EffectClass))
-			{
-				UE_LOG(
-					LogCoreGEA,
-					Warning,
-					TEXT("[%s] Duplicate Infinite GE class configured: %s"),
-					*GetName(),
-					*GetNameSafe(Config.EffectClass)
-				);
-			}
-			else
-			{
-				SeenInfiniteClasses.Add(Config.EffectClass);
-			}
+			SeenInfiniteClasses.Add(Config.EffectClass);
 		}
 	}
 
@@ -67,19 +54,6 @@ void ACoreGameplayEffectActor::BeginPlay()
 			(DurationPolicy == EGameplayEffectDurationType::Instant)  ? TEXT("Instant")  :
 			(DurationPolicy == EGameplayEffectDurationType::Infinite) ? TEXT("Infinite") :
 			(bIsPeriodic ? TEXT("Periodic") : TEXT("Duration"));
-
-		UE_LOG(
-			LogCoreGEA,
-			Verbose,
-			TEXT("[%s] GE=%s Type=%s Apply=%d Remove=%d Level=%.1f StacksToRemove=%d"),
-			*GetName(),
-			*GetNameSafe(Config.EffectClass),
-			TypeStr,
-			int32(Config.ApplicationPolicy),
-			int32(Config.RemovalPolicy),
-			Config.ActorLevel,
-			Config.StacksToRemove
-		);
 	}
 }
 

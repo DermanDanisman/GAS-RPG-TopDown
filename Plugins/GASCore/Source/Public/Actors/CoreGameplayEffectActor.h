@@ -42,9 +42,6 @@
 class UAbilitySystemComponent;
 class UGameplayEffect;
 
-// A logging channel for this actor (defined in the .cpp)
-DECLARE_LOG_CATEGORY_EXTERN(LogCoreGEA, Log, All);
-
 // -----------------------------------------------------------------------------
 // Effect timing policies
 // -----------------------------------------------------------------------------

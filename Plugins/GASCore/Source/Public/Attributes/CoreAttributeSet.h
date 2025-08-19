@@ -190,7 +190,80 @@ public:
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
 
 	// =========================
-	// Health Attributes
+	// Primary Attributes
+	// =========================
+
+	/** Current Strength value - how much Strength the character currently has */
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Strength, Category="Attributes|Primary")
+	FGameplayAttributeData Strength;
+	/** Generates attribute accessors (getter/setter/initter) for Strength */
+	ATTRIBUTE_ACCESSORS(UCoreAttributeSet, Strength);
+
+	/** Current Dexterity value - how much Dexterity the character currently has */
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Dexterity, Category="Attributes|Primary")
+	FGameplayAttributeData Dexterity;
+	/** Generates attribute accessors (getter/setter/initter) for Dexterity */
+	ATTRIBUTE_ACCESSORS(UCoreAttributeSet, Dexterity);
+
+	/** Current Intelligence value - how much Intelligence the character currently has */
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Intelligence, Category="Attributes|Primary")
+	FGameplayAttributeData Intelligence;
+	/** Generates attribute accessors (getter/setter/initter) for Intelligence */
+	ATTRIBUTE_ACCESSORS(UCoreAttributeSet, Intelligence);
+
+	/** Current Endurance value - how much Endurance the character currently has */
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Endurance, Category="Attributes|Primary")
+	FGameplayAttributeData Endurance;
+	/** Generates attribute accessors (getter/setter/initter) for Endurance */
+	ATTRIBUTE_ACCESSORS(UCoreAttributeSet, Endurance);
+
+	/** Current Vigor value - how much Vigor the character currently has */
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Vigor, Category="Attributes|Primary")
+	FGameplayAttributeData Vigor;
+	/** Generates attribute accessors (getter/setter/initter) for Vigor */
+	ATTRIBUTE_ACCESSORS(UCoreAttributeSet, Vigor);
+
+	// =======================================
+	// Primary Attributes Rep Notify Functions
+	// =======================================
+
+	/**
+	 * RepNotify for Strength attribute. Triggers attribute change delegates and
+	 * ensures clients update UI/prediction based on server authoritative values.
+	 */
+	UFUNCTION()
+	void OnRep_Strength(const FGameplayAttributeData& OldStrength) const;
+
+	/**
+	 * RepNotify for Dexterity attribute. Triggers attribute change delegates and
+	 * ensures clients update UI/prediction based on server authoritative values.
+	 */
+	UFUNCTION()
+	void OnRep_Dexterity(const FGameplayAttributeData& OldDexterity) const;
+
+	/**
+	 * RepNotify for Intelligence attribute. Triggers attribute change delegates and
+	 * ensures clients update UI/prediction based on server authoritative values.
+	 */
+	UFUNCTION()
+	void OnRep_Intelligence(const FGameplayAttributeData& OldIntelligence) const;
+	
+	/**
+	 * RepNotify for Endurance attribute. Triggers attribute change delegates and
+	 * ensures clients update UI/prediction based on server authoritative values.
+	 */
+	UFUNCTION()
+	void OnRep_Endurance(const FGameplayAttributeData& OldEndurance) const;
+
+	/**
+	 * RepNotify for Vigor attribute. Triggers attribute change delegates and
+	 * ensures clients update UI/prediction based on server authoritative values.
+	 */
+	UFUNCTION()
+	void OnRep_Vigor(const FGameplayAttributeData& OldVigor) const;
+
+	// =========================
+	// Vital Attributes
 	// =========================
 
 	/** Current health value - how much health the character currently has */
@@ -205,10 +278,6 @@ public:
 	/** Generates attribute accessors for MaxHealth */
 	ATTRIBUTE_ACCESSORS(UCoreAttributeSet, MaxHealth);
 
-	// =========================
-	// Mana Attributes
-	// =========================
-
 	/** Current mana value - resource for casting abilities */
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Mana, Category="Attributes|Vitals")
 	FGameplayAttributeData Mana;
@@ -220,10 +289,6 @@ public:
 	FGameplayAttributeData MaxMana;
 	/** Generates attribute accessors for MaxMana */
 	ATTRIBUTE_ACCESSORS(UCoreAttributeSet, MaxMana);
-
-	// =========================
-	// Stamina Attributes
-	// =========================
 
 	/** Current stamina value - resource for physical actions like sprinting */
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing=OnRep_Stamina, Category="Attributes|Vitals")
@@ -238,7 +303,7 @@ public:
 	ATTRIBUTE_ACCESSORS(UCoreAttributeSet, MaxStamina);
 
 	// =======================================
-	// Health Attributes Rep Notify Functions
+	// Vital Attributes Rep Notify Functions
 	// =======================================
 	
 	/**
@@ -251,10 +316,6 @@ public:
 	/** RepNotify for MaxHealth attribute */
 	UFUNCTION()
 	void OnRep_MaxHealth(const FGameplayAttributeData& OldMaxHealth) const;
-
-	// =======================================
-	// Mana Attributes Rep Notify Functions
-	// =======================================
 	
 	/** RepNotify for Mana attribute */
 	UFUNCTION()
@@ -263,10 +324,6 @@ public:
 	/** RepNotify for MaxMana attribute */
 	UFUNCTION()
 	void OnRep_MaxMana(const FGameplayAttributeData& OldMaxMana) const;
-
-	// =======================================
-	// Stamina Attributes Rep Notify Functions
-	// =======================================
 	
 	/** RepNotify for Stamina attribute */
 	UFUNCTION()
