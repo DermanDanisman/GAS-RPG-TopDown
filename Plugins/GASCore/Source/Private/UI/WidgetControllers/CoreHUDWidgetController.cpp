@@ -78,40 +78,48 @@ void UCoreHUDWidgetController::BindCallbacksToDependencies()
 		}
 	);
 
-	// Forward GameplayEffect asset tags (e.g., "UI.Message.HealthPotion") to the UI.
-	// Note:
-	// - We assume AbilitySystemComponent is actually a UCoreAbilitySystemComponent (subclass)
-	// - UCoreAbilitySystemComponent must have called BindASCDelegates() to hook into GE application
+	// MESSAGEWIDGETROWDELEGATE USAGE:
+	// Forward GameplayEffect asset tags (e.g., "UI.Message.HealthPotion") to the UI for display.
+	//
+	// HOW IT WORKS:
+	// 1. UCoreAbilitySystemComponent broadcasts effect asset tags when GEs are applied
+	// 2. We filter for "UI.Message.*" tags and look up corresponding DataTable rows
+	// 3. Broadcast the full row data to widgets via MessageWidgetRowDelegate
+	//
+	// DATATABLE SETUP REQUIREMENTS:
+	// - Create a DataTable with FUIMessageWidgetRow as the row type
+	// - Row keys must match tag FNames (e.g., row key "UI.Message.HealthPotion" for tag "UI.Message.HealthPotion")
+	// - Populate MessageTag, MessageText, optional MessageWidget class, and MessageImage
+	// - Assign the DataTable to MessageWidgetDataTable property
+	//
+	// WIDGET BINDING:
+	// Widgets should bind to MessageWidgetRowDelegate to receive and display these message notifications.
 	Cast<UCoreAbilitySystemComponent>(AbilitySystemComponent)->OnEffectAssetTags.AddLambda(
 		[this](const FGameplayTagContainer& AssetTags)
 		{
 			for (const FGameplayTag& Tag : AssetTags)
 			{
-				// We filter for a "UI.Message" parent tag so only tags intended for UI messages get processed here.
-				// Example: "UI.Message.HealthPotion".MatchesTag("UI.Message") returns true.
+				// Filter for UI message tags to avoid processing unrelated effect tags
 				const FGameplayTag MessageTag = FGameplayTag::RequestGameplayTag(FName("UI.Message"));
 
 				if (Tag.MatchesTag(MessageTag))
 				{
-					// Look up the corresponding UI message row in the DataTable.
-					// This assumes the row key is the full tag FName (e.g., "UI.Message.HealthPotion").
-					// Safety: MessageWidgetDataTable can be nullptr and FindRow can return nullptr.
-					// Guard checks are recommended in production.
+					// DataTable lookup: row key should match the tag's FName
 					FUIMessageWidgetRow* MessageRow = GetDataTableRowByTag<FUIMessageWidgetRow>(MessageWidgetDataTable, Tag);
 					if (MessageRow && MessageRow->MessageTag.IsValid())
 					{
-						// Example debug output for quick verification.
+						// DEBUG: Optional on-screen verification (should be disabled in shipping builds)
+#if !UE_BUILD_SHIPPING
 						const FString MatchedMsg = FString::Printf(TEXT("GE Tag: %s, Message Tag: %s"), *Tag.ToString(), *MessageRow->MessageTag.ToString());
-						GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Blue, MatchedMsg);
+						UE_LOG(LogTemp, Verbose, TEXT("%s"), *MatchedMsg);
+#endif
 
-						// Broadcast row to the widget layer (assumes you have a corresponding delegate defined,
-						// e.g., DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMessageRow, const FUIMessageWidgetRow&, Row))
-						// and a UPROPERTY(BlueprintAssignable) MessageWidgetRowDelegate on the controller.
+						// Broadcast the complete row to widgets for display
 						MessageWidgetRowDelegate.Broadcast(*MessageRow);
 					}
-					// else: No row found or invalid MessageTag; silently ignore.
+					// else: No matching row found; tag may be misconfigured or DataTable incomplete
 				}
-				// else: Not a UI.Message tag; ignore or handle other tag families as needed.
+				// else: Not a UI.Message tag; ignore (could handle other tag families here)
 			}
 		}
 	);

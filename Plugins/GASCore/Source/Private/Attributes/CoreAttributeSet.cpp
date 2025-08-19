@@ -40,6 +40,7 @@ void UCoreAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, 
 	Super::PreAttributeChange(Attribute, NewValue);
 
 	// Clamp Health between 0 and MaxHealth
+	// This handles CurrentValue changes from Duration/Infinite GEs, direct sets, and aggregator updates
 	if (Attribute == GetHealthAttribute())
 	{
 		NewValue = FMath::Clamp<float>(NewValue, 0.f, GetMaxHealth());
@@ -61,6 +62,7 @@ void UCoreAttributeSet::PreAttributeBaseChange(const FGameplayAttribute& Attribu
 	Super::PreAttributeBaseChange(Attribute, NewValue);
 
 	// Clamp Health.BaseValue between 0 and MaxHealth
+	// This prevents "invisible buffer" overflow from Instant/Periodic GameplayEffects
 	if (Attribute == GetHealthAttribute())
 	{
 		NewValue = FMath::Clamp<float>(NewValue, 0.f, GetMaxHealth());
@@ -152,15 +154,38 @@ void UCoreAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectMo
 	FCoreEffectContext EffectProperties;
 	PopulateEffectContext(Data, EffectProperties);
 
-	// Extension points:
-	// - If Max attributes were modified by Instant/Periodic GEs (Base change), ensure current <= new max:
-	//   if (Data.EvaluatedData.Attribute == GetMaxHealthAttribute()) { SetHealth(FMath::Clamp(GetHealth(), 0.f, GetMaxHealth())); }
-	// - Handle damage/heal meta-attributes if you add them, then clamp.
+	// FINAL AUTHORITATIVE CLAMPING:
+	// This is the safest place to use SetX() methods to modify attributes directly.
+	// Handle cases where Max attributes changed, requiring current values to be adjusted.
+	
+	// When MaxHealth changes, ensure Health doesn't exceed the new maximum
+	if (Data.EvaluatedData.Attribute == GetMaxHealthAttribute())
+	{
+		SetHealth(FMath::Clamp(GetHealth(), 0.f, GetMaxHealth()));
+	}
+	// When MaxMana changes, ensure Mana doesn't exceed the new maximum
+	else if (Data.EvaluatedData.Attribute == GetMaxManaAttribute())
+	{
+		SetMana(FMath::Clamp(GetMana(), 0.f, GetMaxMana()));
+	}
+	// When MaxStamina changes, ensure Stamina doesn't exceed the new maximum
+	else if (Data.EvaluatedData.Attribute == GetMaxStaminaAttribute())
+	{
+		SetStamina(FMath::Clamp(GetStamina(), 0.f, GetMaxStamina()));
+	}
 
-	// Example extension points (not implemented here):
-	// - If a Damage meta-attribute exists: subtract from Health then clamp
-	// - If MaxHealth changed: Health = FMath::Clamp(Health, 0.f, MaxHealth)
+	// Extension points for future functionality:
+	// - Handle damage/heal meta-attributes if you add them, then clamp affected attributes
 	// - Broadcast UI updates or gameplay cues based on EffectProperties
+	// - Trigger death checks or other gameplay reactions
+	//
+	// Example meta-attribute handling:
+	// if (Data.EvaluatedData.Attribute == GetDamageAttribute())
+	// {
+	//     const float LocalDamage = GetDamage();
+	//     SetDamage(0.f); // Clear the meta-attribute
+	//     SetHealth(FMath::Clamp(GetHealth() - LocalDamage, 0.f, GetMaxHealth()));
+	// }
 }
 
 /** RepNotify: Health value updated on clients */

@@ -87,9 +87,19 @@ void ACoreGameplayEffectActor::OnOverlap(AActor* TargetActor)
 {
 	if (!TargetActor) return;
 
-	// On overlap:
-	// - Apply any effects configured for ApplyOnOverlap.
-	// - Optionally remove any effects configured for RemoveOnOverlap (less common, but supported).
+	// OVERLAP LIFECYCLE MAPPING:
+	// On overlap entry, we apply effects configured for ApplyOnOverlap and remove effects configured for RemoveOnOverlap.
+	// 
+	// TYPICAL APPLICATION POLICIES:
+	// - ApplyOnOverlap: Most common (health potions, buffs, fire area damage)
+	// - ApplyEndOverlap: Less common (grant-on-exit mechanics, reverse triggers)
+	// - DoNotApply: Manual control only
+	//
+	// TYPICAL REMOVAL POLICIES (for Infinite effects):
+	// - RemoveOnEndOverlap: Most common (fire areas, aura buffs that end when leaving)
+	// - RemoveOnOverlap: Rare (toggle behaviors, entry-triggered removal)
+	// - DoNotRemove: Permanent effects or manual control
+	
 	ApplyAllGameplayEffects(TargetActor, ECoreEffectApplicationPolicy::ApplyOnOverlap);
 	RemoveAllGameplayEffects(TargetActor, ECoreEffectRemovalPolicy::RemoveOnOverlap);
 }
@@ -98,9 +108,13 @@ void ACoreGameplayEffectActor::EndOverlap(AActor* TargetActor)
 {
 	if (!TargetActor) return;
 
-	// On end overlap:
-	// - Apply any effects configured for ApplyEndOverlap (grant-on-exit designs).
-	// - Remove any effects configured for RemoveOnEndOverlap (typical AoE cleanup).
+	// OVERLAP LIFECYCLE MAPPING:
+	// On overlap exit, we apply effects configured for ApplyEndOverlap and remove effects configured for RemoveOnEndOverlap.
+	//
+	// COMMON USE CASES:
+	// - ApplyEndOverlap: Grant-on-exit designs (rare but valid)
+	// - RemoveOnEndOverlap: Typical AoE cleanup (fire areas, aura buffs, temporary zones)
+	
 	ApplyAllGameplayEffects(TargetActor, ECoreEffectApplicationPolicy::ApplyEndOverlap);
 	RemoveAllGameplayEffects(TargetActor, ECoreEffectRemovalPolicy::RemoveOnEndOverlap);
 }
@@ -139,8 +153,10 @@ void ACoreGameplayEffectActor::ApplyGameplayEffectToTarget(AActor* TargetActor, 
 	checkf(EffectConfig.EffectClass, TEXT("EffectClass is unset on %s"), *GetName());
 
 	// 3) Build an effect context originating from this actor, using the target ASC as the creator.
-	//    - AddSourceObject(this) allows consumers to trace the source effect actor.
-	//    - SetEffectCauser(this) marks this actor as the causer (useful for damage attribution, etc.).
+	//    WHY WE BUILD CONTEXT:
+	//    - AddSourceObject(this): Allows consumers (AttributeSet callbacks, gameplay cues) to trace back to this effect actor
+	//    - SetEffectCauser(this): Marks this actor as the causer for damage attribution, gameplay logs, and analytics
+	//    - Context travels with the effect and is accessible in PostGameplayEffectExecute and other callbacks
 	FGameplayEffectContextHandle EffectContextHandle = TargetASC->MakeEffectContext();
 	EffectContextHandle.AddSourceObject(this);
 	if (EffectContextHandle.Get())
@@ -149,15 +165,23 @@ void ACoreGameplayEffectActor::ApplyGameplayEffectToTarget(AActor* TargetActor, 
 	}
 
 	// 4) Build a spec for this effect at the configured level, with the context provided.
+	//    The spec contains all necessary data to apply the effect: magnitudes, duration, tags, etc.
 	const FGameplayEffectSpecHandle GameplayEffectSpecHandle =
 		TargetASC->MakeOutgoingSpec(EffectConfig.EffectClass, EffectConfig.ActorLevel, EffectContextHandle);
 
 	// 5) Apply the spec to the target ASC (apply-to-self on that ASC).
-	//    Note: For Instant effects, the returned handle is typically invalid (INDEX_NONE), which is expected.
+	//    HANDLE BEHAVIOR BY EFFECT TYPE:
+	//    - Instant effects: Handle is typically invalid (INDEX_NONE) - effect executes and disappears
+	//    - HasDuration effects: Handle is valid and can be used to query/remove the effect
+	//    - Infinite effects: Handle is valid and MUST be tracked for later removal
 	const FActiveGameplayEffectHandle ActiveEffectHandle =
 		TargetASC->ApplyGameplayEffectSpecToSelf(*GameplayEffectSpecHandle.Data.Get());
 
-	// 6) If this is an Infinite effect and we plan to remove it later, track the handle per target ASC.
+	// 6) INFINITE EFFECT TRACKING:
+	//    If this is an Infinite effect and removal is configured, track the handle per target ASC.
+	//    This enables precise removal of effects applied by THIS specific actor instance.
+	//    DUPLICATE-CLASS CAVEAT: If the same Infinite GE class appears multiple times in config,
+	//    tracking becomes ambiguous (which handle corresponds to which config entry?).
 	if (IsInfinite(EffectConfig.EffectClass)
 		&& EffectConfig.RemovalPolicy != ECoreEffectRemovalPolicy::DoNotRemove
 		&& ActiveEffectHandle.IsValid())
@@ -166,6 +190,7 @@ void ACoreGameplayEffectActor::ApplyGameplayEffectToTarget(AActor* TargetActor, 
 	}
 
 	// 7) Optional: destroy the effect actor right after a successful application.
+	//    Useful for consumable pickups (health potions, mana crystals) that should disappear after use.
 	if (EffectConfig.bDestroyOnEffectApplication)
 	{
 		Destroy();
@@ -243,11 +268,17 @@ void ACoreGameplayEffectActor::RemoveGameplayEffectFromTarget(AActor* TargetActo
 }
 
 // ------------ Helper queries on GE classes ------------
+// These helpers inspect GameplayEffect class defaults to determine behavior at design time.
 
 EGameplayEffectDurationType ACoreGameplayEffectActor::GetDurationPolicyOf(const TSubclassOf<UGameplayEffect>& EffectClass)
 {
 	if (!EffectClass) return EGameplayEffectDurationType::Instant;
 
+	// Access the Class Default Object (CDO) to read the configured duration policy.
+	// DURATION POLICY TYPES:
+	// - Instant: Executes once, modifies BaseValue permanently, no handle tracking needed
+	// - HasDuration: Temporary modifier with fixed duration, handle valid until expiration
+	// - Infinite: Temporary modifier lasting until removed, requires handle tracking for removal
 	const UGameplayEffect* EffectCDO = EffectClass->GetDefaultObject<UGameplayEffect>();
 	return EffectCDO ? EffectCDO->DurationPolicy : EGameplayEffectDurationType::Instant;
 }
@@ -256,11 +287,17 @@ bool ACoreGameplayEffectActor::IsPeriodic(const TSubclassOf<UGameplayEffect>& Ef
 {
 	if (!EffectClass) return false;
 
+	// PERIODIC DETECTION: Check if Period > 0
+	// Periodic effects can be HasDuration or Infinite, they execute repeatedly at intervals.
+	// Examples: Fire damage every 0.5s, health regeneration every 1.0s, mana drain every 2.0s
 	const UGameplayEffect* EffectCDO = EffectClass->GetDefaultObject<UGameplayEffect>();
 	return EffectCDO && EffectCDO->Period.GetValue() > 0.f;
 }
 
 bool ACoreGameplayEffectActor::IsInfinite(const TSubclassOf<UGameplayEffect>& EffectClass)
 {
+	// INFINITE DETECTION: Simple duration policy check
+	// Infinite effects last until explicitly removed and require handle tracking.
+	// Examples: Permanent buffs, aura effects, fire area damage that persists until leaving
 	return GetDurationPolicyOf(EffectClass) == EGameplayEffectDurationType::Infinite;
 }

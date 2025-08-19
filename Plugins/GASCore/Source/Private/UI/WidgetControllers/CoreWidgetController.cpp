@@ -32,28 +32,62 @@ void UCoreWidgetController::SetWidgetControllerParams(const FWidgetControllerPar
 
 void UCoreWidgetController::BroadcastInitialValues()
 {
-	// Base class: intentionally empty.
-	// Derived controllers should:
-	// - Read current values from the AttributeSet (e.g., GetHealth/GetMaxHealth)
-	// - Broadcast via BlueprintAssignable delegates so widgets receive initial state
+	// BASE CLASS IMPLEMENTATION: Intentionally empty (no-op).
 	//
-	// Example (in derived):
+	// DERIVED CONTROLLER RESPONSIBILITIES:
+	// Derived controllers (e.g., UCoreHUDWidgetController) should override this method to:
+	// 1. Read current values from the AttributeSet (e.g., GetHealth(), GetMaxHealth(), GetMana())
+	// 2. Broadcast these values via BlueprintAssignable delegates so widgets receive initial state
+	// 3. Ensure UI displays correct values immediately after controller/widget setup
+	//
+	// INITIALIZATION ORDER:
+	// This should be called AFTER:
+	// - SetWidgetControllerParams() (establishes valid ASC/AttributeSet references)
+	// - Widget.SetWidgetController() (widget is ready to receive broadcasts)
+	// - BindCallbacksToDependencies() (ongoing updates are subscribed)
+	//
+	// EXAMPLE IMPLEMENTATION (in derived class):
+	//   const UCoreAttributeSet* CoreAS = CastChecked<UCoreAttributeSet>(AttributeSet);
 	//   OnHealthChanged.Broadcast(CoreAS->GetHealth());
 	//   OnMaxHealthChanged.Broadcast(CoreAS->GetMaxHealth());
+	//   OnManaChanged.Broadcast(CoreAS->GetMana());
+	//   // ... etc for all attributes that have corresponding UI elements
 }
 
 void UCoreWidgetController::BindCallbacksToDependencies()
 {
-	// Base class: intentionally empty.
-	// Derived controllers should:
-	// - Subscribe to ASC/AttributeSet delegates for value changes
-	// - Forward changes via controller delegates for the widgets to consume
+	// BASE CLASS IMPLEMENTATION: Intentionally empty (no-op).
 	//
-	// Example (in derived):
-	//   AbilitySystemComponent
-	//     ->GetGameplayAttributeValueChangeDelegate(CoreAS->GetHealthAttribute())
+	// DERIVED CONTROLLER RESPONSIBILITIES:
+	// Derived controllers should override this method to:
+	// 1. Subscribe to ASC/AttributeSet delegates for value changes
+	// 2. Forward those changes via controller delegates for widgets to consume
+	// 3. Subscribe to custom ASC delegates (e.g., effect application events, ability cooldowns)
+	//
+	// BINDING PATTERN:
+	// - Use AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate() for attribute changes
+	// - Use AddLambda, AddUObject, or AddDynamic depending on lifetime management needs
+	// - Forward received data through controller's BlueprintAssignable delegates
+	//
+	// INITIALIZATION ORDER:
+	// This should be called AFTER:
+	// - SetWidgetControllerParams() (establishes valid ASC/AttributeSet references)
+	// - Widget.SetWidgetController() (widget delegates are ready to be bound to)
+	// But BEFORE:
+	// - BroadcastInitialValues() (ensures ongoing updates are wired before initial state push)
+	//
+	// EXAMPLE IMPLEMENTATION (in derived class):
+	//   const UCoreAttributeSet* CoreAS = CastChecked<UCoreAttributeSet>(AttributeSet);
+	//   
+	//   AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(CoreAS->GetHealthAttribute())
 	//     .AddLambda([this](const FOnAttributeChangeData& Data)
 	//     {
 	//         OnHealthChanged.Broadcast(Data.NewValue);
 	//     });
+	//
+	//   // Subscribe to custom ASC events if available:
+	//   if (UCoreAbilitySystemComponent* CoreASC = Cast<UCoreAbilitySystemComponent>(AbilitySystemComponent))
+	//   {
+	//       CoreASC->OnEffectAssetTags.AddLambda([this](const FGameplayTagContainer& Tags) { ... });
+	//   }
 }

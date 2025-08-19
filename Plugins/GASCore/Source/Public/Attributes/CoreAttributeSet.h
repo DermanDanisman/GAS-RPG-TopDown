@@ -75,12 +75,31 @@ struct FCoreEffectContext
 /**
  * AttributeSet class for managing character attributes like Health, Mana, and Stamina.
  * 
- * Implements proper attribute clamping via:
- * - PreAttributeChange: Clamps CurrentValue changes (from any source, including Duration/Infinite GEs and direct sets)
- * - PreAttributeBaseChange: Clamps BaseValue changes (from Instant/Periodic GEs)
+ * ATTRIBUTE CLAMPING STRATEGY:
+ * This class implements a comprehensive three-tier clamping approach to prevent attribute overflow:
  * 
- * This dual-clamping approach prevents attributes from exceeding valid ranges
- * in both temporary and permanent modifications (avoids "invisible buffers").
+ * 1. PreAttributeChange():
+ *    - WHEN: Always fires before CurrentValue modification (any source: Duration/Infinite GEs, direct sets, aggregator updates)
+ *    - PURPOSE: Clamps visible CurrentValue to [0, MaxX] for consistency across all change sources
+ *    - NOTE: Clamping NewValue here doesn't persist to underlying aggregator inputs for Duration/Infinite effects
+ * 
+ * 2. PreAttributeBaseChange():  
+ *    - WHEN: Fires only for BaseValue changes (Instant/Periodic GameplayEffects)
+ *    - PURPOSE: Clamps BaseValue to [0, MaxX] preventing "invisible buffer" overflows
+ *    - KEY: Prevents BaseValue > MaxValue scenarios where hidden overflow exists
+ * 
+ * 3. PostGameplayEffectExecute():
+ *    - WHEN: Fires after Instant/Periodic GameplayEffect execution completes
+ *    - PURPOSE: Final authoritative clamping and reactive adjustments
+ *    - SAFE: Can use SetX() methods here to modify attributes directly
+ *    - USE CASE: Adjust current values when max values change, handle damage/healing resolution
+ * 
+ * CALLBACK ORDER CHEATSHEET:
+ * - PreAttributeBaseChange → [GE applies to BaseValue] → PreAttributeChange → PostGameplayEffectExecute
+ * - For Duration/Infinite GEs: Only PreAttributeChange → [GE modifies CurrentValue temporarily]
+ * 
+ * This multi-layered approach ensures no attribute can exceed its valid range through any pathway,
+ * preventing the common "fire area + health crystals" bug where attributes appear clamped but have hidden overflow.
  */
 UCLASS()
 class GASCORE_API UCoreAttributeSet : public UAttributeSet
@@ -98,40 +117,75 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	/**
-	 * Called before CurrentValue is modified for any attribute.
-	 * We clamp the incoming value to [0, Max] to keep values consistent for temporary changes.
+	 * Called before CurrentValue is modified for any attribute from any source.
+	 * 
+	 * WHEN IT FIRES:
+	 * - Always: Before any CurrentValue change (Duration/Infinite GEs, direct sets, aggregator updates)
+	 * - Does NOT fire for BaseValue-only changes (use PreAttributeBaseChange for those)
+	 * 
+	 * PURPOSE:
+	 * - Clamp visible CurrentValue to valid ranges [0, Max] for consistency
+	 * - React to Max attribute changes (e.g., when MaxHealth decreases, clamp Health accordingly)
+	 * 
+	 * IMPORTANT LIMITATION:
+	 * - Clamping NewValue here does NOT persist to underlying aggregator inputs for Duration/Infinite effects
+	 * - Example: If Health=90, MaxHealth=100, and a Duration GE tries to add +100 Health:
+	 *   - NewValue gets clamped to 100 (visible), but the +100 modifier remains in the aggregator
+	 *   - When MaxHealth increases to 150, the hidden +100 resurfaces, making Health jump to 190
+	 * - This is why we need PostGameplayEffectExecute for final authoritative clamping
 	 *
-	 * Affects temporary modifiers from Duration/Infinite GameplayEffects and direct sets.
-	 *
-	 * @param Attribute The attribute about to change
+	 * @param Attribute The attribute about to change (CurrentValue)
 	 * @param NewValue  The requested new CurrentValue (clamped in-place)
 	 */
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
 
 	/**
 	 * Called before BaseValue is modified for any attribute.
-	 * We clamp the incoming base to [0, Max] to prevent overflows from Instant/Periodic effects.
-	 * Without this, BaseValue could exceed Max and create a non-visible buffer.
+	 * 
+	 * WHEN IT FIRES:
+	 * - Only for BaseValue changes from Instant/Periodic GameplayEffects
+	 * - Does NOT fire for Duration/Infinite effects (they modify CurrentValue via modifiers)
+	 * - Does NOT fire for direct attribute sets (SetHealth, etc.)
+	 * 
+	 * PURPOSE:
+	 * - Clamp BaseValue to [0, Max] preventing permanent overflow from Instant/Periodic effects
+	 * - Prevent "invisible buffer" scenarios where BaseValue > MaxValue
+	 * - Example: Health.BaseValue=150 with MaxHealth=100 creates a hidden 50-point buffer
+	 * 
+	 * CRITICAL FOR:
+	 * - Instant healing potions that shouldn't create permanent overflow
+	 * - Periodic effects (fire areas, health crystals) that apply permanent increments each tick
+	 * - Any effect that permanently modifies the base attribute value
 	 *
-	 * Affects permanent modifiers from Instant/Periodic GameplayEffects.
-	 * Prevents hidden overflow buffers (e.g., Health.BaseValue > MaxHealth).
-	 *
-	 * @param Attribute The attribute about to change
+	 * @param Attribute The attribute about to change (BaseValue)
 	 * @param NewValue  The requested new BaseValue (clamped in-place)
 	 */
 	virtual void PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const override;
 
 	/**
 	 * Called after a GameplayEffect has executed and applied its modifiers.
-	 * Use this to react to instant changes (e.g., damage/heal resolution, adjusting current when max changes).
-	 * We currently populate a context struct for convenient access to source/target data.
+	 * 
+	 * WHEN IT FIRES:
+	 * - After Instant/Periodic GameplayEffects complete execution
+	 * - Does NOT fire for Duration/Infinite effects (they don't "execute", they just apply/remove modifiers)
+	 * - Server-authoritative: typically only runs on the server in networked games
+	 * 
+	 * PURPOSE:
+	 * - Final authoritative clamping using SetX() methods (safe to modify attributes here)
+	 * - React to attribute changes (adjust current values when max values change)
+	 * - Handle damage/heal resolution, death checks, gameplay cues
+	 * - Apply business logic that should happen after effects complete
+	 * 
+	 * REPLICATION NOTE:
+	 * - This callback runs on the server; attribute changes replicate normally via RepNotify
+	 * - Clients will receive the final clamped values through normal replication channels
+	 * 
+	 * TYPICAL USAGE:
+	 * - If MaxHealth changes: SetHealth(FMath::Clamp(GetHealth(), 0.f, GetMaxHealth()))
+	 * - Handle meta-attributes (Damage): subtract from Health, then clamp Health
+	 * - Broadcast UI updates, trigger gameplay cues, check for death conditions
 	 *
-	 * Typical uses:
-	 * - Apply final damage/healing to attributes
-	 * - Adjust current values when max values change
-	 * - Trigger gameplay cues, death checks, etc.
-	 *
-	 * Current implementation only gathers effect properties; extend as needed.
+	 * @param Data Contains information about the effect that just executed (attribute, new value, source, target, etc.)
 	 */
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
 
