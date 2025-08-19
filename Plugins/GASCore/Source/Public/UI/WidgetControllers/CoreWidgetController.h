@@ -98,51 +98,6 @@ struct FWidgetControllerParams
 };
 
 /**
- * FUIMessageWidgetRow
- *
- * Row type for UI message DataTables.
- * A GameplayTag addresses a message payload
- * (localized text, a widget class, and an optional image) to drive notifications/toasts.
- *
- * Typical usage:
- * - In a controller, listen for "UI.Message.*" tags from the ASC (e.g., effect asset tags).
- * - Look up the row by tag (row name == tag's FName).
- * - Broadcast row via MessageWidgetRowDelegate for the HUD to render.
- */
-USTRUCT(BlueprintType)
-struct FUIMessageWidgetRow : public FTableRowBase
-{
-	GENERATED_BODY()
-
-	/** The unique tag for this message (e.g., UI.Message.HealthPotion). */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI|Message")
-	FGameplayTag MessageTag;
-
-	/** Localized user-facing message text. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI|Message")
-	FText MessageText;
-
-	/** Optional widget class to render the message. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI|Message")
-	TSubclassOf<UCoreUserWidget> MessageWidget;
-
-	/** Optional icon displayed with the message. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI|Message")
-	TObjectPtr<UTexture2D> MessageImage;
-
-	FUIMessageWidgetRow()
-	{
-		MessageTag = FGameplayTag();
-		MessageText = FText();
-		MessageWidget = nullptr;
-		MessageImage = nullptr;
-	}
-};
-
-/** Broadcasts a message widget row to the UI (e.g., HUD overlay). */
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUIMessageWidgetRowSignature, FUIMessageWidgetRow, MessageWidgetRow);
-
-/**
  * UCoreWidgetController
  *
  * Base class for GAS widget controllers. Manages references to gameplay systems
@@ -192,13 +147,4 @@ protected:
 	/** Attribute Set with gameplay stats. */
 	UPROPERTY(BlueprintReadOnly, Category = "Core|Widget Controller")
 	TObjectPtr<UAttributeSet> AttributeSet;
-
-public:
-	/**
-	 * Generic message dispatch to the UI.
-	 * Controllers can broadcast a row (looked up from a DataTable) to request
-	 * the HUD render a message/notification.
-	 */
-	UPROPERTY(BlueprintAssignable, Category = "Core|Widget Controller|UI")
-	FUIMessageWidgetRowSignature MessageWidgetRowDelegate;
 };
