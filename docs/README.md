@@ -25,6 +25,10 @@ Last updated: 2025-08-19
 - **[Attribute Clamping Guide](attributes/attribute-clamping.md)** - Comprehensive guide to preventing attribute overflow bugs
 - **[GAS Callback Cheatsheet](cheatsheets/gas-attribute-callbacks.md)** - Quick reference for AttributeSet callback usage
 
+## Gameplay Effects Deep Dives
+
+- **[Attribute-Based Magnitudes and Modifier Order of Operations](gameplay-effects-attribute-based-magnitudes.md)** - Understanding coefficients, order of operations, and worked examples
+
 ## How to propose changes
 
 - Prefer small, incremental PRs for doc changes.
