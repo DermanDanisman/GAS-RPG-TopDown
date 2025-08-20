@@ -2,7 +2,7 @@
 // This project is the intellectual property of Heathrow (Derman) and is protected by copyright law.
 // Unauthorized reproduction, distribution, or use of this material is strictly prohibited.
 // Unreal Engine and its associated trademarks are used under license from Epic Games.
-//
+
 // Summary:
 //   Base UObject for all GAS-oriented widget controllers.
 //   It centralizes references to gameplay systems (PlayerController, PlayerState, ASC, AttributeSet)
