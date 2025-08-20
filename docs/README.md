@@ -2,7 +2,7 @@
 
 > This documentation is a living document. It will evolve as we progress through the course and as the codebase changes. If something is out of date or unclear, please open a "Docs Update" issue or a PR.
 
-Last updated: 2025-08-19
+Last updated: 2025-08-20
 
 ## Index
 
@@ -19,6 +19,9 @@ Last updated: 2025-08-19
 - Plugin design (WIP):
   - plugin/overview.md
   - plugin/api.md
+- Game Design Documents:
+  - gdd/GDD - Metal Sword and Shield - Combined Draft.md
+  - gdd/attribute_formulas.cpp
 
 ## Attribute System Deep Dives
 
