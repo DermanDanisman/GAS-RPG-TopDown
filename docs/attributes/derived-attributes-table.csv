@@ -1,0 +1,13 @@
+Attribute,BackingAttribute,Operation,PreAdd,Coefficient,PostAdd,Source,Snapshot,DurationPolicy
+Armor,Endurance,Override,0,0.25,6,Target,false,Infinite
+Armor Penetration,Dexterity,Override,0,0.15,3,Target,false,Infinite
+Block Chance,Armor,Override,0,0.25,4,Target,false,Infinite
+Critical Hit Chance,Armor Penetration,Override,0,0.25,2,Target,false,Infinite
+Critical Hit Damage,Armor Penetration,Override,0,1.5,5,Target,false,Infinite
+Critical Hit Resistance,Armor,Override,0,0.25,10,Target,false,Infinite
+Health Regeneration,Vigor,Override,0,0.1,1,Target,false,Infinite
+Mana Regeneration,Intelligence,Override,0,0.1,1,Target,false,Infinite
+Stamina Regeneration,Endurance,Override,0,0.1,1,Target,false,Infinite
+Max Health,Vigor,Override,0,2.5,80,Target,false,Infinite
+Max Mana,Intelligence,Override,0,2.0,50,Target,false,Infinite
+Max Stamina,Endurance,Override,0,2.0,60,Target,false,Infinite

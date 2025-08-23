@@ -25,6 +25,7 @@ Last updated: 2025-08-20
 
 ## Attribute System Deep Dives
 
+- **[Derived Attributes with GAS](attributes/derived-attributes.md)** - Complete guide to implementing secondary/vital attributes using infinite Gameplay Effects
 - **[Attribute Clamping Guide](attributes/attribute-clamping.md)** - Comprehensive guide to preventing attribute overflow bugs
 - **[GAS Callback Cheatsheet](cheatsheets/gas-attribute-callbacks.md)** - Quick reference for AttributeSet callback usage
 
