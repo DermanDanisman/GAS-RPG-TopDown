@@ -5,7 +5,7 @@
 
 #include "Charcters/TDCharacterBase.h"
 
-#include "Components/CorePrimaryAttributeInitComponent.h"
+#include "Components/TDDefaultAttributeInitComponent.h"
 
 
 ATDCharacterBase::ATDCharacterBase()
@@ -13,11 +13,11 @@ ATDCharacterBase::ATDCharacterBase()
 	// Disable tick by default for performance. Subclasses can enable as needed.
     PrimaryActorTick.bCanEverTick = false;
 
-	PrimaryAttributeInitComponent = CreateDefaultSubobject<UCorePrimaryAttributeInitComponent>(FName("PrimaryAttributeInitComponent"));
+	DefaultAttributeInitComponent = CreateDefaultSubobject<UTDDefaultAttributeInitComponent>("DefaultAttributeInitComponent");
 
     // Create the skeletal mesh component for the weapon.
     WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>("Weapon");
-    // Attach the weapon mesh to the main character mesh at the "WeaponHandSocket" socket.
+    // Attach the weapon mesh to the main character mesh at the "WeaponHandSocket" sockeSt.
     WeaponMesh->SetupAttachment(GetMesh(), "WeaponHandSocket");
     // Disable collision on the weapon mesh (can be enabled in subclasses if needed).
     WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);

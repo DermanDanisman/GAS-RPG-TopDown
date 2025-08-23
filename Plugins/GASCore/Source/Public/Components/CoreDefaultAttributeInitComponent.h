@@ -36,7 +36,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "CorePrimaryAttributeInitComponent.generated.h"
+#include "CoreDefaultAttributeInitComponent.generated.h"
 
 class UAbilitySystemComponent;
 class UGameplayEffect;
@@ -54,14 +54,14 @@ class UGameplayEffect;
  * - Use Override modifiers in the init GE to make starting values explicit.
  */
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class GASCORE_API UCorePrimaryAttributeInitComponent : public UActorComponent
+class GASCORE_API UCoreDefaultAttributeInitComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this component's properties.
 	// We disable ticking; this component performs a one-shot initialization.
-	UCorePrimaryAttributeInitComponent();
+	UCoreDefaultAttributeInitComponent();
 
 	/**
 	 * Gameplay Effect that sets initial primary attributes (e.g., STR/DEX/INT/END/VIG).
@@ -73,8 +73,11 @@ public:
 	 *
 	 * Author the asset in the game project. Do not hard-code defaults in the plugin.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="GASCore|Init")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="GASCore|Attribute Init Component|Init")
 	TSubclassOf<UGameplayEffect> DefaultPrimaryAttributes;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="GASCore|Attribute Init Component|Init")
+	TSubclassOf<UGameplayEffect> DefaultSecondaryAttributes;
 
 	/**
 	 * Initialize primary attributes by applying DefaultPrimaryAttributes to the provided ASC.
@@ -95,6 +98,8 @@ public:
 	 * - Uses check() to catch misuse during development (null ASC or missing GE).
 	 *   Consider replacing with guards/ensure in shipping builds to avoid crashing.
 	 */
-	UFUNCTION(BlueprintCallable, Category="GASCore|Init")
-	void InitializePrimaryAttributes(UAbilitySystemComponent* TargetAbilitySystemComponent = nullptr) const;
+	UFUNCTION(BlueprintCallable, Category="GASCore|Attribute Init Component|Init")
+	virtual void InitializeDefaultAttributes(UAbilitySystemComponent* TargetAbilitySystemComponent) const;
+	
+	virtual void ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffectClass, float Level, UAbilitySystemComponent* TargetAbilitySystemComponent) const;
 };

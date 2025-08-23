@@ -7,7 +7,9 @@
 
 #include "Attributes/CoreAttributeSet.h"
 #include "Components/CoreAbilitySystemComponent.h"
-#include "Components/CorePrimaryAttributeInitComponent.h"
+#include "Components/CoreDefaultAttributeInitComponent.h"
+#include "Components/TDAbilitySystemComponent.h"
+#include "Components/TDDefaultAttributeInitComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Player/TDPlayerController.h"
 #include "Player/TDPlayerState.h"
@@ -61,14 +63,14 @@ void ATDPlayerCharacter::InitializeAbilityActorInfo()
 			if (TDPlayerState)
 			{
 				// The ASC and AttributeSet live on the PlayerState for player characters.
-				AbilitySystemComponent = Cast<UCoreAbilitySystemComponent>(TDPlayerState->GetAbilitySystemComponent());
+				AbilitySystemComponent = Cast<UTDAbilitySystemComponent>(TDPlayerState->GetAbilitySystemComponent());
 				AttributeSet = Cast<UCoreAttributeSet>(TDPlayerState->GetAttributeSet());
 
 				// Initialize the ASC's actor info, specifying the player state as the owner and this character as the avatar.
 				if (AbilitySystemComponent)
 				{
 					AbilitySystemComponent->InitAbilityActorInfo(TDPlayerState, this);
-					Cast<UCoreAbilitySystemComponent>(TDPlayerState->GetAbilitySystemComponent())->BindASCDelegates();
+					Cast<UTDAbilitySystemComponent>(TDPlayerState->GetAbilitySystemComponent())->BindASCDelegates();
 				}
 			}
 
@@ -87,10 +89,9 @@ void ATDPlayerCharacter::InitializeAbilityActorInfo()
 				}
 			}
 
-			// Apply initialization GE on the server only; clients receive replicated attributes.
-			if (HasAuthority() && PrimaryAttributeInitComponent && AbilitySystemComponent)
+			if (AbilitySystemComponent && AttributeSet && DefaultAttributeInitComponent->DefaultPrimaryAttributes)
 			{
-				PrimaryAttributeInitComponent->InitializePrimaryAttributes(AbilitySystemComponent);
+				DefaultAttributeInitComponent->InitializeDefaultAttributes(AbilitySystemComponent);
 			}
 		}
 	}

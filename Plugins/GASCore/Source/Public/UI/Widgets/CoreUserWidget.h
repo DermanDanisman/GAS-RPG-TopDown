@@ -128,7 +128,7 @@ public:
 	 * - Set up any controller-dependent UI features
 	 */
 	UFUNCTION(BlueprintCallable, Category = "GASCore|User Widget|Widget Controller")
-	void SetWidgetController(UObject* InWidgetController);
+	virtual void SetWidgetController(UObject* InWidgetController);
 
 protected:
 	/**

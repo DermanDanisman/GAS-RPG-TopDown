@@ -3,16 +3,15 @@
 // Unreal Engine and its associated trademarks are used under license from Epic Games.
 //
 // Implementation details and notes:
-// - Overlap handlers call into ApplyAllGameplayEffects/RemoveAllGameplayEffects with the appropriate policy.
+// - Overlap handlers call ApplyAllGameplayEffects/RemoveAllGameplayEffects with the appropriate policy.
 // - For application, we build an effect context with this actor as source/causer and apply to the target's ASC.
-// - For Infinite effects (with a non-DoNotRemove removal policy), we record the returned handle per target ASC,
-//   enabling precise removal later. Instant effects return invalid handles by design.
-// - Removal traverses tracked handles for the target ASC and removes stacks based on StacksToRemove.
-// - Verbose logging is included to aid debugging and tuning.
+// - For non-instant effects (HasDuration or Infinite; Periodic counts as non-instant) with a removal policy,
+//   we record the returned handle per target ASC (tracked via TWeakObjectPtr), enabling precise, GC-safe removal.
+// - Removal traverses tracked handles for the target ASC, matches by effect class, and removes stacks
+//   based on the stacks value recorded at application time (per-handle, not per-config at removal).
 //
-// Authority:
-// - Consider gating overlap-driven application/removal behind HasAuthority() checks depending on your game.
-//   Applying/removing GEs is usually server-authoritative in multiplayer.
+// Multiplayer authority:
+// - In networked games, prefer guarding OnOverlap/EndOverlap with HasAuthority() or perform server RPCs.
 
 #include "Actors/CoreGameplayEffectActor.h"
 
@@ -31,34 +30,12 @@ ACoreGameplayEffectActor::ACoreGameplayEffectActor()
 void ACoreGameplayEffectActor::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// Validate configuration: warn if the same Infinite GE class appears multiple times.
-	// Duplicate Infinite classes can make handle-based tracking/removal ambiguous.
-	TSet<TSubclassOf<UGameplayEffect>> SeenInfiniteClasses;
-	for (const FCoreEffectConfig& Config : GameplayEffects)
-	{
-		if (IsInfinite(Config.EffectClass))
-		{
-			SeenInfiniteClasses.Add(Config.EffectClass);
-		}
-	}
-
-	// Log a summary of configured effects for quick validation/tuning.
-	for (const FCoreEffectConfig& Config : GameplayEffects)
-	{
-		if (!Config.EffectClass) continue;
-
-		const EGameplayEffectDurationType DurationPolicy = GetDurationPolicyOf(Config.EffectClass);
-		const bool bIsPeriodic = IsPeriodic(Config.EffectClass);
-		const TCHAR* TypeStr =
-			(DurationPolicy == EGameplayEffectDurationType::Instant)  ? TEXT("Instant")  :
-			(DurationPolicy == EGameplayEffectDurationType::Infinite) ? TEXT("Infinite") :
-			(bIsPeriodic ? TEXT("Periodic") : TEXT("Duration"));
-	}
+	
 }
 
 void ACoreGameplayEffectActor::OnOverlap(AActor* TargetActor)
 {
+	// Early-out for safety: we need a target actor to proceed.
 	if (!TargetActor) return;
 
 	// OVERLAP LIFECYCLE MAPPING:
@@ -80,6 +57,7 @@ void ACoreGameplayEffectActor::OnOverlap(AActor* TargetActor)
 
 void ACoreGameplayEffectActor::EndOverlap(AActor* TargetActor)
 {
+	// Early-out for safety.
 	if (!TargetActor) return;
 
 	// OVERLAP LIFECYCLE MAPPING:
@@ -95,24 +73,27 @@ void ACoreGameplayEffectActor::EndOverlap(AActor* TargetActor)
 
 void ACoreGameplayEffectActor::ApplyAllGameplayEffects(AActor* TargetActor, ECoreEffectApplicationPolicy ApplicationPolicy)
 {
-	// Iterate through configured effects and apply those whose ApplicationPolicy matches.
-	for (const FCoreEffectConfig& Config : GameplayEffects)
+	// Iterate all rows and apply only those matching this timing.
+	// Note: If multiple rows set bDestroyOnEffectApplication, calling Destroy() inside ApplyGameplayEffectToTarget
+	// will end processing early. If you need "apply all then destroy", aggregate a flag and Destroy() once after this loop.
+	for (const FCoreEffectConfig& EffectConfig : GameplayEffects)
 	{
-		if (Config.EffectClass && Config.ApplicationPolicy == ApplicationPolicy)
+		if (EffectConfig.EffectClass && EffectConfig.ApplicationPolicy == ApplicationPolicy)
 		{
-			ApplyGameplayEffectToTarget(TargetActor, Config);
+			ApplyGameplayEffectToTarget(TargetActor, EffectConfig);
 		}
 	}
 }
 
 void ACoreGameplayEffectActor::RemoveAllGameplayEffects(AActor* TargetActor, ECoreEffectRemovalPolicy RemovalPolicy)
 {
-	// Iterate through configured effects and remove those whose RemovalPolicy matches.
-	for (const FCoreEffectConfig& Config : GameplayEffects)
+	// Iterate all rows and remove only those matching this timing.
+	// Removal is per-handle and GC-safe (tracked ASC is weak).
+	for (const FCoreEffectConfig& EffectConfig : GameplayEffects)
 	{
-		if (Config.EffectClass && Config.RemovalPolicy == RemovalPolicy)
+		if (EffectConfig.EffectClass && EffectConfig.RemovalPolicy == RemovalPolicy)
 		{
-			RemoveGameplayEffectFromTarget(TargetActor, Config);
+			RemoveGameplayEffectFromTarget(TargetActor, EffectConfig);
 		}
 	}
 }
@@ -142,29 +123,41 @@ void ACoreGameplayEffectActor::ApplyGameplayEffectToTarget(AActor* TargetActor, 
 	//    The spec contains all necessary data to apply the effect: magnitudes, duration, tags, etc.
 	const FGameplayEffectSpecHandle GameplayEffectSpecHandle =
 		TargetASC->MakeOutgoingSpec(EffectConfig.EffectClass, EffectConfig.ActorLevel, EffectContextHandle);
+	if (!GameplayEffectSpecHandle.IsValid() || !GameplayEffectSpecHandle.Data.IsValid())
+	{
+		// Spec creation can fail if class is invalid or gameplay tags/requirements block it.
+		return;
+	}
 
-	// 5) Apply the spec to the target ASC (apply-to-self on that ASC).
-	//    HANDLE BEHAVIOR BY EFFECT TYPE:
-	//    - Instant effects: Handle is typically invalid (INDEX_NONE) - effect executes and disappears
-	//    - HasDuration effects: Handle is valid and can be used to query/remove the effect
-	//    - Infinite effects: Handle is valid and MUST be tracked for later removal
+
+	// 5) Apply to the target ASC (apply-to-self on that ASC).
+	//    Handle validity:
+	//    - Instant: usually invalid (effect executes immediately and ends)
+	//    - Duration/Infinite: valid, can be removed/stacked/queried
 	const FActiveGameplayEffectHandle ActiveEffectHandle =
 		TargetASC->ApplyGameplayEffectSpecToSelf(*GameplayEffectSpecHandle.Data.Get());
 
-	// 6) INFINITE EFFECT TRACKING:
-	//    If this is an Infinite effect and removal is configured, track the handle per target ASC.
-	//    This enables precise removal of effects applied by THIS specific actor instance.
-	//    DUPLICATE-CLASS CAVEAT: If the same Infinite GE class appears multiple times in config,
-	//    tracking becomes ambiguous (which handle corresponds to which config entry?).
-	if (IsInfinite(EffectConfig.EffectClass)
-		&& EffectConfig.RemovalPolicy != ECoreEffectRemovalPolicy::DoNotRemove
-		&& ActiveEffectHandle.IsValid())
+	// 6) Track non-instant effects if a removal policy is configured.
+	// Periodic effects are either HasDuration or Infinite; both count as non-instant.
+	if (ActiveEffectHandle.IsValid() && EffectConfig.RemovalPolicy != ECoreEffectRemovalPolicy::DoNotRemove && IsNonInstant(EffectConfig.EffectClass))
 	{
-		ActiveInfiniteEffects.Add(ActiveEffectHandle, TargetASC);
+		FTrackedEffect Track;
+		Track.ASC = TargetASC;
+		Track.EffectClass = EffectConfig.EffectClass;
+		Track.bDestroyOnRemoval = EffectConfig.bDestroyOnEffectRemoval;
+		
+		// Normalize stacks: <=0 means "remove all"
+		Track.StacksToRemove = (EffectConfig.StacksToRemove <= 0) ? -1 : EffectConfig.StacksToRemove;
+
+		// If re-application merges into the same active effect per stacking rules,
+		// GAS may return the same handle; TMap::Add will update the value for that key.
+		ActiveGameplayEffects.Add(ActiveEffectHandle, Track);
 	}
 
-	// 7) Optional: destroy the effect actor right after a successful application.
-	//    Useful for consumable pickups (health potions, mana crystals) that should disappear after use.
+	// 7) Optional: destroy the actor immediately after a successful application (consumables).
+	// Caveat: If multiple rows apply in the same overlap tick and each has this flag,
+	// the first Destroy() will end further processing. If you need "apply all then destroy",
+	// remove Destroy() here and instead aggregate a flag in ApplyAllGameplayEffects.
 	if (EffectConfig.bDestroyOnEffectApplication)
 	{
 		Destroy();
@@ -177,65 +170,72 @@ void ACoreGameplayEffectActor::RemoveGameplayEffectFromTarget(AActor* TargetActo
 	UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetActor);
 	if (!TargetASC) return;
 
-	// 2) Collect handles:
-	//    - Only those we previously recorded in ActiveInfiniteEffects
-	//    - Which belong to THIS TargetASC
-	//    - And whose active spec.Def class matches EffectConfig.EffectClass
-	//    Stale handles (no longer active) are also collected for cleanup.
+	// 2) Collect matching handles:
+	//    - Tracked handle’s ASC is valid AND equals this TargetASC
+	//    - Tracked handle’s GE class matches the Config’s EffectClass
+	// We do not inspect current active spec Defs here; we use our own tracking to ensure we remove
+	// only things this actor applied.
 	TArray<FActiveGameplayEffectHandle> HandlesForThisASC;
-	for (const TPair<FActiveGameplayEffectHandle, UAbilitySystemComponent*>& TrackedPair : ActiveInfiniteEffects)
+	HandlesForThisASC.Reserve(ActiveGameplayEffects.Num());
+	
+	for (TPair<FActiveGameplayEffectHandle, FTrackedEffect>& TrackedPair : ActiveGameplayEffects)
 	{
-		const FActiveGameplayEffectHandle TrackedHandle = TrackedPair.Key;
-		UAbilitySystemComponent* ASCForHandle = TrackedPair.Value;
-
-		if (ASCForHandle != TargetASC)
+		const FTrackedEffect& TrackedEffect = TrackedPair.Value;
+		
+		// Skip if the weak ASC is no longer valid (its owner was GC’d or destroyed)
+		if (!TrackedEffect.ASC.IsValid())
 		{
-			continue; // Different target ASC.
-		}
-
-		const FActiveGameplayEffect* ActiveEffect = TargetASC->GetActiveGameplayEffect(TrackedHandle);
-		if (!ActiveEffect)
-		{
-			// Stale entry; add for cleanup.
-			HandlesForThisASC.Add(TrackedHandle);
 			continue;
 		}
 
-		if (ActiveEffect->Spec.Def && ActiveEffect->Spec.Def->GetClass() == EffectConfig.EffectClass)
+		// Compare against the current TargetASC (raw pointer) using the weak's Get()
+		if (TrackedEffect.ASC.Get() == TargetASC && TrackedEffect.EffectClass == EffectConfig.EffectClass)
 		{
-			HandlesForThisASC.Add(TrackedHandle);
+			HandlesForThisASC.Add(TrackedPair.Key);
 		}
 	}
 
 	// 3) Remove stacks/effects for all matching handles and note if anything was removed.
 	bool bRemovedAnyStacks = false;
+	bool bDestroyAfterRemoval = false; // honor the intent stored per handle
 
-	for (const FActiveGameplayEffectHandle& Handle : HandlesForThisASC)
+	for (const FActiveGameplayEffectHandle& EffectHandle : HandlesForThisASC)
 	{
-		const FActiveGameplayEffect* ExistingActiveEffect = TargetASC->GetActiveGameplayEffect(Handle);
-		if (!ExistingActiveEffect)
-		{
-			// Already stale, skip removal; cleanup will erase it below.
-			continue;
-		}
+		const FTrackedEffect* TrackedEffect = ActiveGameplayEffects.Find(EffectHandle);
+		if (!TrackedEffect) continue;
 
-		// RemoveActiveGameplayEffect returns number of stacks removed (0 if nothing removed).
-		// StacksToRemove: -1 = remove all stacks; 1 = remove a single stack.
-		const int32 RemovedCount = TargetASC->RemoveActiveGameplayEffect(Handle, EffectConfig.StacksToRemove);
+		// Defensive: ASC could have become invalid between collection and removal
+		if (!TrackedEffect->ASC.IsValid()) continue;
+
+		// Attempt removal; returns number of stacks removed (0 if nothing happened).
+		// -1 means “remove all stacks” for the matched handle.
+		const int32 RemovedCount = TargetASC->RemoveActiveGameplayEffect(EffectHandle, TrackedEffect->StacksToRemove);
 		bRemovedAnyStacks |= (RemovedCount != 0);
-	}
 
-	// 4) Cleanup: erase handles that no longer exist on the ASC.
-	for (const FActiveGameplayEffectHandle& Handle : HandlesForThisASC)
-	{
-		if (!TargetASC->GetActiveGameplayEffect(Handle))
+		// If this particular handle asked for actor destruction on removal, remember it.
+		if (RemovedCount != 0 && TrackedEffect->bDestroyOnRemoval)
 		{
-			ActiveInfiniteEffects.Remove(Handle);
+			bDestroyAfterRemoval = true;
 		}
 	}
 
-	// 5) Optional: destroy the effect actor after a successful removal.
-	if (bRemovedAnyStacks && EffectConfig.bDestroyOnEffectRemoval)
+	// 4) Cleanup: erase entries that no longer exist on the ASC OR whose weak ASC is invalid.
+	for (const FActiveGameplayEffectHandle& Handle : HandlesForThisASC)
+	{
+		const FTrackedEffect* TrackedEffect = ActiveGameplayEffects.Find(Handle);
+
+		// If ASC invalid, or the handle no longer exists on the ASC, purge it
+		const bool bASCInvalid = !TrackedEffect || !TrackedEffect->ASC.IsValid();
+		const bool bHandleGone = !bASCInvalid && !TargetASC->GetActiveGameplayEffect(Handle);
+		
+		if (bASCInvalid || bHandleGone)
+		{
+			ActiveGameplayEffects.Remove(Handle);
+		}
+	}
+
+	// 5) Optional: destroy the actor if any handle requested destruction on removal.
+	if (bRemovedAnyStacks && bDestroyAfterRemoval)
 	{
 		Destroy();
 	}
@@ -248,11 +248,11 @@ EGameplayEffectDurationType ACoreGameplayEffectActor::GetDurationPolicyOf(const 
 {
 	if (!EffectClass) return EGameplayEffectDurationType::Instant;
 
-	// Access the Class Default Object (CDO) to read the configured duration policy.
-	// DURATION POLICY TYPES:
-	// - Instant: Executes once, modifies BaseValue permanently, no handle tracking needed
-	// - HasDuration: Temporary modifier with fixed duration, handle valid until expiration
-	// - Infinite: Temporary modifier lasting until removed, requires handle tracking for removal
+	// Read DurationPolicy from the GE’s Class Default Object (design-time config).
+	// Types:
+	//   - Instant: Executes once, typically leaves no active handle.
+	//   - HasDuration: Active for a time; returns a valid handle.
+	//   - Infinite: Active until explicitly removed; returns a valid handle.
 	const UGameplayEffect* EffectCDO = EffectClass->GetDefaultObject<UGameplayEffect>();
 	return EffectCDO ? EffectCDO->DurationPolicy : EGameplayEffectDurationType::Instant;
 }
@@ -274,4 +274,10 @@ bool ACoreGameplayEffectActor::IsInfinite(const TSubclassOf<UGameplayEffect>& Ef
 	// Infinite effects last until explicitly removed and require handle tracking.
 	// Examples: Permanent buffs, aura effects, fire area damage that persists until leaving
 	return GetDurationPolicyOf(EffectClass) == EGameplayEffectDurationType::Infinite;
+}
+
+bool ACoreGameplayEffectActor::IsNonInstant(const TSubclassOf<UGameplayEffect>& EffectClass)
+{
+	// Non-instant if DurationPolicy != Instant (covers HasDuration and Infinite; periodic is included).
+	return GetDurationPolicyOf(EffectClass) != EGameplayEffectDurationType::Instant;
 }

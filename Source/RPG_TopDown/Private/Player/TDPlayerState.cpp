@@ -6,7 +6,7 @@
 #include "Player/TDPlayerState.h"
 
 #include "Attributes/CoreAttributeSet.h"
-#include "Components/CoreAbilitySystemComponent.h"
+#include "Components/TDAbilitySystemComponent.h"
 
 ATDPlayerState::ATDPlayerState()
 {
@@ -15,7 +15,7 @@ ATDPlayerState::ATDPlayerState()
 
 	// Create the GAS AbilitySystemComponent as a default subobject.
 	// PlayerState is the authoritative owner for player-controlled characters.
-	AbilitySystemComponent = CreateDefaultSubobject<UCoreAbilitySystemComponent>("AbilitySystemComponent");
+	AbilitySystemComponent = CreateDefaultSubobject<UTDAbilitySystemComponent>("AbilitySystemComponent");
 	AbilitySystemComponent->SetIsReplicated(true); // Enable replication for multiplayer.
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 

@@ -11,11 +11,8 @@
 UCoreAttributeSet::UCoreAttributeSet()
 {
 	InitHealth(25.f);
-	InitMaxHealth(100.f);
 	InitMana(10.f);
-	InitMaxMana(50.f);
 	InitStamina(25.f);
-	InitMaxStamina(80.f);
 }
 
 void UCoreAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -32,17 +29,32 @@ void UCoreAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, Vigor, COND_None, REPNOTIFY_Always);
 
 	// ===================
+	// Secondary Attributes 
+	// ===================
+
+	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, Armor, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, ArmorPenetration, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, BlockChance, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, CriticalHitChance, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, CriticalHitDamage, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, CriticalHitResistance, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, HealthRegeneration, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, MaxHealth, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, ManaRegeneration, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, MaxMana, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, StaminaRegeneration, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, MaxStamina, COND_None, REPNOTIFY_Always);
+
+	// ===================
 	// Vital Attributes
 	// ===================
 	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, Health, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, MaxHealth, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, Mana, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, MaxMana, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, Stamina, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UCoreAttributeSet, MaxStamina, COND_None, REPNOTIFY_Always);
+
 }
 
-void UCoreAttributeSet::PopulateEffectContext(const struct FGameplayEffectModCallbackData& Data,
+void UCoreAttributeSet::PopulateCoreEffectContext(const struct FGameplayEffectModCallbackData& Data,
 	FCoreEffectContext& InEffectContext) const
 {
 	// Source = causer of the effect, Target = owner of this ASC
@@ -159,7 +171,7 @@ void UCoreAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallba
 	Super::PostGameplayEffectExecute(Data);
 
 	FCoreEffectContext EffectProperties;
-	PopulateEffectContext(Data, EffectProperties);
+	PopulateCoreEffectContext(Data, EffectProperties);
 	
 	// FINAL AUTHORITATIVE CLAMPING:
 	// This is the safest place to use SetX() methods to modify attributes directly.
@@ -214,41 +226,84 @@ void UCoreAttributeSet::OnRep_Vigor(const FGameplayAttributeData& OldVigor) cons
 }
 
 // =======================================
-// Vital Attributes Rep Notify Functions
+// Secondary Attributes Rep Notify Functions
 // =======================================
 
-/** RepNotify: Health value updated on clients */
-void UCoreAttributeSet::OnRep_Health(const FGameplayAttributeData& OldHealth) const
+void UCoreAttributeSet::OnRep_Armor(const FGameplayAttributeData& OldArmor) const
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UCoreAttributeSet, Health, OldHealth);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UCoreAttributeSet, Armor, OldArmor);
 }
 
-/** RepNotify: MaxHealth value updated on clients */
+void UCoreAttributeSet::OnRep_ArmorPenetration(const FGameplayAttributeData& OldArmorPenetration) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UCoreAttributeSet, ArmorPenetration, OldArmorPenetration);
+}
+
+void UCoreAttributeSet::OnRep_BlockChance(const FGameplayAttributeData& OldBlockChance) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UCoreAttributeSet, BlockChance, OldBlockChance);
+}
+
+void UCoreAttributeSet::OnRep_CriticalHitChance(const FGameplayAttributeData& OldCriticalHitChance) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UCoreAttributeSet, CriticalHitChance, OldCriticalHitChance);
+}
+
+void UCoreAttributeSet::OnRep_CriticalHitDamage(const FGameplayAttributeData& OldCriticalHitDamage) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UCoreAttributeSet, CriticalHitDamage, OldCriticalHitDamage);
+}
+
+void UCoreAttributeSet::OnRep_CriticalHitResistance(const FGameplayAttributeData& OldCriticalHitResistance) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UCoreAttributeSet, CriticalHitResistance, OldCriticalHitResistance);
+}
+
+void UCoreAttributeSet::OnRep_HealthRegeneration(const FGameplayAttributeData& OldHealthRegeneration) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UCoreAttributeSet, HealthRegeneration, OldHealthRegeneration);
+}
+
 void UCoreAttributeSet::OnRep_MaxHealth(const FGameplayAttributeData& OldMaxHealth) const
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UCoreAttributeSet, MaxHealth, OldMaxHealth);
 }
 
-/** RepNotify: Mana value updated on clients */
-void UCoreAttributeSet::OnRep_Mana(const FGameplayAttributeData& OldMana) const
+void UCoreAttributeSet::OnRep_ManaRegeneration(const FGameplayAttributeData& OldManaRegeneration) const
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UCoreAttributeSet, Mana, OldMana);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UCoreAttributeSet, ManaRegeneration, OldManaRegeneration);
 }
 
-/** RepNotify: MaxMana value updated on clients */
 void UCoreAttributeSet::OnRep_MaxMana(const FGameplayAttributeData& OldMaxMana) const
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UCoreAttributeSet, MaxMana, OldMaxMana);
 }
 
-/** RepNotify: Stamina value updated on clients */
-void UCoreAttributeSet::OnRep_Stamina(const FGameplayAttributeData& OldStamina) const
+void UCoreAttributeSet::OnRep_StaminaRegeneration(const FGameplayAttributeData& OldStaminaRegeneration) const
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UCoreAttributeSet, Stamina, OldStamina);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UCoreAttributeSet, StaminaRegeneration, OldStaminaRegeneration);
 }
 
-/** RepNotify: MaxStamina value updated on clients */
 void UCoreAttributeSet::OnRep_MaxStamina(const FGameplayAttributeData& OldMaxStamina) const
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UCoreAttributeSet, MaxStamina, OldMaxStamina);
+}
+
+// =======================================
+// Vital Attributes Rep Notify Functions
+// =======================================
+
+void UCoreAttributeSet::OnRep_Health(const FGameplayAttributeData& OldHealth) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UCoreAttributeSet, Health, OldHealth);
+}
+
+void UCoreAttributeSet::OnRep_Mana(const FGameplayAttributeData& OldMana) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UCoreAttributeSet, Mana, OldMana);
+}
+
+void UCoreAttributeSet::OnRep_Stamina(const FGameplayAttributeData& OldStamina) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UCoreAttributeSet, Stamina, OldStamina);
 }

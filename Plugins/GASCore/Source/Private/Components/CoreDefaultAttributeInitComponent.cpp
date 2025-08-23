@@ -3,25 +3,32 @@
 // Unreal Engine and its associated trademarks are used under license from Epic Games.
 
 
-#include "Components/CorePrimaryAttributeInitComponent.h"
+#include "Components/CoreDefaultAttributeInitComponent.h"
 
 #include "AbilitySystemComponent.h"
 #include "GameplayEffect.h"
 
 
-UCorePrimaryAttributeInitComponent::UCorePrimaryAttributeInitComponent()
+UCoreDefaultAttributeInitComponent::UCoreDefaultAttributeInitComponent()
 {
 	// This is a fire-and-forget initialization helper; no need to tick.
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
-void UCorePrimaryAttributeInitComponent::InitializePrimaryAttributes(UAbilitySystemComponent* TargetAbilitySystemComponent) const
+void UCoreDefaultAttributeInitComponent::InitializeDefaultAttributes(UAbilitySystemComponent* TargetAbilitySystemComponent) const
+{
+	ApplyEffectToSelf(DefaultPrimaryAttributes, 1.f, TargetAbilitySystemComponent);
+	ApplyEffectToSelf(DefaultSecondaryAttributes, 1.f, TargetAbilitySystemComponent);
+}
+
+void UCoreDefaultAttributeInitComponent::ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffectClass,
+	float Level, UAbilitySystemComponent* TargetAbilitySystemComponent) const
 {
 	// Development-time checks to surface incorrect usage early.
 	// - TargetAbilitySystemComponent must be valid.
-	// - DefaultPrimaryAttributes (GE class) must be assigned in BP or defaults.
+	// - GameplayEffectClass (GE class) must be assigned in BP or defaults.
 	check(IsValid(TargetAbilitySystemComponent));
-	check(DefaultPrimaryAttributes);
+	check(GameplayEffectClass);
 
 	// Build an effect context from the target ASC.
 	// You may optionally add metadata here,
@@ -31,7 +38,7 @@ void UCorePrimaryAttributeInitComponent::InitializePrimaryAttributes(UAbilitySys
 	// Create an outgoing spec for the initialization GE at level 1.0.
 	// If you need level scaling, pass a different level or set SetByCaller magnitudes inside the spec.
 	const FGameplayEffectSpecHandle EffectSpec =
-		TargetAbilitySystemComponent->MakeOutgoingSpec(DefaultPrimaryAttributes, 1.f, EffectContextHandle);
+		TargetAbilitySystemComponent->MakeOutgoingSpec(GameplayEffectClass, Level, EffectContextHandle);
 
 	// Apply the spec "to target" where the target is the same ASC (self-application).
 	// Note on pointer handling:

@@ -10,9 +10,9 @@
 
 // Forward declare widget/controller classes to minimize dependencies.
 class UTDHUDWidgetController;
+class UTDUserWidget;
 class UAttributeSet;
 class UAbilitySystemComponent;
-class UCoreUserWidget;
 struct FWidgetControllerParams;
 
 /**
@@ -30,7 +30,7 @@ public:
 
 	/** Pointer to the on-screen HUD widget instance (your custom user widget). */
 	UPROPERTY()
-	TObjectPtr<UCoreUserWidget> HUDWidget;
+	TObjectPtr<UTDUserWidget> HUDWidget;
 
 	/**
 	 * Returns a pointer to the HUD Widget Controller, creating and initializing it if none exists.

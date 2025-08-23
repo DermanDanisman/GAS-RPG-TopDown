@@ -8,6 +8,8 @@
 #include "HighlightActor.h"
 #include "Attributes/CoreAttributeSet.h"
 #include "Components/CoreAbilitySystemComponent.h"
+#include "Components/TDAbilitySystemComponent.h"
+#include "Components/TDDefaultAttributeInitComponent.h"
 #include "RPG_TopDown/RPG_TopDown.h"
 
 
@@ -19,7 +21,7 @@ ATDEnemyCharacter::ATDEnemyCharacter()
 
 	// Create the Ability System Component for the AI enemy.
 	// Unlike player characters, AI own their own ASC and AttributeSet.
-	AbilitySystemComponent = CreateDefaultSubobject<UCoreAbilitySystemComponent>("AbilitySystemComponent");
+	AbilitySystemComponent = CreateDefaultSubobject<UTDAbilitySystemComponent>("AbilitySystemComponent");
 	AbilitySystemComponent->SetIsReplicated(true); // Enable replication for multiplayer.
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
 
@@ -45,7 +47,7 @@ void ATDEnemyCharacter::InitializeAbilityActorInfo()
 	{
 		// Initialize the ASC's actor info, using this character as both owner and avatar.
 		AbilitySystemComponent->InitAbilityActorInfo(this, this);
-		Cast<UCoreAbilitySystemComponent>(AbilitySystemComponent)->BindASCDelegates();
+		Cast<UTDAbilitySystemComponent>(AbilitySystemComponent)->BindASCDelegates();
 	}
 }
 

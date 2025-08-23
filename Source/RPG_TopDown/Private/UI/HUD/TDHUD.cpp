@@ -7,7 +7,7 @@
 
 #include "Blueprint/UserWidget.h"
 #include "UI/WidgetControllers/TDHUDWidgetController.h"
-#include "UI/Widgets/CoreUserWidget.h"
+#include "UI/Widgets/TDUserWidget.h"
 
 
 UTDHUDWidgetController* ATDHUD::GetHUDWidgetController(const FWidgetControllerParams& InWidgetControllerParams)
@@ -44,7 +44,7 @@ void ATDHUD::InitializeHUD(APlayerController* InPlayerController, APlayerState* 
 
 	// Safely cast the generic UserWidget to your GAS-specific widget type.
 	// This allows you to call GAS-specific functions or bind to GAS-specific data.
-	HUDWidget = Cast<UCoreUserWidget>(UserWidget);
+	HUDWidget = Cast<UTDUserWidget>(UserWidget);
 
 	// Compose all relevant gameplay references (controller, state, ability system, attributes)
 	// into a single struct for easier, cleaner parameter passing.

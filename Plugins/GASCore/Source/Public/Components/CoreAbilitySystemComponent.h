@@ -42,7 +42,7 @@ public:
 	 * - Binds HandleGameplayEffectAppliedToSelf to OnGameplayEffectAppliedDelegateToSelf via AddUObject
 	 * - AddUObject ensures safe unbinding if this component is GC'd
 	 */
-	void BindASCDelegates();
+	virtual void BindASCDelegates();
 
 	/**
 	 * Fires whenever a GameplayEffect is applied to this ASC (self), providing the asset tag container
@@ -61,6 +61,6 @@ protected:
 	 * @param GameplayEffectSpec     The spec for the effect being applied
 	 * @param ActiveGameplayEffectHandle Handle to the active GE instance (if any)
 	 */
-	void HandleGameplayEffectAppliedToSelf(UAbilitySystemComponent* AbilitySystemComponent,
+	virtual void HandleGameplayEffectAppliedToSelf(UAbilitySystemComponent* AbilitySystemComponent,
 		const FGameplayEffectSpec& GameplayEffectSpec, FActiveGameplayEffectHandle ActiveGameplayEffectHandle);
 };

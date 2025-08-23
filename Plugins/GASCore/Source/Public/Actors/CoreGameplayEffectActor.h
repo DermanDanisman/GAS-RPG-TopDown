@@ -2,32 +2,28 @@
 // This project is the intellectual property of Heathrow (Derman) and is protected by copyright law.
 // Unreal Engine and its associated trademarks are used under license from Epic Games.
 //
-// Summary:
-//   A versatile world actor that applies and manages Gameplay Effects to overlapping targets.
-//   It supports Instant, Duration, Periodic, and Infinite effects, with configurable
-//   application/removal policies, level/scaling, and optional actor self-destruction.
+// Summary (header):
+// - Data-driven GameplayEffect application/removal controlled by FCoreEffectConfig entries.
+// - Tracks non-instant effects (HasDuration or Infinite; Periodic is covered) via handles for precise removal.
+// - Uses TWeakObjectPtr for GC-safe ASC tracking.
+// - See CoreGameplayEffect.cpp for implementation (recommend renaming that file to a .cpp).
 //
 // Design:
 //   - Data-driven: designers configure an array of FCoreEffectConfig entries.
 //   - Overlap-driven: call OnOverlap/EndOverlap from collision events (or manually).
-//   - Tracking: Infinite effects applied by this actor are tracked per-target ASC via handles
-//               to enable precise removal later.
-//   - UI/Debug: emits verbose logs describing configuration and operations.
+//   - Tracking: Non-instant effects applied by this actor are tracked per-target ASC via handles
+//               to enable precise removal later (periodic effects are covered because they’re non-instant).
 //
 // Usage (typical Blueprint workflow):
 //   - Place ACoreGameplayEffectActor in the level and add desired collision component(s).
 //   - Configure GameplayEffects array (EffectClass, ApplicationPolicy, RemovalPolicy, etc.).
 //   - Bind the collision's Begin/End overlap to OnOverlap/EndOverlap respectively.
-//   - For Infinite effects, ensure each entry uses a distinct GameplayEffect class.
+//   - If you configure bDestroyOnEffectApplication on multiple entries, consider deferring destruction
+//     until all entries are processed to avoid early-exit (see note in implementation).
 //
 // Networking note:
-//   - Applying/removing gameplay effects is typically a server-authoritative action.
-//     Ensure your overlap events run on the server or route calls appropriately (e.g., via server RPC).
-//
-// Related helpers:
-//   - AbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Target)
-//   - UAbilitySystemComponent::MakeEffectContext / MakeOutgoingSpec / ApplyGameplayEffectSpecToSelf
-//   - UAbilitySystemComponent::RemoveActiveGameplayEffect
+//   - Applying/removing gameplay effects is typically server-authoritative.
+//     Ensure overlap events run on the server or route via server RPCs (HasAuthority()).
 //
 // Implementation: see Actors/CoreGameplayEffectActor.cpp
 
@@ -52,31 +48,21 @@ class UGameplayEffect;
 UENUM(BlueprintType)
 enum class ECoreEffectApplicationPolicy : uint8
 {
-	/** Apply the effect when an actor begins overlap with this actor */
-	ApplyOnOverlap UMETA(DisplayName = "Apply On Overlap"),
-
-	/** Apply the effect when an actor ends overlap with this actor */
-	ApplyEndOverlap UMETA(DisplayName = "Apply On End Overlap"),
-
-	/** Do not apply the effect automatically (manual application only) */
-	DoNotApply UMETA(DisplayName = "Do Not Apply")
+	ApplyOnOverlap   UMETA(DisplayName = "Apply On Overlap"),    // Fire during OnOverlap
+	ApplyEndOverlap  UMETA(DisplayName = "Apply On End Overlap"),// Fire during EndOverlap
+	DoNotApply       UMETA(DisplayName = "Do Not Apply")         // Manual/other control only
 };
 
 /**
  * When to remove the effect relative to overlap events.
- * Only meaningful for non-instant effects (HasDuration/Infinite, including Periodic).
+ * Only meaningful for non-instant effects (HasDuration/Infinite; Periodic is non-instant).
  */
 UENUM(BlueprintType)
 enum class ECoreEffectRemovalPolicy : uint8
 {
-	/** Remove the effect when an actor begins overlap with this actor */
-	RemoveOnOverlap UMETA(DisplayName = "Remove On Overlap"),
-
-	/** Remove the effect when an actor ends overlap with this actor */
-	RemoveOnEndOverlap UMETA(DisplayName = "Remove On End Overlap"),
-
-	/** Do not remove the effect automatically (manual removal only) */
-	DoNotRemove UMETA(DisplayName = "Do Not Remove")
+	RemoveOnOverlap     UMETA(DisplayName = "Remove On Overlap"),    // Remove during OnOverlap
+	RemoveOnEndOverlap  UMETA(DisplayName = "Remove On End Overlap"),// Remove during EndOverlap
+	DoNotRemove         UMETA(DisplayName = "Do Not Remove")         // Never auto-remove
 };
 
 // -----------------------------------------------------------------------------
@@ -84,48 +70,43 @@ enum class ECoreEffectRemovalPolicy : uint8
 // -----------------------------------------------------------------------------
 
 /**
- * Configuration for a single Gameplay Effect entry.
- * Contains all data necessary to apply and manage a Gameplay Effect instance.
+ * One GameplayEffect configuration row.
+ * Designers add multiple rows; each row applies/removes independently.
  */
 USTRUCT(BlueprintType)
 struct FCoreEffectConfig
 {
 	GENERATED_BODY()
 
-	/** The Gameplay Effect class to apply. This drives duration policy, periodicity, and stacking behavior. */
+	/** GE class to apply. Defines duration policy, periodic tick, stacking rules, etc. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|Effect")
 	TSubclassOf<UGameplayEffect> EffectClass;
 
-	/** When this effect should be applied relative to overlap events. */
+	/** When this effect should be applied relative to overlaps. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|Effect")
 	ECoreEffectApplicationPolicy ApplicationPolicy;
 
-	/**
-	 * When this effect should be removed relative to overlap events.
-	 * Applies only to non-instant effects (HasDuration or Infinite; Periodic counts as non-instant).
-	 */
+	/** When this effect should be removed relative to overlaps (non-instant effects only). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|Effect")
 	ECoreEffectRemovalPolicy RemovalPolicy;
 
-	/** Destroy this actor immediately after a successful application of this effect (useful for consumables). */
+	/** Destroy this actor immediately after applying this effect (consumables, one-shots). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|Effect")
 	bool bDestroyOnEffectApplication;
 
-	/** Destroy this actor immediately after this effect is removed (e.g., on leaving an AoE fire). */
+	/** Destroy this actor immediately after this effect is removed (e.g., leave an AoE). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|Effect")
 	bool bDestroyOnEffectRemoval;
 
-	/**
-	 * Effect level used when creating the outgoing spec.
-	 * Drives scalable magnitudes/tables defined in the GE (if any).
-	 */
+	/** Level used for the outgoing spec (scales magnitudes, tables, etc.). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|Effect", meta = (ClampMin = "1.0"))
 	float ActorLevel;
 
 	/**
 	 * How many stacks to remove when RemovalPolicy triggers:
-	 * -1 = remove all stacks for the matched handle
-	 *  1 = remove a single stack (classic: leave one fire area, remove one stack)
+	 * -1 = remove all stacks on the matched handle (recommended for “remove all”)
+	 *  1 = remove a single stack (common for stacking auras/areas)
+	 * >1 = remove exactly that many stacks
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|Effect", meta = (ClampMin = "-1"))
 	int32 StacksToRemove;
@@ -138,13 +119,40 @@ struct FCoreEffectConfig
 		bDestroyOnEffectApplication = false;
 		bDestroyOnEffectRemoval = false;
 		ActorLevel = 1.0f;
-		StacksToRemove = -1;
+		StacksToRemove = -1; // -1 == remove all
 	}
 };
 
-// -----------------------------------------------------------------------------
-// Gameplay Effect Actor
-// -----------------------------------------------------------------------------
+/**
+ * Per-handle tracking info for non-instant effects applied by this actor
+ * that we intend to remove later based on configured RemovalPolicy.
+ *
+ * GC-safety:
+ * - ASC is tracked with TWeakObjectPtr so if the component or its owner is destroyed
+ *   (level stream out, death, cleanup), the pointer becomes null instead of dangling.
+ * - Always check IsValid() before using ASC.
+ *
+ * Matching:
+ * - We store the exact GE class and a per-handle “destroy on removal” intent as of application time,
+ *   so multiple config rows using the same GE class with different intentions won’t conflict.
+ */
+USTRUCT()
+struct FTrackedEffect
+{
+	GENERATED_BODY()
+
+	/** Weak reference to the target ASC (GC-safe). Use IsValid() and Get() before use. */
+	TWeakObjectPtr<UAbilitySystemComponent> ASC;
+
+	/** The exact GE class used. Used to match during removal requests. */
+	TSubclassOf<UGameplayEffect> EffectClass = nullptr;
+
+	/** Stacks to remove when removal triggers. -1 means “remove all stacks”. */
+	int32 StacksToRemove = -1;
+
+	/** If true, destroy this actor after this specific handle is removed. */
+	bool bDestroyOnRemoval = false;
+};
 
 /**
  * ACoreGameplayEffectActor
@@ -216,16 +224,16 @@ private:
 	TObjectPtr<USceneComponent> DefaultSceneRoot;
 
 	// -----------------------------------------------------------------------
-	// INFINITE EFFECT TRACKING
+	// TRACKED EFFECTS (Duration and Infinite)
 	// -----------------------------------------------------------------------
 
 	/**
-	 * Maps active Infinite effect handles to their target ASCs.
-	 * Enables precise removal of effects applied specifically by THIS actor instance.
-	 * (Handles for Instant effects are typically invalid and are not tracked.)
+	 * Handles of non-instant effects applied by this actor, for precise removal.
+	 * Key: active handle returned by ApplyGameplayEffectSpecToSelf.
+	 * Val: per-handle tracking info (weak ASC, class, stacks, destroy-on-removal).
 	 */
 	UPROPERTY()
-	TMap<FActiveGameplayEffectHandle, UAbilitySystemComponent*> ActiveInfiniteEffects;
+	TMap<FActiveGameplayEffectHandle, FTrackedEffect> ActiveGameplayEffects;
 
 	// -----------------------------------------------------------------------
 	// CORE OPERATIONS
@@ -255,4 +263,7 @@ private:
 
 	/** Returns true if the GE class has Infinite duration. */
 	static bool IsInfinite(const TSubclassOf<UGameplayEffect>& EffectClass);
+
+	/** Returns true if non-instant (HasDuration or Infinite). */
+	static bool IsNonInstant(const TSubclassOf<UGameplayEffect>& EffectClass);
 };
