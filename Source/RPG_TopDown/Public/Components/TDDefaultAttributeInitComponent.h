@@ -6,7 +6,16 @@
 #include "Components/CoreDefaultAttributeInitComponent.h"
 #include "TDDefaultAttributeInitComponent.generated.h"
 
-
+/**
+ * TDDefaultAttributeInitComponent
+ *
+ * Game-side initializer that applies:
+ * - Default primary attributes (instant GE) via the base component’s behavior
+ * - Default secondary/vital attributes via an infinite GE (recomputes on backing-attribute changes)
+ *
+ * Call InitializeDefaultAttributes right after ASC->InitAbilityActorInfo in your Character/Pawn.
+ * In multiplayer, call on the server and let replication update clients.
+ */
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class RPG_TOPDOWN_API UTDDefaultAttributeInitComponent : public UCoreDefaultAttributeInitComponent
 {

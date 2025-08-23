@@ -1,0 +1,13 @@
+Row Name,Tag,Dev Comment
+Attributes Secondary Armor,Attributes.Secondary.Armor,"Mitigates incoming physical damage; often scales from Endurance/Resilience"
+Attributes Secondary Armor Penetration,Attributes.Secondary.ArmorPenetration,"Reduces target’s effective armor; improves damage vs armored targets"
+Attributes Secondary Block Chance,Attributes.Secondary.BlockChance,"Chance to block incoming attacks; can scale from Armor"
+Attributes Secondary Critical Hit Chance,Attributes.Secondary.CriticalHitChance,"Chance for attacks to crit; typically scales from Armor Penetration/Dexterity"
+Attributes Secondary Critical Hit Damage,Attributes.Secondary.CriticalHitDamage,"Crit damage multiplier or bonus; often scales from Armor Penetration"
+Attributes Secondary Critical Hit Resistance,Attributes.Secondary.CriticalHitResistance,"Reduces chance or impact of incoming crits; scales from Armor"
+Attributes Secondary Health Regeneration,Attributes.Secondary.HealthRegeneration,"Health per second; typically scales from Vigor"
+Attributes Secondary Mana Regeneration,Attributes.Secondary.ManaRegeneration,"Mana per second; typically scales from Intelligence"
+Attributes Secondary Stamina Regeneration,Attributes.Secondary.StaminaRegeneration,"Stamina per second; typically scales from Endurance"
+Attributes Secondary Max Health,Attributes.Secondary.MaxHealth,"Maximum health pool; typically derived from Vigor"
+Attributes Secondary Max Mana,Attributes.Secondary.MaxMana,"Maximum mana pool; typically derived from Intelligence"
+Attributes Secondary Max Stamina,Attributes.Secondary.MaxStamina,"Maximum stamina pool; typically derived from Endurance"

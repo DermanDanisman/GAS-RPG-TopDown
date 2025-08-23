@@ -33,12 +33,17 @@ void UCoreDefaultAttributeInitComponent::ApplyEffectToSelf(TSubclassOf<UGameplay
 	// Build an effect context from the target ASC.
 	// You may optionally add metadata here,
 	// such as SourceObject or Instigator, if you need it later for attribution.
-	const FGameplayEffectContextHandle EffectContextHandle = TargetAbilitySystemComponent->MakeEffectContext();
+	FGameplayEffectContextHandle EffectContextHandle = TargetAbilitySystemComponent->MakeEffectContext();
+	EffectContextHandle.AddSourceObject(GetOwner());
 
 	// Create an outgoing spec for the initialization GE at level 1.0.
 	// If you need level scaling, pass a different level or set SetByCaller magnitudes inside the spec.
 	const FGameplayEffectSpecHandle EffectSpec =
 		TargetAbilitySystemComponent->MakeOutgoingSpec(GameplayEffectClass, Level, EffectContextHandle);
+	if (!EffectSpec.IsValid() || !EffectSpec.Data.IsValid())
+	{
+		return;
+	}
 
 	// Apply the spec "to target" where the target is the same ASC (self-application).
 	// Note on pointer handling:
