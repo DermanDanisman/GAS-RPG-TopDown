@@ -1829,10 +1829,10 @@ class UMMC_ElementalDamage : public UGameplayModMagnitudeCalculation
 #### **Cross-References to Related Documentation**
 
 - **[Derived (Secondary) Attributes](./derived-attributes.md)**: When to use AttributeBased vs MMCs
-- **[Attribute-Based Magnitudes](../gameplay-effects-attribute-based-magnitudes.md)**: Understanding the transform formula and modifier order
+- **[Attribute-Based Magnitudes](../../gameplay-effects-attribute-based-magnitudes.md)**: Understanding the transform formula and modifier order
 - **[GAS Attribute Callbacks Cheatsheet](../cheatsheets/gas-attribute-callbacks.md)**: AttributeSet callback integration for clamping derived values
 - **[Gameplay Effects](../gameplay-effects.md)**: Core GE concepts and application patterns
-- **[Replication and Multiplayer](../replication-and-multiplayer.md)**: Networking considerations for custom calculations
+- **[Replication and Multiplayer](../../architecture/replication-and-multiplayer.md)**: Networking considerations for custom calculations
 
 #### **Plugin Integration Points**
 

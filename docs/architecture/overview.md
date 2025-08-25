@@ -34,4 +34,4 @@ Key Classes/Concepts:
 - Effect Actor Pattern
   - Actor with overlap volume & data for what Effect to apply
   - Applies Instant/Duration/Infinite Effects to overlapping target ASC
-  - Policies for Apply/Remove (see gameplay-effects.md)
+  - Policies for Apply/Remove (see ../gas/gameplay-effects.md)

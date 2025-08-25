@@ -269,6 +269,6 @@ void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
 ## See Also
 
 - [GAS Attribute Callbacks Cheatsheet](../cheatsheets/gas-attribute-callbacks.md)
-- [Attributes & Accessors](../attributes-and-accessors.md)
+- [Attributes & Accessors](../../attributes-and-accessors.md)
 - [Gameplay Effects](../gameplay-effects.md)
-- [Replication & Multiplayer](../replication-and-multiplayer.md)
+- [Replication & Multiplayer](../../architecture/replication-and-multiplayer.md)
