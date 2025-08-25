@@ -1,97 +1,117 @@
 # Custom Calculations (MMCs) for Max Health and Max Mana
 
-Goal: Compute derived attributes using more than just AttributeBased magnitudes. We'll mix a backing Attribute (Vigor/Intelligence) with a non-Attribute value (Level) that lives on PlayerState (or another combatant), exposed via an interface. We'll implement two Modifier Magnitude Calculations (MMCs): one for Max Health and one for Max Mana.
+Goal: Compute derived attributes using more than AttributeBased magnitudes by mixing backing Attributes (Vigor/Intelligence) with a non-Attribute (Level) exposed via a Combat interface. We'll implement two UGameplayModMagnitudeCalculation classes (MMCs): one for Max Health and one for Max Mana, wire them into an infinite GE, and initialize vitals to full via an instant GE.
 
-Use this when AttributeBased is not enough — e.g., you need external data (Level, difficulty, equipment) that isn't an Attribute.
+Use this when AttributeBased isn't enough (e.g., you need Level, difficulty, or equipment data not modeled as Attributes).
 
-## MMC vs AttributeBased — when to choose which?
-- AttributeBased is great for "Attribute X drives Attribute Y" and re-evaluates automatically when the captured Attributes change.
-- MMC (UGameplayModMagnitudeCalculation) runs custom C++ to return a float magnitude. Use it when:
-  - You must combine Attributes with non-Attribute data (like Level on PlayerState).
-  - The formula is branching, table-driven, or otherwise too complex for AttributeBased.
+## MMC vs AttributeBased — choose the right tool
+- AttributeBased: "Attribute X drives Attribute Y," re-evaluates automatically when captured Attributes change.
+- MMC (UGameplayModMagnitudeCalculation): custom C++ returns a float. Use when you must combine Attributes with non-Attributes (Level), or express branching/curve/table-driven logic.
 
-In this guide we:
-- Keep Level as a variable (int32) on PlayerState (not an Attribute).
-- Expose Level through a `Combat` interface so MMCs remain decoupled from concrete classes.
-- Build MMCs for Max Health and Max Mana and wire them into an infinite GE with Override modifiers.
+We will:
+- Keep Level as an int32 (not an Attribute) on PlayerState for players, on Character for enemies.
+- Expose Level via a lightweight ICombatInterface::GetPlayerLevel() to keep MMCs decoupled.
+- Build MMCs for MaxHealth/MaxMana and use them in an infinite GE with Override.
+- Initialize Health and Mana to their max values with a simple instant GE after secondary attributes are set.
 
-## Design overview
-- Level lives on PlayerState (replicated int32).
-- Any actor that participates in combat implements `ICombatInterface` with `GetCharacterLevel()`.
-- MMCs capture the backing Attributes (Vigor for MaxHealth, Intelligence for MaxMana) and also query `GetCharacterLevel()` from the Source/Target via the effect spec's context.
-- The infinite GE uses Override + Calculation Class to set MaxHealth/MaxMana.
+## Design: Level placement + interface
+- Player-controlled: Level lives on PlayerState, replicated with RepNotify.
+- AI enemies: Level lives on the Character (non-replicated; server drives authoritative logic).
+- A shared Combat interface abstracts "what's the level?" so MMCs don't depend on concrete classes.
 
-## Step 1 — Add Level to PlayerState
-Define a replicated level on your PlayerState and optionally a setter you'll use on level-up.
-
+### PlayerState (replicated Level with getter)
 ```cpp
-// PlayerState header (excerpt)
-UPROPERTY(EditAnywhere, BlueprintReadWrite, ReplicatedUsing=OnRep_Level, Category="Level")
+// AuraPlayerState.h (excerpt)
+UPROPERTY(VisibleAnywhere, ReplicatedUsing=OnRep_Level, Category="Level")
 int32 Level = 1;
 
 UFUNCTION()
-void OnRep_Level();
+void OnRep_Level(int32 OldLevel);
 
 UFUNCTION(BlueprintCallable, Category="Level")
 void SetLevel(int32 NewLevel);
-```
 
+FORCEINLINE int32 GetPlayerLevel() const { return Level; }
+```
 ```cpp
-// PlayerState source (excerpt)
-void AMyPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+// AuraPlayerState.cpp (excerpt)
+#include "Net/UnrealNetwork.h"
+
+void AAuraPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out) const
 {
-    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-    DOREPLIFETIME(AMyPlayerState, Level);
+    Super::GetLifetimeReplicatedProps(Out);
+    DOREPLIFETIME(AAuraPlayerState, Level);
 }
 
-void AMyPlayerState::SetLevel(int32 NewLevel)
+void AAuraPlayerState::SetLevel(int32 NewLevel)
 {
     if (HasAuthority())
     {
+        const int32 Old = Level;
         Level = FMath::Max(1, NewLevel);
-        OnRep_Level();
+        OnRep_Level(Old);
     }
 }
 
-void AMyPlayerState::OnRep_Level()
+void AAuraPlayerState::OnRep_Level(int32 OldLevel)
 {
-    // See "Recomputation on Level change" below for how we refresh derived values.
+    // See "Recompute on Level change" for how/when we refresh derived values.
 }
 ```
 
-## Step 2 — Define a Combat interface to expose Level
-Keep MMCs generic by depending on an interface rather than concrete classes.
-
+### Enemy Character (server-only Level)
 ```cpp
-// CombatInterface.h
-#pragma once
-#include "UObject/Interface.h"
-#include "CombatInterface.generated.h"
+// AuraEnemy.h (excerpt)
+protected:
+UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Character Class Defaults")
+int32 Level = 1; // Not replicated (server authoritative)
+```
 
+### Combat interface (decoupling)
+```cpp
+// CombatInterface.h (minimal)
 UINTERFACE(BlueprintType)
-class UCombatInterface : public UInterface
-{ GENERATED_BODY() };
+class UCombatInterface : public UInterface { GENERATED_BODY() };
 
 class ICombatInterface
 {
     GENERATED_BODY()
 public:
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Combat")
-    int32 GetCharacterLevel() const;
+    int32 GetPlayerLevel() const; // Name avoids clashing with AActor::GetLevel()
 };
 ```
+Implement on:
+- AuraEnemy: return its Level.
+- AuraCharacter (player): fetch PlayerState and return PlayerState->GetPlayerLevel().
+- Optionally implement on other combatants.
 
-Implement `ICombatInterface` on PlayerState, Character, and any enemy types that hold level-like data.
+### Ensure SourceObject is set when applying GEs
+MMCs will query Level via the effect context's SourceObject. When applying effects, set the source object:
+```cpp
+// In AuraCharacterBase::ApplyEffectToSelf(...)
+FGameplayEffectContextHandle ContextHandle = ASC->MakeEffectContext();
+ContextHandle.AddSourceObject(this); // Provide self as the interface carrier
+// build spec with ContextHandle and Apply
+```
 
-## Step 3 — Implement MMCs for Max Health and Max Mana
-Each MMC captures its backing Attribute and queries Level via the interface.
+## MMC implementation
+Each MMC captures a backing Attribute and queries Level via the interface.
 
+Common pieces:
+```cpp
+// Includes you'll typically need
+#include "GameplayModMagnitudeCalculation.h"
+#include "GameplayEffect.h"
+#include "GameplayEffectExtension.h"
+#include "AbilitySystemComponent.h"
+#include "CombatInterface.h"
+#include "YourProject/AttributeSets/YourAttributeSet.h" // Replace with your set
+```
+
+### UMMC_MaxHealth (captures Vigor)
 ```cpp
 // MMC_MaxHealth.h
-#pragma once
-#include "GameplayModMagnitudeCalculation.h"
-#include "MMC_MaxHealth.generated.h"
-
 UCLASS()
 class UMMC_MaxHealth : public UGameplayModMagnitudeCalculation
 {
@@ -101,19 +121,10 @@ public:
     virtual float CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const override;
 };
 ```
-
 ```cpp
 // MMC_MaxHealth.cpp
-#include "MMC_MaxHealth.h"
-#include "AbilitySystemComponent.h"
-#include "GameplayEffect.h"
-#include "GameplayEffectExtension.h"
-#include "CombatInterface.h"
-#include "YourProject/AttributeSets/YourAttributeSet.h" // Replace with your AttributeSet
-
 namespace MaxHealthMMC
 {
-    // Capture Vigor from the Target (no snapshot so it re-evaluates on Vigor changes)
     static FGameplayEffectAttributeCaptureDefinition VigorDef(
         UYourAttributeSet::GetVigorAttribute(), EGameplayEffectAttributeCaptureSource::Target, false);
 }
@@ -123,112 +134,119 @@ UMMC_MaxHealth::UMMC_MaxHealth()
     RelevantAttributesToCapture.Add(MaxHealthMMC::VigorDef);
 }
 
-static int32 ResolveLevelFromContext(const FGameplayEffectSpec& Spec)
+static int32 ResolveLevel(const FGameplayEffectSpec& Spec)
 {
     int32 Level = 1;
-
     const FGameplayEffectContextHandle& Ctx = Spec.GetContext();
+
     if (const UObject* SourceObj = Ctx.GetSourceObject())
     {
-        if (const ICombatInterface* CI = Cast<ICombatInterface>(SourceObj))
-        { Level = ICombatInterface::Execute_GetCharacterLevel(SourceObj); }
+        Level = ICombatInterface::Execute_GetPlayerLevel(SourceObj);
     }
-
     if (Level <= 0)
     {
         if (const AActor* Instigator = Ctx.GetOriginalInstigator())
         {
-            if (const ICombatInterface* CI = Cast<ICombatInterface>(Instigator))
-            { Level = ICombatInterface::Execute_GetCharacterLevel(const_cast<AActor*>(Instigator)); }
+            Level = ICombatInterface::Execute_GetPlayerLevel(const_cast<AActor*>(Instigator));
         }
     }
-
     return FMath::Max(1, Level);
 }
 
 float UMMC_MaxHealth::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const
 {
-    FAggregatorEvaluateParameters EvalParams;
-    EvalParams.SourceTags = Spec.CapturedSourceTags.GetAggregatedTags();
-    EvalParams.TargetTags = Spec.CapturedTargetTags.GetAggregatedTags();
+    FAggregatorEvaluateParameters Params;
+    Params.SourceTags = Spec.CapturedSourceTags.GetAggregatedTags();
+    Params.TargetTags = Spec.CapturedTargetTags.GetAggregatedTags();
 
     float Vigor = 0.f;
-    GetCapturedAttributeMagnitude(MaxHealthMMC::VigorDef, Spec, EvalParams, Vigor);
+    GetCapturedAttributeMagnitude(MaxHealthMMC::VigorDef, Spec, Params, Vigor);
     Vigor = FMath::Max(0.f, Vigor);
 
-    const int32 Level = ResolveLevelFromContext(Spec);
+    const int32 Level = ResolveLevel(Spec);
 
-    const float Base = 80.f;        // from our starter mapping
+    const float Base = 80.f;
     const float FromVigor = 2.5f * Vigor;
-    const float FromLevel = 10.f * static_cast<float>(Level);
-
+    const float FromLevel = 10.f * Level;
     return Base + FromVigor + FromLevel;
 }
 ```
 
-Repeat for Max Mana, capturing Intelligence instead of Vigor and using different coefficients:
-
+### UMMC_MaxMana (captures Intelligence)
 ```cpp
-// MMC_MaxMana.h/.cpp (differences only)
+// MMC_MaxMana.h/.cpp (differences)
 namespace MaxManaMMC
 {
     static FGameplayEffectAttributeCaptureDefinition IntelligenceDef(
         UYourAttributeSet::GetIntelligenceAttribute(), EGameplayEffectAttributeCaptureSource::Target, false);
 }
 
-// In constructor
+// ctor
 RelevantAttributesToCapture.Add(MaxManaMMC::IntelligenceDef);
 
-// In CalculateBaseMagnitude_Implementation
+// CalculateBaseMagnitude_Implementation body (key lines)
 float Intelligence = 0.f;
-GetCapturedAttributeMagnitude(MaxManaMMC::IntelligenceDef, Spec, EvalParams, Intelligence);
+GetCapturedAttributeMagnitude(MaxManaMMC::IntelligenceDef, Spec, Params, Intelligence);
 Intelligence = FMath::Max(0.f, Intelligence);
-
-const float Base = 50.f;        // starter mapping
-const float FromInt = 2.0f * Intelligence;
-const float FromLevel = 7.f * static_cast<float>(Level); // example level coefficient
+const int32 Level = ResolveLevel(Spec);
+const float Base = 50.f;
+const float FromInt = 2.5f * Intelligence;
+const float FromLevel = 15.f * Level; // example
 return Base + FromInt + FromLevel;
 ```
 
-## Step 4 — Configure the Gameplay Effect (Editor)
-For your infinite derived-attributes GE (or a dedicated one):
-1) Duration Policy: Infinite
-2) Add two Modifiers:
-   - Attribute: Max Health
-     - Modifier Op: Override
-     - Magnitude: Calculation Class = `MMC_MaxHealth`
-   - Attribute: Max Mana
-     - Modifier Op: Override
-     - Magnitude: Calculation Class = `MMC_MaxMana`
-3) Snapshot: not applicable to MMC input; captured Attributes in the MMC are set to not snapshot so they re-evaluate when those Attributes change.
+Notes:
+- We set bSnapshot=false in capture definitions so MMCs re-evaluate when captured Attributes change.
+- You can optionally scale MMC output via coefficients in the GE modifier (pre/post add/mul).
 
-This keeps MaxHealth/MaxMana current with Vigor/Intelligence. Level is queried on demand in the MMC.
+## Editor wiring: the infinite "Secondary" GE
+For your GE that sets derived attributes (MaxHealth/MaxMana):
+- Duration Policy: Infinite
+- Modifiers:
+  - Attribute: Max Health
+    - Op: Override
+    - Magnitude: Custom Calculation Class = MMC_MaxHealth
+  - Attribute: Max Mana
+    - Op: Override
+    - Magnitude: Custom Calculation Class = MMC_MaxMana
 
-## Recomputation when Level changes
-Because Level is not an Attribute, the aggregator won't automatically re-run your MMC when Level changes. Choose one:
-- Simple: Reapply the infinite GE on level-up (remove + reapply, or apply a fresh spec). This forces MMCs to recompute with the new Level.
-- Alternative: Make Level an Attribute. Then derived values can be AttributeBased or declared as captured dependencies and will re-evaluate automatically.
-- Advanced: Feed Level via SetByCaller on an instant GE you reapply on level changes. For an infinite GE, SetByCallers are captured at application time; you still need to reapply to update them.
+## Recompute on Level change
+Level is not an Attribute, so aggregators won't auto-recompute MMCs when Level changes. Options:
+- Simple: Reapply the infinite GE on level-up (remove+reapply or apply a fresh spec).
+- Alternative: Make Level an Attribute and use AttributeBased or captured dependencies.
+- SetByCaller: Pass Level on an instant GE and reapply on change.
+Recommendation: Reapply the infinite derived GE on level-up.
 
-Recommendation: Reapply the infinite derived GE on level-up. It's straightforward and cheap for a small number of rows.
+## Initialize vitals to full (instant GE)
+Initialize Health and Mana after secondary attributes are set:
+- Create GE_Aura_VitalAttributes (Instant)
+  - Modifier 1: Attribute=Health, Op=Override, Magnitude=AttributeBased(MaxHealth from Target)
+  - Modifier 2: Attribute=Mana, Op=Override, Magnitude=AttributeBased(MaxMana from Target)
+- Apply order in code (AuraCharacterBase): Primary → Secondary (infinite) → Vital (instant)
+```cpp
+// After applying DefaultPrimary and DefaultSecondary
+ApplyEffectToSelf(DefaultVitalAttributes, 1);
+```
+This ensures the globes start full and stay consistent with current Max values.
 
-## Testing
-- Start with Vigor = 10, Intelligence = 10, Level = 1.
-- Observe Max Health = 80 + 2.5×10 + 10×1 = 115.
-- Increase Level to 2, reapply the infinite GE, observe Max Health = 125.
-- Bump Vigor via a test GE and confirm Max Health updates automatically without reapplication (because Vigor is captured with snapshot = false).
-- Use `ShowDebug AbilitySystem` to watch Attribute values; consider adding an Attributes UI panel later.
+## Testing checklist
+- Start: Vigor=9, Intelligence=17, Level=1 ⇒ MaxHealth = 80 + 2.5*9 + 10*1 = 112.5
+- Change Level to 2, reapply infinite GE ⇒ MaxHealth increases by 10.
+- Increase Vigor/Intelligence via GEs ⇒ Max attributes update automatically (no reapply needed).
+- Verify Health/Mana initialize to Max via the instant GE.
+- Use ShowDebug AbilitySystem and/or breakpoints in MMCs.
 
-## Teachable moments and pitfalls
-- MMCs are for logic you can't cleanly express with AttributeBased. Prefer AttributeBased when possible for automatic recompute.
-- Keep MMCs decoupled by using interfaces. Avoid hard-coding PlayerState/Character classes.
-- If you keep Level off-Attribute, you must decide how to refresh effects when Level changes (reapply vs. periodic vs. making Level an Attribute). Avoid periodic ticking unless absolutely required.
-- Ensure captured Attributes in MMCs use `bSnapshot=false` so they re-evaluate on Attribute change.
-- When Max attributes change, clamp current values in your AttributeSet to avoid over/underflow.
+## Teachable moments & pitfalls
+- Prefer AttributeBased when possible; reach for MMCs when data lives outside Attributes or logic is complex.
+- Keep decoupled: depend on ICombatInterface, not concrete classes.
+- Remember to set SourceObject on the effect context before applying, or interface calls will see null.
+- Use bSnapshot=false for captured Attributes you want to track live.
+- Clamp current values in your AttributeSet when Max values change.
+- BlueprintReadOnly should not be on private members; use protected or public as appropriate.
 
-## Appendix — Alternatives and scaling
-- SetByCaller: Pass Level as a SetByCaller value on an instant GE and reapply on change.
-- Make Level an Attribute: Simplifies recomputation at the cost of adding an Attribute.
-- Use ScalableFloats/Curves: Move coefficients (e.g., 2.5, 2.0, 10) into curve tables keyed by Level or difficulty for tuning.
+## Appendix — Alternatives & tuning
+- Make Level an Attribute for automatic recompute.
+- SetByCaller for event-driven inputs (still reapply for infinite effects).
+- Move coefficients (2.5, 10, 15) into ScalableFloats/Curves for designer tuning.
 
-See also: [Derived (Secondary) Attributes](./derived-attributes.md) for AttributeBased mappings and initialization order.
+See also: [Derived (Secondary) Attributes](./derived-attributes.md)
