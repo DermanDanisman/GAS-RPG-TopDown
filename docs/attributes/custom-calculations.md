@@ -1323,24 +1323,589 @@ ApplyEffectToSelf(DefaultVitalAttributes, 1);
 ```
 This ensures the globes start full and stay consistent with current Max values.
 
-## Testing checklist
-- Start: Vigor=9, Intelligence=17, Level=1 ⇒ MaxHealth = 80 + 2.5*9 + 10*1 = 112.5
-- Change Level to 2, reapply infinite GE ⇒ MaxHealth increases by 10.
-- Increase Vigor/Intelligence via GEs ⇒ Max attributes update automatically (no reapply needed).
-- Verify Health/Mana initialize to Max via the instant GE.
-- Use ShowDebug AbilitySystem and/or breakpoints in MMCs.
+## Testing Checklist: Repository-Specific Validation
 
-## Teachable moments & pitfalls
-- Prefer AttributeBased when possible; reach for MMCs when data lives outside Attributes or logic is complex.
-- Keep decoupled: depend on ICombatInterface, not concrete classes.
-- Remember to set SourceObject on the effect context before applying, or interface calls will see null.
-- Use bSnapshot=false for captured Attributes you want to track live.
-- Clamp current values in your AttributeSet when Max values change.
-- BlueprintReadOnly should not be on private members; use protected or public as appropriate.
+### Core MMC Functionality
+- [ ] **Basic calculation verification**: 
+  - Start with Vigor=9, Intelligence=17, Endurance=8, Level=1
+  - MaxHealth = 80 + 2.5×9 + 10×1 = 112.5
+  - MaxMana = 50 + 2.5×17 + 15×1 = 107.5
+  - MaxStamina = 60 + 2.0×8 = 76.0 (if using Endurance-based MMC)
 
-## Appendix — Alternatives & tuning
-- Make Level an Attribute for automatic recompute.
-- SetByCaller for event-driven inputs (still reapply for infinite effects).
-- Move coefficients (2.5, 10, 15) into ScalableFloats/Curves for designer tuning.
+- [ ] **Attribute capture validation**:
+  - Apply +5 Vigor effect ⇒ MaxHealth should increase by 12.5 automatically
+  - Apply +3 Intelligence effect ⇒ MaxMana should increase by 7.5 automatically  
+  - Apply +2 Endurance effect ⇒ verify any Endurance-based calculations update
+
+- [ ] **Level dependency testing**:
+  - Change Level from 1 to 2 ⇒ MaxHealth should NOT auto-update (external dependency)
+  - Reapply infinite GE after level change ⇒ MaxHealth increases by 10, MaxMana by 15
+  - Test Level resolution fallback chain (SourceObject → OriginalInstigator → Instigator → Default)
+
+### Interface Implementation Validation
+- [ ] **ICombatInterface::GetActorLevel implementation**:
+  - Player characters: Level retrieved from PlayerState
+  - Enemy characters: Level retrieved from Character's Level property
+  - Interface returns valid level (≥1) for all combatants
+  - Null safety: Handle actors that don't implement the interface
+
+### Context and SourceObject Testing
+- [ ] **SourceObject requirement**:
+  - Apply effects WITH SourceObject set ⇒ MMCs can resolve Level correctly
+  - Apply effects WITHOUT SourceObject set ⇒ MMCs fall back gracefully to default Level
+  - Verify warning logs when SourceObject resolution fails
+
+- [ ] **Effect context hierarchy**:
+  - Test direct application: SourceObject = applying actor
+  - Test chain application: Pet attacks → OriginalInstigator = Player, Instigator = Pet
+  - Verify Level resolution follows correct priority chain
+
+### Recomputation Strategy Testing
+- [ ] **Attribute changes (auto-recompute)**:
+  - bSnapshot=false captures update when source attributes change
+  - Duration/Infinite GEs with attribute captures recalculate automatically
+  - No manual intervention required for attribute-based dependencies
+
+- [ ] **External dependency changes (manual recompute)**:
+  - Level increases → MMCs do NOT auto-update (expected behavior)
+  - Reapply infinite GE → MMCs use new Level value
+  - Alternative: Model Level as Attribute → test auto-recomputation
+
+### Vital Attribute Initialization
+- [ ] **Initialization order**:
+  - Apply primary attributes first (Vigor, Intelligence, Endurance)
+  - Apply secondary attributes (MaxHealth, MaxMana) via infinite GE
+  - Apply vital initialization (Health=MaxHealth, Mana=MaxMana) via instant GE
+
+- [ ] **Vital synchronization**:
+  - Health initialized to current MaxHealth value
+  - Mana initialized to current MaxMana value  
+  - Values stay in sync when Max attributes change (via AttributeSet clamping)
+
+### Edge Cases and Error Handling
+- [ ] **Null/invalid data handling**:
+  - Missing SourceObject → use default Level, log warning
+  - Invalid Level (≤0) → clamp to minimum (1)
+  - Missing attribute captures → use 0.0f, handle gracefully
+
+- [ ] **Boundary conditions**:
+  - Level 1 vs Level 100 → verify calculations scale correctly
+  - Zero attributes → ensure non-negative base values
+  - Maximum attribute values → test for overflow/precision issues
+
+### Debugging and Visualization
+- [ ] **ShowDebug AbilitySystem validation**:
+  - View current attribute values in real-time
+  - Observe MMC-calculated values updating
+  - Check active gameplay effects and their contributions
+
+- [ ] **Logging verification**:
+  - MMC warning logs appear when context resolution fails
+  - Level resolution shows correct fallback chain
+  - No spam logging during normal operation
+
+- [ ] **Breakpoint testing**:
+  - Set breakpoints in CalculateBaseMagnitude_Implementation
+  - Verify captured attribute values are correct
+  - Step through Level resolution logic
+  - Confirm final calculated values
+
+### Performance Validation
+- [ ] **Allocation testing**:
+  - Run with memory profiler during MMC-heavy scenarios  
+  - Verify no heap allocations in CalculateBaseMagnitude_Implementation
+  - Check for stack overflow with deep effect chains
+
+- [ ] **Performance benchmarks**:
+  - Measure MMC execution time under typical load
+  - Test with 100+ active effects using MMCs
+  - Verify frame rate stability during mass attribute changes
+
+## Common Pitfalls and Comprehensive Guidance
+
+### MMC Design and Implementation Pitfalls
+
+#### **Forgetting to Set SourceObject**
+```cpp
+// ❌ WRONG: MMCs will fail to resolve Level
+void ApplyEffect(TSubclassOf<UGameplayEffect> GE)
+{
+    FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+    // Missing: Context.AddSourceObject(this);
+    // Result: Level resolution fails, uses default value
+}
+
+// ✅ CORRECT: Always set SourceObject for MMCs
+void ApplyEffect(TSubclassOf<UGameplayEffect> GE)
+{
+    FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+    Context.AddSourceObject(this); // MMCs can now access ICombatInterface
+}
+```
+
+#### **Incorrect bSnapshot Usage**
+```cpp
+// ❌ WRONG: Snapshot prevents live updates
+static FGameplayEffectAttributeCaptureDefinition VigorDef(
+    UCoreAttributeSet::GetVigorAttribute(),
+    EGameplayEffectAttributeCaptureSource::Target,
+    true  // bSnapshot=true freezes the value - derived attributes won't update!
+);
+
+// ✅ CORRECT: Live tracking for derived attributes
+static FGameplayEffectAttributeCaptureDefinition VigorDef(
+    UCoreAttributeSet::GetVigorAttribute(),
+    EGameplayEffectAttributeCaptureSource::Target,
+    false // bSnapshot=false allows live updates when Vigor changes
+);
+```
+
+#### **Missing Attribute Capture Registration**
+```cpp
+// ❌ WRONG: Captures used but not registered
+UMMC_MaxHealth::UMMC_MaxHealth()
+{
+    // Missing: RelevantAttributesToCapture.Add(VigorDef);
+    // Result: GetCapturedAttributeMagnitude returns 0.0f
+}
+
+// ✅ CORRECT: Register all captures
+UMMC_MaxHealth::UMMC_MaxHealth()
+{
+    RelevantAttributesToCapture.Add(MaxHealthMMC::VigorDef);
+    // Now GAS knows this MMC depends on Vigor
+}
+```
+
+#### **Hardcoded Constants (Non-Scalable)**
+```cpp
+// ❌ WRONG: Requires code changes to tune
+float CalculateBaseMagnitude_Implementation(...) const
+{
+    return 80.0f + (Vigor * 2.5f) + (Level * 10.0f); // Hardcoded
+}
+
+// ✅ CORRECT: Use ScalableFloats for designer control
+UPROPERTY(EditDefaultsOnly)
+FScalableFloat BaseHealthValue; // Can use curves, scale with level
+
+float CalculateBaseMagnitude_Implementation(...) const
+{
+    return BaseHealthValue.GetValueAtLevel(Level) + ...; // Data-driven
+}
+```
+
+### Networking and Authority Pitfalls
+
+#### **Client-Side External Dependency Changes**
+```cpp
+// ❌ WRONG: Client triggering recomputation
+void OnLevelUp()
+{
+    Level++; // This might run on client first
+    GetExternalModifierDependencyMulticast().Broadcast(); // Client triggers recompute!
+    // Result: Client-server desync, potential cheating
+}
+
+// ✅ CORRECT: Server-authoritative dependency changes
+void OnLevelUp()
+{
+    if (HasAuthority()) // Only server
+    {
+        Level++;
+        // Reapply effects or use dependency multicast safely
+    }
+}
+```
+
+#### **Forgetting Authority Checks**
+```cpp
+// ❌ WRONG: Assuming server context
+void RecomputeAttributes()
+{
+    ASC->RemoveActiveGameplayEffectBySourceEffect(...); // Might fail on client
+    ASC->ApplyGameplayEffectSpecToSelf(...);            // Might fail on client
+}
+
+// ✅ CORRECT: Ensure proper authority
+void RecomputeAttributes()
+{
+    if (HasAuthority() && ASC)
+    {
+        ASC->RemoveActiveGameplayEffectBySourceEffect(...);
+        ASC->ApplyGameplayEffectSpecToSelf(...);
+    }
+}
+```
+
+### Performance and Stability Pitfalls
+
+#### **Blocking Operations in MMCs**
+```cpp
+// ❌ NEVER DO: Blocking operations
+float CalculateBaseMagnitude_Implementation(...) const
+{
+    // File I/O - blocks game thread
+    FString Config;
+    FFileHelper::LoadFileToString(Config, TEXT("data.txt"));
+    
+    // Network request - unpredictable latency
+    float ServerValue = HttpService->GetValueSync();
+    
+    // Database query - can timeout
+    return Database->QueryPlayerBonus(); // Game freezes!
+}
+
+// ✅ CORRECT: Only immediate calculations
+float CalculateBaseMagnitude_Implementation(...) const
+{
+    // Use readily available data only
+    float Vigor = GetCapturedAttribute(...);
+    int32 Level = ResolveLevel(Spec); // Fast interface call
+    return BaseValue + (Vigor * Multiplier) + (Level * LevelBonus);
+}
+```
+
+#### **Memory Allocations in Hot Path**
+```cpp
+// ❌ WRONG: Allocations during calculation
+float CalculateBaseMagnitude_Implementation(...) const
+{
+    TArray<float> TempValues; // Heap allocation
+    FString DebugInfo = FString::Printf(TEXT("Level: %d"), Level); // Allocation
+    
+    for (int32 i = 0; i < 10; ++i) // Loop with allocations
+    {
+        TempValues.Add(GetBonus(i));
+    }
+    return TempValues.Last(); // Expensive and wasteful
+}
+
+// ✅ CORRECT: Stack-only calculations
+float CalculateBaseMagnitude_Implementation(...) const
+{
+    float Result = 0.0f;
+    float TempBonus = 0.0f;
+    
+    // Direct stack calculations
+    GetCapturedAttributeMagnitude(..., TempBonus);
+    Result += TempBonus * Multiplier;
+    
+    return Result; // Fast and allocation-free
+}
+```
+
+### Repository-Specific Pitfalls
+
+#### **ICombatInterface Implementation Issues**
+```cpp
+// ❌ WRONG: Missing interface implementation
+class GASCORE_API AMyCharacter : public ACharacter
+{
+    // Missing: public ICombatInterface
+    // Result: MMCs can't access GetActorLevel, use default value
+};
+
+// ✅ CORRECT: Proper interface implementation
+class GASCORE_API AMyCharacter : public ACharacter, public ICombatInterface
+{
+public:
+    virtual int32 GetActorLevel_Implementation() const override
+    {
+        return Level; // Or PlayerState->GetPlayerLevel() for players
+    }
+};
+```
+
+#### **Attribute Set Mismatches**
+```cpp
+// ❌ WRONG: Using wrong attribute set
+static FGameplayEffectAttributeCaptureDefinition VigorDef(
+    UDifferentAttributeSet::GetVigorAttribute(), // Wrong attribute set!
+    EGameplayEffectAttributeCaptureSource::Target,
+    false
+);
+
+// ✅ CORRECT: Use CoreAttributeSet from this repository
+static FGameplayEffectAttributeCaptureDefinition VigorDef(
+    UCoreAttributeSet::GetVigorAttribute(), // Correct attribute set
+    EGameplayEffectAttributeCaptureSource::Target,
+    false
+);
+```
+
+#### **Effect Application Order Issues**
+```cpp
+// ❌ WRONG: Wrong application order
+void InitializeAttributes()
+{
+    ApplyEffectToSelf(VitalAttributesGE);    // Health=0, Mana=0 (MaxHealth not set yet)
+    ApplyEffectToSelf(SecondaryAttributesGE); // MaxHealth calculated
+    ApplyEffectToSelf(PrimaryAttributesGE);   // Vigor set (should be first)
+}
+
+// ✅ CORRECT: Proper dependency order  
+void InitializeAttributes()
+{
+    ApplyEffectToSelf(PrimaryAttributesGE);   // Set Vigor, Intelligence first
+    ApplyEffectToSelf(SecondaryAttributesGE); // Calculate MaxHealth, MaxMana
+    ApplyEffectToSelf(VitalAttributesGE);     // Initialize Health=MaxHealth, Mana=MaxMana
+}
+```
+
+### Debugging and Troubleshooting Guide
+
+#### **MMC Returns Unexpected Values**
+1. **Check capture registration**: Ensure all used captures are in `RelevantAttributesToCapture`
+2. **Verify bSnapshot setting**: Use `false` for live derived attributes
+3. **Test attribute source**: Confirm Target vs Source capture source
+4. **Debug tag evaluation**: Check if tags are filtering modifiers unexpectedly
+
+#### **Level Resolution Fails**
+1. **Check SourceObject**: Ensure `Context.AddSourceObject(this)` is called
+2. **Verify interface implementation**: Actor must implement `ICombatInterface`
+3. **Test fallback chain**: SourceObject → OriginalInstigator → Instigator → Default
+4. **Enable debug logging**: Look for MMC warning messages
+
+#### **Auto-Recomputation Not Working**
+1. **Verify bSnapshot=false**: Captured attributes need live tracking
+2. **Check effect duration**: Only Infinite/Duration effects auto-recompute
+3. **Confirm capture registration**: Missing captures won't trigger updates
+4. **Test manual reapply**: Force recompute to verify calculation logic
+
+#### **Performance Issues**
+1. **Profile MMC execution**: Use Unreal's profiler to measure calculation time
+2. **Check for allocations**: Run with memory tracking enabled
+3. **Verify capture efficiency**: Only capture attributes you actually use
+4. **Test with scale**: Performance with 100+ active effects
+
+## Appendix — Alternatives & Tuning
+
+### Alternative Approaches to External Dependencies
+
+#### **Model Level as an Attribute**
+Instead of keeping Level external, convert it to a proper attribute:
+
+```cpp
+// In your AttributeSet
+UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Level, Category = "Character")
+FGameplayAttributeData Level;
+
+// Use AttributeBased instead of MMC for simple cases
+// MaxHealth = AttributeBased(Vigor) + AttributeBased(Level)
+```
+
+**Pros**: Full GAS integration, automatic recomputation, networking support  
+**Cons**: More attributes to manage, Level becomes "just another stat"  
+**Use when**: Level behaves like a stat, needs full attribute features
+
+#### **SetByCaller for Event-Driven Inputs**
+Pass dynamic values at effect application time:
+
+```cpp
+// Apply with dynamic level override
+FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(MaxHealthGE, 1.0f, Context);
+Spec.Data->SetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag("SetByCaller.Level"), CurrentLevel);
+ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data);
+```
+
+**Pros**: Event-specific values, guaranteed synchronization  
+**Cons**: Must reapply for infinite effects, no auto-recomputation  
+**Use when**: Values are computed at application time, temporary modifiers
+
+#### **Hybrid AttributeBased + MMC Approach**
+Combine both approaches for maximum flexibility:
+
+```cpp
+// Simple relationships: AttributeBased
+// MaxHealth = 80 + 2.5 × Vigor  (GE modifier: AttributeBased)
+
+// Complex relationships: MMC  
+// CriticalHitChance = BaseChance + (Dexterity × 0.1) + LevelBonus(Level) + EquipmentBonus()
+```
+
+### Designer Tuning with ScalableFloats
+
+Move hardcoded coefficients into data assets for designer control:
+
+#### **Curve Table Setup**
+```cpp
+// Create curve table asset: CT_AttributeScaling
+// Columns: Level (1-100), VigorMultiplier, LevelMultiplier, BaseValue
+// Row examples:
+// Level 1: VigorMultiplier=2.5, LevelMultiplier=10.0, BaseValue=80.0
+// Level 50: VigorMultiplier=3.2, LevelMultiplier=15.0, BaseValue=120.0
+// Level 100: VigorMultiplier=4.0, LevelMultiplier=20.0, BaseValue=160.0
+
+// In your MMC
+UPROPERTY(EditDefaultsOnly, Category = "Scaling")
+FScalableFloat VigorMultiplier;
+
+// Initialize with curve reference
+VigorMultiplier.Curve.CurveTable = LoadObject<UCurveTable>(nullptr, TEXT("/Game/Data/CT_AttributeScaling"));
+VigorMultiplier.Curve.RowName = FName("VigorMultiplier");
+
+// Use in calculation
+float Multiplier = VigorMultiplier.GetValueAtLevel(CharacterLevel);
+```
+
+#### **Benefits of ScalableFloats**
+- **Designer control**: No code changes for balance tuning
+- **Level scaling**: Different coefficients at different levels
+- **A/B testing**: Easy to swap curve tables for testing
+- **Complexity management**: Complex scaling curves without code complexity
+
+### Advanced MMC Patterns
+
+#### **Conditional Logic with Gameplay Tags**
+```cpp
+float CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const
+{
+    float BaseValue = 100.0f;
+    
+    // Check for berserker mode
+    if (Spec.CapturedTargetTags.GetAggregatedTags().HasTagExact(FGameplayTag::RequestGameplayTag("Character.State.Berserker")))
+    {
+        BaseValue *= 1.5f; // 50% bonus in berserker mode
+    }
+    
+    // Check for weakness debuff
+    if (Spec.CapturedTargetTags.GetAggregatedTags().HasTagExact(FGameplayTag::RequestGameplayTag("Character.Debuff.Weakness")))
+    {
+        BaseValue *= 0.8f; // 20% penalty when weakened
+    }
+    
+    return BaseValue;
+}
+```
+
+#### **Equipment Integration**
+```cpp
+// Define equipment interface
+UINTERFACE(BlueprintType)
+class UEquipmentInterface : public UInterface { GENERATED_BODY() };
+
+class IEquipmentInterface
+{
+    GENERATED_BODY()
+public:
+    UFUNCTION(BlueprintNativeEvent, Category = "Equipment")
+    float GetAttributeMultiplier(FGameplayAttribute Attribute) const;
+};
+
+// Use in MMC
+float GetEquipmentBonus(const FGameplayEffectSpec& Spec, FGameplayAttribute Attribute) const
+{
+    const UObject* SourceObj = Spec.GetContext().GetSourceObject();
+    if (const IEquipmentInterface* Equipment = Cast<IEquipmentInterface>(SourceObj))
+    {
+        return Equipment->Execute_GetAttributeMultiplier(SourceObj, Attribute);
+    }
+    return 1.0f; // No equipment bonus
+}
+```
+
+#### **Damage Type Variations**
+```cpp
+// Different MMCs for different damage types
+class UMMC_PhysicalDamage : public UGameplayModMagnitudeCalculation
+{
+    // Captures Strength, Level, uses weapon physical damage multiplier
+};
+
+class UMMC_MagicalDamage : public UGameplayModMagnitudeCalculation  
+{
+    // Captures Intelligence, Level, uses spell power multiplier
+};
+
+class UMMC_ElementalDamage : public UGameplayModMagnitudeCalculation
+{
+    // Captures Intelligence, Level, adds elemental resistance calculations
+};
+```
+
+### Integration with Other Systems
+
+#### **Cross-References to Related Documentation**
+
+- **[Derived (Secondary) Attributes](./derived-attributes.md)**: When to use AttributeBased vs MMCs
+- **[Attribute-Based Magnitudes](../gameplay-effects-attribute-based-magnitudes.md)**: Understanding the transform formula and modifier order
+- **[GAS Attribute Callbacks Cheatsheet](../cheatsheets/gas-attribute-callbacks.md)**: AttributeSet callback integration for clamping derived values
+- **[Gameplay Effects](../gameplay-effects.md)**: Core GE concepts and application patterns
+- **[Replication and Multiplayer](../replication-and-multiplayer.md)**: Networking considerations for custom calculations
+
+#### **Plugin Integration Points**
+
+This repository's MMC patterns integrate with:
+- **GASCore Plugin**: `UCoreAttributeSet`, `ICombatInterface`, `UCoreAbilitySystemComponent`
+- **HighlightActor Plugin**: Visual feedback for attribute changes
+- **Custom GameplayTag hierarchies**: Effect classification and conditional logic
+
+#### **Blueprint Integration**
+```cpp
+// Expose MMC parameters to Blueprint
+UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "MMC|Health")
+FScalableFloat BaseHealthValue;
+
+UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "MMC|Health")  
+FScalableFloat VigorMultiplier;
+
+// Blueprint callable helper (for debugging/testing)
+UFUNCTION(BlueprintCallable, Category = "MMC|Debug")
+float DebugCalculateHealth(float Vigor, int32 Level) const;
+```
+
+### Performance Optimization Strategies
+
+#### **MMC Pooling for Complex Calculations**
+For MMCs that require expensive setup or complex state:
+
+```cpp
+// Singleton pattern for heavy initialization
+class UMMC_ComplexDamage : public UGameplayModMagnitudeCalculation
+{
+private:
+    static TMap<FString, TSharedPtr<FComplexCalculationData>> CachedData;
+    
+public:
+    float CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const override
+    {
+        // Use cached expensive data instead of recalculating
+        const FString CacheKey = BuildCacheKey(Spec);
+        if (const auto CachedValue = CachedData.Find(CacheKey))
+        {
+            return (*CachedValue)->CalculateValue(Spec);
+        }
+        
+        // Fallback to direct calculation
+        return DirectCalculation(Spec);
+    }
+};
+```
+
+#### **Conditional Capture Patterns**
+Only capture attributes you actually need:
+
+```cpp
+// Instead of always capturing all attributes
+class UMMC_Adaptive : public UGameplayModMagnitudeCalculation
+{
+public:
+    UMMC_Adaptive(bool bUseIntelligence = false, bool bUseEndurance = false)
+    {
+        RelevantAttributesToCapture.Add(VigorDef); // Always needed
+        
+        if (bUseIntelligence)
+        {
+            RelevantAttributesToCapture.Add(IntelligenceDef); // Conditional
+        }
+        
+        if (bUseEndurance)  
+        {
+            RelevantAttributesToCapture.Add(EnduranceDef); // Conditional
+        }
+    }
+};
+```
 
 See also: [Derived (Secondary) Attributes](./derived-attributes.md)
