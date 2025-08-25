@@ -14,6 +14,10 @@
  *
  * Enemy character class with GAS (Gameplay Ability System) and highlight interaction.
  * Inherits from ATDCharacterBase (provides Ability System, Attribute Set) and supports IHighlightInterface.
+ *
+ * Design:
+ * - AI owns its own ASC/AttributeSet (unlike players whose ASC lives on PlayerState).
+ * - Level typically lives on the character itself for AI. See GetActorLevel().
  */
 UCLASS()
 class RPG_TOPDOWN_API ATDEnemyCharacter : public ATDCharacterBase, public IHighlightInterface
@@ -34,9 +38,16 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Interactable)
 	bool bHighlighted;
 
-protected:
+	/** Combat Interface: return this enemy's level (used by MMCs, scaling, etc.). */
+	virtual int32 GetActorLevel() override;
 
+protected:
 	virtual void BeginPlay() override;
 
+	/** Initialize GAS owner/avatar for AI (AI owns its own ASC/AttributeSet). */
 	virtual void InitializeAbilityActorInfo() override;
+	
+	/** AI level value; typically server-only relevance for calculations. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Class Defaults")
+	int32 EnemyCharacterLevel;
 };

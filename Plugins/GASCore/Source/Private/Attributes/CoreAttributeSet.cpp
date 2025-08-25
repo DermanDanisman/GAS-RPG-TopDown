@@ -10,9 +10,6 @@
 
 UCoreAttributeSet::UCoreAttributeSet()
 {
-	InitHealth(25.f);
-	InitMana(10.f);
-	InitStamina(25.f);
 }
 
 void UCoreAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

@@ -14,6 +14,10 @@
  * Primary gameplay character class for the GAS TopDown RPG project.
  * - Inherits from ATDCharacterBase, which provides GAS integration.
  * - Handles movement, possession, and GAS initialization for both server and clients.
+ *
+ * GAS ownership:
+ * - For players, the ASC and AttributeSet live on the PlayerState (authoritative, persistent).
+ * - This character becomes the AvatarActor for the PlayerState's ASC.
  */
 UCLASS()
 class RPG_TOPDOWN_API ATDPlayerCharacter : public ATDCharacterBase
@@ -34,10 +38,12 @@ public:
 	  * Ensures Ability System is re-initialized for the new PlayerState.
 	  */
 	virtual void OnRep_PlayerState() override;
+
+	/** Combat Interface: get level from PlayerState for player-controlled characters. */
+	virtual int32 GetActorLevel() override;
 	
 protected:
 
-	virtual void BeginPlay() override;
-
+	/** Initialize GAS owner/avatar references (PlayerState owner, this character as avatar). */
 	virtual void InitializeAbilityActorInfo() override;
 };

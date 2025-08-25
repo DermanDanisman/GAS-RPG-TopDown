@@ -2,7 +2,6 @@
 // and is protected by copyright law. Unauthorized reproduction, distribution, or use of this material is strictly prohibited.
 // Unreal Engine and its associated trademarks are used under license from Epic Games.
 
-
 #include "Charcters/TDEnemyCharacter.h"
 
 #include "HighlightActor.h"
@@ -11,7 +10,6 @@
 #include "Components/TDAbilitySystemComponent.h"
 #include "Components/TDDefaultAttributeInitComponent.h"
 #include "RPG_TopDown/RPG_TopDown.h"
-
 
 // Sets default values
 ATDEnemyCharacter::ATDEnemyCharacter()
@@ -23,7 +21,7 @@ ATDEnemyCharacter::ATDEnemyCharacter()
 	// Unlike player characters, AI own their own ASC and AttributeSet.
 	AbilitySystemComponent = CreateDefaultSubobject<UTDAbilitySystemComponent>("AbilitySystemComponent");
 	AbilitySystemComponent->SetIsReplicated(true); // Enable replication for multiplayer.
-	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
+	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal); // Minimal: fewer network updates.
 
 	// Create the Attribute Set for this AI character.
 	AttributeSet = CreateDefaultSubobject<UCoreAttributeSet>("AttributeSet");
@@ -47,6 +45,8 @@ void ATDEnemyCharacter::InitializeAbilityActorInfo()
 	{
 		// Initialize the ASC's actor info, using this character as both owner and avatar.
 		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+
+		// Bind ASC delegates (e.g., attribute change broadcasts) for this component type.
 		Cast<UTDAbilitySystemComponent>(AbilitySystemComponent)->BindASCDelegates();
 	}
 }
@@ -60,7 +60,7 @@ void ATDEnemyCharacter::HighlightActor()
 	GetMesh()->SetRenderCustomDepth(true);
 	GetMesh()->SetCustomDepthStencilValue(CUSTOM_DEPTH_RED);
 
-	// Also highlight the weapon mesh.
+	// Also highlight the weapon mesh (if present).
 	WeaponMesh->SetRenderCustomDepth(true);
 	WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_RED);
 }
@@ -75,6 +75,8 @@ void ATDEnemyCharacter::UnHighlightActor()
 	WeaponMesh->SetRenderCustomDepth(false);
 }
 
-
-
-
+int32 ATDEnemyCharacter::GetActorLevel()
+{
+	// AI enemies keep their level on the character itself.
+	return EnemyCharacterLevel;
+}

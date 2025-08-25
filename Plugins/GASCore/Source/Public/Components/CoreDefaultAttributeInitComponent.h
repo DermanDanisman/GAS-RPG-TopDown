@@ -76,14 +76,21 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="GASCore|Attribute Init Component|Init")
 	TSubclassOf<UGameplayEffect> DefaultPrimaryAttributes;
 
+	// Infinite GE that computes secondary/derived attributes (e.g., MaxHealth/MaxMana via MMCs).
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="GASCore|Attribute Init Component|Init")
 	TSubclassOf<UGameplayEffect> DefaultSecondaryAttributes;
 
+	// Instant GE that sets current Health/Mana equal to their Max after secondaries are ready.
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="GASCore|Attribute Init Component|Init")
+	TSubclassOf<UGameplayEffect> DefaultVitalAttributes;
+
+
 	/**
-	 * Initialize primary attributes by applying DefaultPrimaryAttributes to the provided ASC.
+	 * Initialize primary, secondary, and vital attributes by applying configured GEs
+	 * to the provided ASC in the correct order.
 	 *
 	 * Parameters:
-	 * - TargetAbilitySystemComponent: The ASC that should receive the init GE.
+	 * - TargetAbilitySystemComponent: The ASC that should receive the init GEs.
 	 *   Must be valid. This function does not auto-resolve an ASC if null.
 	 *
 	 * When to call:
@@ -101,5 +108,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category="GASCore|Attribute Init Component|Init")
 	virtual void InitializeDefaultAttributes(UAbilitySystemComponent* TargetAbilitySystemComponent) const;
 	
+	/**
+	 * Helper to build an effect spec and apply it to the same ASC (self-application).
+	 * - Level parameter enables scalable values or SetByCaller scaling in the GE.
+	 */
 	virtual void ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffectClass, float Level, UAbilitySystemComponent* TargetAbilitySystemComponent) const;
 };
