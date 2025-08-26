@@ -27,6 +27,10 @@ Last updated: 2025-08-25
 ## UI
 - UI & Widget Controller: ui/ui-widget-controller.md
 
+### Attribute Menu
+- Framed Value: ui/attribute-menu/framed-value.md
+- Text Value Row (coming next): ui/attribute-menu/text-value-row.md
+
 ## Plugin
 - Plugin API (Proposed): plugin/api.md
 
