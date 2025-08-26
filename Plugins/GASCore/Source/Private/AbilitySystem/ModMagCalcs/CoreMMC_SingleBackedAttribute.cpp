@@ -4,19 +4,19 @@
 // Consider renaming to "MM_Calculation_Actor.cpp" (or similar) and adding it to your build.
 // Also update includes to match the actual header path used in your project layout.
 
-#include "AbilitySystem/ModMagCalcs/CoreMMC_SingleAttributeBase.h"
+#include "AbilitySystem/ModMagCalcs/CoreMMC_SingleBackedAttribute.h"
 
 #include "Attributes/CoreAttributeSet.h"
 #include "Interfaces/CombatInterface.h"
 
-UCoreMMC_SingleAttributeBase::UCoreMMC_SingleAttributeBase()
+UCoreMMC_SingleBackedAttribute::UCoreMMC_SingleBackedAttribute()
 {
 	// Intentionally empty.
 	// Set CapturedAttributeDef and coefficients (BaseMagnitude/AttributeMultiplier/LevelMultiplier)
 	// either in a Blueprint child (recommended for iteration) or in a small C++ child constructor.
 }
 
-float UCoreMMC_SingleAttributeBase::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const
+float UCoreMMC_SingleBackedAttribute::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const
 {
 	/*
 		About this function:
@@ -68,7 +68,7 @@ float UCoreMMC_SingleAttributeBase::CalculateBaseMagnitude_Implementation(const 
 	return FinalizeOutput(FinalValue);
 }
 
-const TArray<FGameplayEffectAttributeCaptureDefinition>& UCoreMMC_SingleAttributeBase::GetAttributeCaptureDefinitions() const
+const TArray<FGameplayEffectAttributeCaptureDefinition>& UCoreMMC_SingleBackedAttribute::GetAttributeCaptureDefinitions() const
 {
 	// Ensure the engine captures whatever attribute is configured on the CDO.
 	// Returning this list here (instead of pushing into RelevantAttributesToCapture) guarantees that the
@@ -81,7 +81,7 @@ const TArray<FGameplayEffectAttributeCaptureDefinition>& UCoreMMC_SingleAttribut
 	return CachedCaptures;
 }
 
-float UCoreMMC_SingleAttributeBase::FinalizeOutput(float Value) const
+float UCoreMMC_SingleBackedAttribute::FinalizeOutput(float Value) const
 {
 	switch (RoundingPolicy)
 	{

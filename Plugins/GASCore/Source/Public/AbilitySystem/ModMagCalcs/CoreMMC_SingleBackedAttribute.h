@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameplayModMagnitudeCalculation.h"
 
-#include "CoreMMC_SingleAttributeBase.generated.h"
+#include "CoreMMC_SingleBackedAttribute.generated.h"
 
 UENUM(BlueprintType)
 enum class EMMCRoundingPolicy : uint8
@@ -38,12 +38,12 @@ enum class EMMCRoundingPolicy : uint8
  * - Keep this calculation allocation-free and fast; it runs on the game thread.
  */
 UCLASS()
-class GASCORE_API UCoreMMC_SingleAttributeBase : public UGameplayModMagnitudeCalculation
+class GASCORE_API UCoreMMC_SingleBackedAttribute : public UGameplayModMagnitudeCalculation
 {
 	GENERATED_BODY()
 
 public:
-	UCoreMMC_SingleAttributeBase();
+	UCoreMMC_SingleBackedAttribute();
 
 	// Called by GAS to compute the base magnitude for a GE modifier that references this MMC.
 	virtual float CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const override;
