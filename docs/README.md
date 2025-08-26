@@ -29,6 +29,7 @@ Last updated: 2025-08-25
 
 ### Attribute Menu
 - Attribute Menu Container: ui/attribute-menu/attribute-menu.md
+- Attribute Menu Button: ui/attribute-menu/attribute-menu-button.md
 - Framed Value: ui/attribute-menu/framed-value.md
 - Text Value Row: ui/attribute-menu/text-value-row.md
 - Text Value Button Row: ui/attribute-menu/text-value-button-row.md
