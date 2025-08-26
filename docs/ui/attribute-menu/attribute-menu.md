@@ -237,6 +237,56 @@ Add **Spacer** widgets between major sections to control vertical spacing:
 - Background materials should be optimized for UI rendering
 - Consider texture streaming settings for UI assets
 
+## Open/Close + Dispatcher
+
+### Close Button Wiring
+
+To properly handle menu closing functionality:
+
+#### Rename and Configure Close Button
+
+1. In the close button setup (Section 11), rename the close button element to `CloseButton`
+2. Mark `CloseButton` as **Is Variable** to allow external access
+
+#### Event Construct Binding
+
+1. Override **Event Construct** in the Widget Graph
+2. Get reference to the CloseButton's internal Button component
+3. Assign the Button's **OnClicked** event to call **RemoveFromParent**
+4. This immediately closes the menu when the X button is clicked
+
+### Event Dispatcher Implementation
+
+To re-enable the Attributes Button without creating tight coupling between widgets:
+
+#### Create Event Dispatcher
+
+1. In WP_AttributeMenu, create a new **Event Dispatcher** named `AttributeMenuClosed`
+2. Set the dispatcher as **BlueprintAssignable** to allow external binding
+
+#### Event Destruct Implementation
+
+1. Override **Event Destruct** in the Widget Graph
+2. In Event Destruct, call **(Broadcast) AttributeMenuClosed**
+3. This notifies any listening widgets when the menu is being destroyed
+
+#### Attributes Button Re-enabling
+
+In the overlay/HUD where WP_AttributeMenuButton lives:
+
+1. Immediately after creating WP_AttributeMenu and setting its position
+2. Bind to the menu's **AttributeMenuClosed** event dispatcher
+3. In the callback function:
+   - Get reference to WP_AttributeMenuButton
+   - Get reference to its internal Button component
+   - Call **Set Is Enabled** with value `true` on the internal Button
+
+> **Important:** Call Set Is Enabled on the internal Button, not the wrapper widget.
+
+### Alternative Pattern Note
+
+You could keep a persistent menu instance and toggle visibility instead of creating/destroying the menu each time. Both approaches are acceptable, but this guide prefers the create/destroy pattern to avoid hidden widgets reacting to callbacks when they shouldn't be active.
+
 ## Next Steps
 
 - **GAS Integration**: Wire up Gameplay Ability System bindings for real-time attribute updates
