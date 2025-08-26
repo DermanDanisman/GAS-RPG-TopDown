@@ -134,5 +134,5 @@ Practical tips and pitfalls
 - Sanity checks: Test with simple numbers first (10, 9, 12, 100) before tuning game values.
 
 See also
-- Gameplay Effects overview: gameplay-effects.md
-- Attribute clamping: attributes/attribute-clamping.md
+- Gameplay Effects overview: gas/gameplay-effects.md
+- Attribute clamping: gas/attributes/attribute-clamping.md

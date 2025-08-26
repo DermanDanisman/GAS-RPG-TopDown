@@ -270,5 +270,5 @@ SetHealth(NewValue); // ❌ Can cause infinite recursion
 ## See Also
 
 - [Attribute Clamping Guide](../attributes/attribute-clamping.md)
-- [Attributes & Accessors](../attributes-and-accessors.md)
+- [Attributes & Accessors](../../attributes-and-accessors.md)
 - [Gameplay Effects](../gameplay-effects.md)
