@@ -28,9 +28,13 @@ Last updated: 2025-08-25
 - UI & Widget Controller: ui/ui-widget-controller.md
 
 ### Attribute Menu
+- Attribute Menu Container: ui/attribute-menu/attribute-menu.md
 - Framed Value: ui/attribute-menu/framed-value.md
 - Text Value Row: ui/attribute-menu/text-value-row.md
 - Text Value Button Row: ui/attribute-menu/text-value-button-row.md
+
+### Button
+- WP_Button Widget: ui/button/wp-button.md
 
 ## Plugin
 - Plugin API (Proposed): plugin/api.md
