@@ -30,6 +30,7 @@ Last updated: 2025-08-25
 ### Attribute Menu
 - Framed Value: ui/attribute-menu/framed-value.md
 - Text Value Row: ui/attribute-menu/text-value-row.md
+- Text Value Button Row: ui/attribute-menu/text-value-button-row.md
 
 ## Plugin
 - Plugin API (Proposed): plugin/api.md
