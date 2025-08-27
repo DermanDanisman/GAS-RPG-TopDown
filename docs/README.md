@@ -31,6 +31,7 @@ Last updated: 2025-08-25
 - Attribute Menu Container: ui/attribute-menu/attribute-menu.md
 - Attribute Menu Button: ui/attribute-menu/attribute-menu-button.md
 - Attribute Menu Widget Controller: ui/attribute-menu/attribute-menu-controller.md
+- Attribute Menu Widget Controller Setup: ui/attribute-menu/attribute-menu-widget-controller-setup.md
 - Framed Value: ui/attribute-menu/framed-value.md
 - Text Value Row: ui/attribute-menu/text-value-row.md
 - Text Value Button Row: ui/attribute-menu/text-value-button-row.md
@@ -43,6 +44,7 @@ Last updated: 2025-08-25
 
 ## Systems
 - Gameplay Tags Centralization: systems/gameplay-tags-centralization.md
+- Attributes Gameplay Tags: systems/attributes-gameplay-tags.md
 
 ## Plugin
 - Plugin API (Proposed): plugin/api.md

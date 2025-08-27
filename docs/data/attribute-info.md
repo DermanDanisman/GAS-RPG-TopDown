@@ -8,9 +8,9 @@ Create a data-driven system for managing attribute metadata using Unreal Engine'
 
 ## FAuraAttributeInfo Struct Definition
 
-### Core Structure
+### Core Structure (From Transcript)
 
-The foundational struct that contains all metadata for a single attribute:
+The foundational struct that contains all metadata for a single attribute, based on the transcript requirements:
 
 ```cpp
 USTRUCT(BlueprintType)
@@ -24,11 +24,15 @@ struct GASCORE_API FAuraAttributeInfo
 
     /** Localized display name for UI elements */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Attribute Info")
-    FText DisplayName;
+    FText AttributeName;
 
     /** Localized description for tooltips and detailed information */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Attribute Info")
-    FText Description;
+    FText AttributeDescription;
+
+    /** Current attribute value (not editable in asset - populated at runtime) */
+    UPROPERTY(BlueprintReadOnly, Category = "Attribute Info")
+    float AttributeValue = 0.0f;
 
     /** Optional format string for value display (e.g., "{0}%", "{0} pts") */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Attribute Info")
@@ -46,8 +50,9 @@ struct GASCORE_API FAuraAttributeInfo
     FAuraAttributeInfo()
     {
         AttributeTag = FGameplayTag();
-        DisplayName = FText::GetEmpty();
-        Description = FText::GetEmpty();
+        AttributeName = FText::GetEmpty();
+        AttributeDescription = FText::GetEmpty();
+        AttributeValue = 0.0f;
         ValueFormat = FText::FromString("{0}");
         AttributeIcon = nullptr;
         bIsPrimary = false;
@@ -62,15 +67,20 @@ struct GASCORE_API FAuraAttributeInfo
 - **Usage**: Used by Widget Controller to map attribute changes to display information
 - **Examples**: `Attributes.Primary.Strength`, `Attributes.Secondary.CriticalHitChance`
 
-#### DisplayName (FText)
+#### AttributeName (FText)
 - **Purpose**: Localized, human-readable name for UI display
 - **Usage**: Shown in attribute row labels, menus, and tooltips
 - **Examples**: "Strength", "Critical Hit Chance", "Armor Penetration"
 
-#### Description (FText)
+#### AttributeDescription (FText)
 - **Purpose**: Detailed explanation for tooltips and help text
 - **Usage**: Displayed when hovering over attribute rows or in detailed views
 - **Examples**: "Increases physical damage and carrying capacity", "Chance to deal double damage on attacks"
+
+#### AttributeValue (float)
+- **Purpose**: Current runtime value of the attribute (not editable in asset)
+- **Usage**: Populated by the Widget Controller at runtime from the Ability System Component
+- **Note**: This field is BlueprintReadOnly and should not be set in the Data Asset editor
 
 #### ValueFormat (FText, Optional)
 - **Purpose**: Template for formatting numeric values
@@ -105,12 +115,13 @@ public:
     TArray<FAuraAttributeInfo> AttributeInformation;
 
     /** 
-     * Find attribute info by GameplayTag
+     * Find attribute info by GameplayTag with optional logging
      * @param AttributeTag - The tag to search for
+     * @param bLogNotFound - Whether to log with LogTemp if the tag is not found
      * @return The corresponding attribute info, or default if not found
      */
     UFUNCTION(BlueprintCallable, Category = "Attribute Info")
-    FAuraAttributeInfo FindAttributeInfo(const FGameplayTag& AttributeTag) const;
+    FAuraAttributeInfo FindAttributeInfoForTag(const FGameplayTag& AttributeTag, bool bLogNotFound = false) const;
 
     /** 
      * Get all primary attributes
@@ -130,12 +141,12 @@ public:
 
 ### Implementation Details
 
-#### FindAttributeInfo Function
+#### FindAttributeInfoForTag Function
 
-The core lookup function used by Widget Controllers:
+The core lookup function used by Widget Controllers, with optional logging:
 
 ```cpp
-FAuraAttributeInfo UAttributeInfo::FindAttributeInfo(const FGameplayTag& AttributeTag) const
+FAuraAttributeInfo UAttributeInfo::FindAttributeInfoForTag(const FGameplayTag& AttributeTag, bool bLogNotFound) const
 {
     for (const FAuraAttributeInfo& Info : AttributeInformation)
     {
@@ -145,10 +156,24 @@ FAuraAttributeInfo UAttributeInfo::FindAttributeInfo(const FGameplayTag& Attribu
         }
     }
     
+    // Log if requested and not found
+    if (bLogNotFound)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("AttributeInfo not found for tag: %s"), *AttributeTag.ToString());
+    }
+    
     // Return default if not found
     return FAuraAttributeInfo();
 }
 ```
+
+### Data Asset API
+
+The `UAttributeInfo` data asset provides the following API for iterating through and finding attribute information:
+
+- **FindAttributeInfoForTag(const FGameplayTag& AttributeTag, bool bLogNotFound=false) const**: Primary lookup function that iterates through the AttributeInformation array and returns the matching entry, optionally logging if not found
+- **GetPrimaryAttributes() const**: Returns only primary attributes (bIsPrimary == true) 
+- **GetSecondaryAttributes() const**: Returns only secondary attributes (bIsPrimary == false)
 
 #### Helper Functions
 
@@ -182,81 +207,127 @@ TArray<FAuraAttributeInfo> UAttributeInfo::GetSecondaryAttributes() const
 }
 ```
 
-## Authoring Guidance
+## Blueprint Authoring Steps
 
-### Creating the Data Asset
+### Step 1: Create DA_AttributeInfo Data Asset
 
 1. **Create Blueprint Data Asset**:
    - In Content Browser, right-click → Miscellaneous → Data Asset
    - Choose `UAttributeInfo` as the Data Asset Class
-   - Name it `DA_AttributeInfo` or similar
+   - Name it `DA_AttributeInfo`
+   - Save in appropriate content folder (e.g., `Content/Data/AttributeInfo/`)
 
-2. **Populate Attribute Information**:
-   - Open the Data Asset in the editor
-   - Add entries to the `AttributeInformation` array
-   - Configure each entry with appropriate values
+2. **Open Data Asset Editor**:
+   - Double-click the created Data Asset
+   - Locate the `Attribute Information` array property
+   - This array will contain all attribute entries
 
-### Example Entries for Primary Attributes
+### Step 2: Populate Attribute Information Entries
 
-```cpp
-// Strength Attribute
+For each attribute in your game, add a new entry to the AttributeInformation array:
+
+#### Primary Attribute Example Entries
+
+**Strength Attribute Entry:**
+```
 AttributeTag: Attributes.Primary.Strength
-DisplayName: "Strength"
-Description: "Increases physical damage and carrying capacity. Higher strength allows for more powerful melee attacks and the ability to carry heavier equipment."
+AttributeName: "Strength"
+AttributeDescription: "Increases physical damage and carrying capacity. Higher strength allows for more powerful melee attacks and the ability to carry heavier equipment."
+AttributeValue: 0.0 (leave as default - populated at runtime)
 ValueFormat: "{0}"
-bIsPrimary: true
-
-// Dexterity Attribute  
-AttributeTag: Attributes.Primary.Dexterity
-DisplayName: "Dexterity"
-Description: "Improves accuracy, critical hit chance, and movement speed. Higher dexterity enhances ranged combat effectiveness and evasion abilities."
-ValueFormat: "{0}"
-bIsPrimary: true
-
-// Intelligence Attribute
-AttributeTag: Attributes.Primary.Intelligence
-DisplayName: "Intelligence"
-Description: "Increases mana capacity and spell effectiveness. Higher intelligence allows for more powerful magic abilities and greater mana reserves."
-ValueFormat: "{0}"
+AttributeIcon: [Select appropriate texture]
 bIsPrimary: true
 ```
 
-### Example Entries for Secondary Attributes
+**Intelligence Attribute Entry:**
+```
+AttributeTag: Attributes.Primary.Intelligence
+AttributeName: "Intelligence"
+AttributeDescription: "Increases mana capacity and spell effectiveness. Higher intelligence allows for more powerful magic abilities and greater mana reserves."
+AttributeValue: 0.0 (leave as default - populated at runtime)
+ValueFormat: "{0}"
+AttributeIcon: [Select appropriate texture]
+bIsPrimary: true
+```
+
+**Resilience Attribute Entry:**
+```
+AttributeTag: Attributes.Primary.Resilience
+AttributeName: "Resilience"
+AttributeDescription: "Provides physical and magical resistance. Higher resilience reduces incoming damage from all sources."
+AttributeValue: 0.0 (leave as default - populated at runtime)
+ValueFormat: "{0}"
+AttributeIcon: [Select appropriate texture]
+bIsPrimary: true
+```
+
+**Vigor Attribute Entry:**
+```
+AttributeTag: Attributes.Primary.Vigor
+AttributeName: "Vigor"
+AttributeDescription: "Determines health and stamina capacity. Higher vigor increases maximum health and stamina pools."
+AttributeValue: 0.0 (leave as default - populated at runtime)
+ValueFormat: "{0}"
+AttributeIcon: [Select appropriate texture]
+bIsPrimary: true
+```
+
+#### Secondary Attribute Example Entries
+
+**Armor Attribute Entry:**
+```
+AttributeTag: Attributes.Secondary.Armor
+AttributeName: "Armor"
+AttributeDescription: "Physical damage reduction. Higher armor values reduce incoming physical damage."
+AttributeValue: 0.0 (leave as default - populated at runtime)
+ValueFormat: "{0}"
+AttributeIcon: [Select appropriate texture]
+bIsPrimary: false
+```
+
+**Critical Hit Chance Entry:**
+```
+AttributeTag: Attributes.Secondary.CriticalHitChance
+AttributeName: "Critical Hit Chance"
+AttributeDescription: "Probability of dealing critical damage on attacks. Calculated based on Dexterity and equipment bonuses."
+AttributeValue: 0.0 (leave as default - populated at runtime)
+ValueFormat: "{0}%"
+AttributeIcon: [Select appropriate texture]
+bIsPrimary: false
+```
+
+### Step 3: Configure Data Asset Properties
+
+1. **GameplayTag Selection**: 
+   - Use the GameplayTag picker to select the appropriate tags
+   - Ensure tags match those defined in FAuraGameplayTags::InitializeNativeGameplayTags()
+
+2. **Text Localization**:
+   - For AttributeName and AttributeDescription, consider using String Tables for localization
+   - Create entries in a String Table and reference them in the Data Asset
+
+3. **Icon Assignment**:
+   - Import appropriate icon textures for each attribute
+   - Assign them to the AttributeIcon property for visual representation
+
+### Step 4: Validation and Testing
+
+1. **Tag Consistency**: Verify all AttributeTag values match the native tags in FAuraGameplayTags
+2. **Completeness**: Ensure all game attributes have corresponding entries
+3. **Format Strings**: Test ValueFormat strings render correctly with sample values
+4. **Localization**: Verify text displays correctly in different languages if applicable
+
+### Step 5: Integration with Widget Controller
+
+The completed Data Asset will be referenced in the AttributeMenuWidgetController:
 
 ```cpp
-// Critical Hit Chance
-AttributeTag: Attributes.Secondary.CriticalHitChance
-DisplayName: "Critical Hit Chance"
-Description: "Probability of dealing double damage on attacks. Calculated based on Dexterity and equipment bonuses."
-ValueFormat: "{0}%"
-bIsPrimary: false
-
-// Armor Penetration
-AttributeTag: Attributes.Secondary.ArmorPenetration
-DisplayName: "Armor Penetration"
-Description: "Reduces effectiveness of target's armor. Higher penetration allows attacks to bypass more enemy armor."
-ValueFormat: "{0}"
-bIsPrimary: false
-
-// Mana Regeneration
-AttributeTag: Attributes.Secondary.ManaRegeneration
-DisplayName: "Mana Regeneration"
-Description: "Rate at which mana is restored over time. Based on Intelligence and Willpower attributes."
-ValueFormat: "{0}/sec"
-bIsPrimary: false
+// In AttributeMenuWidgetController
+UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Attribute Info")
+TObjectPtr<UAttributeInfo> AttributeInfoDataAsset;
 ```
 
-### Localization Considerations
-
-- **Use Text Assets**: Store DisplayName and Description in text assets for localization
-- **Namespace Properly**: Use consistent namespaces like "AttributeMenu.Labels" and "AttributeMenu.Descriptions"
-- **Format Strings**: Ensure ValueFormat templates work across different languages
-
-### Asset Organization
-
-- **Single Source**: Maintain one authoritative Data Asset for all attributes
-- **Version Control**: Treat the Data Asset as critical content requiring careful version control
-- **Testing**: Create test entries to verify the lookup system works correctly
+Designers can then assign the DA_AttributeInfo asset to this property in Blueprint or during controller initialization.
 
 ## Usage in Widget Controller
 
