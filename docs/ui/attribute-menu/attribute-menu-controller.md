@@ -13,6 +13,26 @@ Design and implement the AttributeMenuWidgetController that bridges the Gameplay
 - Basic knowledge of [Attribute Menu Button Row](./text-value-button-row.md) widgets
 - Understanding of Unreal's Gameplay Ability System (GAS) and attribute change notifications
 
+## Setup
+
+For detailed setup instructions on creating and configuring the `UAuraAttributeMenuWidgetController`, see the [Attribute Menu Widget Controller Setup](./attribute-menu-widget-controller-setup.md) guide.
+
+### Required Overrides Summary
+
+The implementation requires overriding two key methods from `UAuraWidgetController`:
+
+- **`BindCallbacksToDependencies()`**: Subscribe to ASC attribute change delegates for all primary and secondary attributes
+- **`BroadcastInitialValues()`**: Push initial attribute values to the UI when the controller is first set up
+
+### Construction Pattern Summary  
+
+The controller follows the same caching pattern as other widget controllers:
+- Constructed and cached in `AuraHUD` using `WidgetControllerParams`
+- Optional Blueprint Function Library helpers for easy widget access
+- Data Asset dependency for attribute metadata lookup
+
+See the [setup guide](./attribute-menu-widget-controller-setup.md) for complete implementation details.
+
 ## Problem with One-Delegate-Per-Attribute Approach
 
 ### Scalability Concerns
