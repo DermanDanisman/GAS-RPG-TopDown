@@ -287,9 +287,37 @@ In the overlay/HUD where WP_AttributeMenuButton lives:
 
 You could keep a persistent menu instance and toggle visibility instead of creating/destroying the menu each time. Both approaches are acceptable, but this guide prefers the create/destroy pattern to avoid hidden widgets reacting to callbacks when they shouldn't be active.
 
+## Data Flow and Bindings (Overview)
+
+The Attribute Menu uses a sophisticated data flow architecture that connects the Gameplay Ability System (GAS) to the UI through a centralized Widget Controller pattern. This approach provides scalable, data-driven attribute display without tight coupling between components.
+
+### Architecture Components
+
+- **[Attribute Menu Widget Controller](./attribute-menu-controller.md)**: Central mediator that bridges GAS and UI using generic dispatch patterns
+- **[Attribute Info Data Asset](../../data/attribute-info.md)**: Data-driven storage for attribute metadata including display names, descriptions, and formatting
+- **[Centralized Gameplay Tags](../../systems/gameplay-tags-centralization.md)**: Unified tag system for mapping attributes to UI elements without hardcoded strings
+
+### High-Level Flow Summary
+
+1. **ASC Broadcasts**: Ability System Component emits attribute change notifications when values change
+2. **Widget Controller Subscribes**: AttributeMenuWidgetController binds to ASC delegates for all relevant attributes
+3. **Tag Mapping**: Controller maps changed attributes to GameplayTags using centralized tag registry
+4. **Data Asset Lookup**: Controller queries Attribute Info Data Asset by tag to retrieve display metadata
+5. **Generic Broadcast**: Controller emits single OnAttributeInfoChanged event with complete attribute information
+6. **Row Widget Updates**: Each attribute row compares its AssignedTag to the broadcast tag; matching rows update their display
+
+This pattern eliminates the need for individual delegates per attribute and enables easy addition of new attributes through data configuration rather than code changes.
+
+### Benefits
+
+- **Scalability**: Add new attributes by updating data assets and tag definitions only
+- **Minimal Coupling**: Row widgets only depend on generic attribute info structure
+- **Data-Driven**: Designers can modify attribute display without code changes
+- **Maintainability**: Single source of truth for attribute metadata and UI binding logic
+
 ## Next Steps
 
-- **GAS Integration**: Wire up Gameplay Ability System bindings for real-time attribute updates
+- **GAS Integration**: Wire up Gameplay Ability System bindings for real-time attribute updates using the [Widget Controller pattern](./attribute-menu-controller.md)
 - **Button Interactions**: Implement attribute point spending logic through Widget Controller
 - **Responsive Layout**: Convert hardcoded dimensions to variables for different screen sizes
 - **Visual Polish**: Fine-tune fonts, spacing, and visual effects based on final design requirements
