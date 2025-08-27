@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/CoreAbilitySystemComponent.h"
+#include "GASCore/Public/Components/CoreAbilitySystemComponent.h"
 #include "TDAbilitySystemComponent.generated.h"
 
 

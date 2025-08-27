@@ -5,10 +5,9 @@
 #include "Charcters/TDEnemyCharacter.h"
 
 #include "HighlightActor.h"
-#include "Attributes/CoreAttributeSet.h"
-#include "Components/CoreAbilitySystemComponent.h"
+#include "GASCore/Public/Attributes/CoreAttributeSet.h"
+#include "GASCore/Public/Components/CoreAbilitySystemComponent.h"
 #include "Components/TDAbilitySystemComponent.h"
-#include "Components/TDDefaultAttributeInitComponent.h"
 #include "RPG_TopDown/RPG_TopDown.h"
 
 // Sets default values

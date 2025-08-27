@@ -4,7 +4,7 @@
 
 #include "Player/TDPlayerState.h"
 
-#include "Attributes/CoreAttributeSet.h"
+#include "GASCore/Public/Attributes/CoreAttributeSet.h"
 #include "Components/TDAbilitySystemComponent.h"
 #include "Net/UnrealNetwork.h"
 

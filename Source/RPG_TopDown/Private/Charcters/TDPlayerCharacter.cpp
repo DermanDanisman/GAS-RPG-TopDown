@@ -4,9 +4,7 @@
 
 #include "Charcters/TDPlayerCharacter.h"
 
-#include "Attributes/CoreAttributeSet.h"
-#include "Components/CoreAbilitySystemComponent.h"
-#include "Components/CoreDefaultAttributeInitComponent.h"
+#include "GASCore/Public/Attributes/CoreAttributeSet.h"
 #include "Components/TDAbilitySystemComponent.h"
 #include "Components/TDDefaultAttributeInitComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"

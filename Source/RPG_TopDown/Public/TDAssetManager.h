@@ -3,18 +3,22 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GASCore/Public/UI/Widgets/CoreUserWidget.h"
-#include "TDUserWidget.generated.h"
+#include "Engine/AssetManager.h"
+#include "TDAssetManager.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class RPG_TOPDOWN_API UTDUserWidget : public UCoreUserWidget
+class RPG_TOPDOWN_API UTDAssetManager : public UAssetManager
 {
 	GENERATED_BODY()
 
 public:
 
-	virtual void SetWidgetController(UObject* InWidgetController) override;
+	static UTDAssetManager& Get();
+
+protected:
+	virtual void StartInitialLoading() override;
+	
 };

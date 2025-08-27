@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/CoreDefaultAttributeInitComponent.h"
+#include "GASCore/Public/Components/CoreDefaultAttributeInitComponent.h"
 #include "TDDefaultAttributeInitComponent.generated.h"
 
 /**

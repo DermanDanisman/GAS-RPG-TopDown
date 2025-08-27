@@ -3,6 +3,8 @@
 
 #include "Components/TDAbilitySystemComponent.h"
 
+#include "TDGameplayTags.h"
+
 
 UTDAbilitySystemComponent::UTDAbilitySystemComponent()
 {
@@ -12,6 +14,12 @@ UTDAbilitySystemComponent::UTDAbilitySystemComponent()
 void UTDAbilitySystemComponent::BindASCDelegates()
 {
 	Super::BindASCDelegates();
+
+	const FTDGameplayTags& GameplayTags = FTDGameplayTags::Get();
+	GEngine->AddOnScreenDebugMessage(-1,
+		10.f,
+		FColor::Orange,
+		FString::Printf(TEXT("Tag: %s"), *GameplayTags.Attributes_Secondary_Armor.ToString()));
 }
 
 void UTDAbilitySystemComponent::HandleGameplayEffectAppliedToSelf(UAbilitySystemComponent* AbilitySystemComponent,

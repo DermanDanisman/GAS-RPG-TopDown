@@ -7,7 +7,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
-#include "Interfaces/CombatInterface.h"
+#include "GASCore/Public/Interfaces/CombatInterface.h"
 #include "TDCharacterBase.generated.h"
 
 class UTDDefaultAttributeInitComponent;
