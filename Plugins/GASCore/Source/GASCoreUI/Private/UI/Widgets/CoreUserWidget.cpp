@@ -44,7 +44,7 @@
 // - If controller cast fails, log warning and disable related UI features
 // - If delegate binding fails, individual UI elements may not update but widget shouldn't crash
 
-#include "GASCore/Public/UI/Widgets/CoreUserWidget.h"
+#include "GASCoreUI/Public/UI/Widgets/CoreUserWidget.h"
 
 void UCoreUserWidget::SetWidgetController(UObject* InWidgetController)
 {

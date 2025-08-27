@@ -5,9 +5,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GASCore/Public/UI/WidgetControllers/CoreHUDWidgetController.h"
+#include "GameplayTagContainer.h"
+#include "UI/WidgetControllers/CoreWidgetController.h"
 #include "TDHUDWidgetController.generated.h"
 
+class UTDUserWidget;
 /**
  * FUIMessageWidgetRow
  *
@@ -35,7 +37,7 @@ struct FUIMessageWidgetRow : public FTableRowBase
 
 	/** Optional widget class to render the message. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|UI|Message")
-	TSubclassOf<UCoreUserWidget> MessageWidget;
+	TSubclassOf<UTDUserWidget> MessageWidget;
 
 	/** Optional icon displayed with the message. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|UI|Message")

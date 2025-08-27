@@ -18,7 +18,8 @@ public class RPG_TopDown : ModuleRules
 			"GameplayTags", 
 			"GameplayTasks", 
 			"UMG", // For UI widgets
-			"GASCore"
+			"GASCore",
+			"GASCoreUI"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });

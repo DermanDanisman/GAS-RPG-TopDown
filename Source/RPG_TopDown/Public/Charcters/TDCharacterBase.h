@@ -7,7 +7,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
-#include "GASCore/Public/Interfaces/CombatInterface.h"
+#include "GASCore/Public/Interfaces/CoreCombatInterface.h"
 #include "TDCharacterBase.generated.h"
 
 class UTDDefaultAttributeInitComponent;
@@ -22,7 +22,7 @@ class UAttributeSet;
  * - Handles setup of the ability system and attribute set references, and provides accessors for UI/controllers.
  */
 UCLASS()
-class RPG_TOPDOWN_API ATDCharacterBase : public ACharacter, public IAbilitySystemInterface, public ICombatInterface
+class RPG_TOPDOWN_API ATDCharacterBase : public ACharacter, public IAbilitySystemInterface, public ICoreCombatInterface
 {
 	GENERATED_BODY()
 

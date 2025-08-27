@@ -21,13 +21,13 @@ public class GASCoreUI : ModuleRules
         });
 
         PrivateDependencyModuleNames.AddRange(
-            new string[]
-            {
-                "CoreUObject",
-                "Engine",
-                "Slate",
-                "SlateCore"
-            }
+        new string[]
+        {
+            "CoreUObject",
+            "Engine",
+            "Slate",
+            "SlateCore"
+        }
         );
     }
 }

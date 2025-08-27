@@ -44,7 +44,7 @@
 //   - AddLambda: Convenient but requires manual cleanup if controller lifetime differs
 //   - AddUObject: Automatic cleanup when UObject is destroyed, safer for most cases
 
-#include "GASCore/Public/UI/WidgetControllers/CoreWidgetController.h"
+#include "GASCoreUI/Public/UI/WidgetControllers/CoreWidgetController.h"
 
 void UCoreWidgetController::SetWidgetControllerParams(const FWidgetControllerParams& InWidgetControllerParams)
 {

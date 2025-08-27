@@ -7,7 +7,7 @@
 #include "GASCore/Public/AbilitySystem/ModMagCalcs/CoreMMC_SingleBackedAttribute.h"
 
 #include "GASCore/Public/Attributes/CoreAttributeSet.h"
-#include "GASCore/Public/Interfaces/CombatInterface.h"
+#include "GASCore/Public/Interfaces/CoreCombatInterface.h"
 
 UCoreMMC_SingleBackedAttribute::UCoreMMC_SingleBackedAttribute()
 {
@@ -56,7 +56,7 @@ float UCoreMMC_SingleBackedAttribute::CalculateBaseMagnitude_Implementation(cons
 	// 2) External (non-attribute) dependency: Level from SourceObject via ICombatInterface.
 	//    Best practice: when creating the GE spec, the applier sets Context.AddSourceObject(SomeActorImplementingICombatInterface).
 	//    If absent, we default to 1 here. Alternatively (and more robustly), you can fall back to Spec.GetLevel().
-	ICombatInterface* CombatInterface = Cast<ICombatInterface>(Spec.GetContext().GetSourceObject());
+	ICoreCombatInterface* CombatInterface = Cast<ICoreCombatInterface>(Spec.GetContext().GetSourceObject());
 	const int32 PlayerLevel = CombatInterface ? CombatInterface->GetActorLevel() : 1;
 
 	// 3) Compute the base value. Designers can further scale this in the GE modifier if desired.

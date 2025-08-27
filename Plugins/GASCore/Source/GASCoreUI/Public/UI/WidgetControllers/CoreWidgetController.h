@@ -104,7 +104,7 @@ struct FWidgetControllerParams
  * and defines a standard initialization contract for derived controllers.
  */
 UCLASS()
-class GASCORE_API UCoreWidgetController : public UObject
+class GASCOREUI_API UCoreWidgetController : public UObject
 {
 	GENERATED_BODY()
 

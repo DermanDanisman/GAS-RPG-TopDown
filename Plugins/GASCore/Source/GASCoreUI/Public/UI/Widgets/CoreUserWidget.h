@@ -85,7 +85,7 @@
  * 4. Bind to MessageWidgetRowDelegate → Display Notifications
  */
 UCLASS()
-class GASCORE_API UCoreUserWidget : public UUserWidget
+class GASCOREUI_API UCoreUserWidget : public UUserWidget
 {
 	GENERATED_BODY()
 
