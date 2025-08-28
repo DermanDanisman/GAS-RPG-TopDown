@@ -11,7 +11,7 @@
 #include "UI/HUD/TDHUD.h"
 #include "UI/WidgetControllers/TDHUDWidgetController.h"
 #include "UI/WidgetControllers/TDAttributeMenuWidgetController.h"
-#include "UI/WidgetControllers/GASCoreUIWidgetController.h"
+#include "GASCoreUI/Public/UI/WidgetControllers/GASCoreUIWidgetController.h"
 
 UTDHUDWidgetController* UAuraAbilitySystemLib::GetHUDWidgetController(const UObject* WorldContext)
 {

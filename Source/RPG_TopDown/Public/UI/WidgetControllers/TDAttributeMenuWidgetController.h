@@ -5,7 +5,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UI/WidgetControllers/GASCoreUIWidgetController.h"
+#include "GASCoreUI/Public/UI/WidgetControllers/GASCoreUIWidgetController.h"
 #include "TDAttributeMenuWidgetController.generated.h"
 
 /**

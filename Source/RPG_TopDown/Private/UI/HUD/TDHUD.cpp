@@ -36,6 +36,13 @@ UTDAttributeMenuWidgetController* ATDHUD::GetAttributeMenuWidgetController(const
 	// If the controller hasn't been created yet, instantiate it and initialize.
 	if (AttributeMenuWidgetController == nullptr)
 	{
+		// Ensure we have a controller class assigned
+		if (!AttributeMenuWidgetControllerClass)
+		{
+			UE_LOG(LogTemp, Error, TEXT("AttributeMenuWidgetControllerClass is not set in BP_TDHUD. Cannot create Attribute Menu Widget Controller."));
+			return nullptr;
+		}
+
 		// Create a new widget controller of the specified class, owned by this HUD.
 		AttributeMenuWidgetController = NewObject<UTDAttributeMenuWidgetController>(this, AttributeMenuWidgetControllerClass);
 
@@ -58,7 +65,12 @@ void ATDHUD::InitializeHUD(APlayerController* InPlayerController, APlayerState* 
 	// If not, crash with a clear message so the developer/designer can fix the setup.
 	checkf(HUDWidgetClass, TEXT("HUD Widget Class uninitialized, please fill out BP_TDHUD"));
 	checkf(HUDWidgetControllerClass, TEXT("HUD Widget Controller Class uninitialized, please fill out BP_TDHUD"));
-	checkf(AttributeMenuWidgetControllerClass, TEXT("Attribute Menu Widget Controller Class uninitialized, please fill out BP_TDHUD"));
+	
+	// Warn if Attribute Menu controller class is not set (optional but recommended)
+	if (!AttributeMenuWidgetControllerClass)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Attribute Menu Widget Controller Class not set in BP_TDHUD. This is needed for GetAttributeMenuWidgetController() to work."));
+	}
 
 	// Create the HUD widget instance using the specified class.
 	// This creates a UUserWidget, which we then cast to our custom UGASUserWidget class.
