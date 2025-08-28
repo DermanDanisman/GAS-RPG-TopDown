@@ -448,18 +448,341 @@ void UTDAttributeMenuWidgetController::BuildTagToAttributeMap(TMap<FGameplayTag,
 - Situations where data asset provides valuable additional information
 - Performance-critical contexts where getter method calls are expensive
 
+## Strategy 5: GameplayTag→Attribute Registry
+
+### Approach Overview
+
+Create a registry within the AttributeSet that maps FGameplayTag to attribute accessors, eliminating per-attribute boilerplate in the Widget Controller. The registry provides a centralized lookup mechanism where the Widget Controller can iterate over tag-to-attribute mappings without hardcoding individual attribute broadcasts.
+
+This approach moves the mapping logic into the AttributeSet itself, making it the authoritative source for both attribute storage and attribute access patterns.
+
+### Approach 5A: Delegate-Based Registry
+
+The initial approach uses delegates to provide a callable interface for attribute retrieval:
+
+```cpp
+// In AttributeSet header - delegate signature for attribute access
+DECLARE_DELEGATE_RetVal(FGameplayAttribute, FAttributeAccessorDelegate);
+
+class UTDAttributeSet : public UGASCoreAttributeSet
+{
+private:
+    /** Registry mapping GameplayTags to attribute accessor delegates */
+    TMap<FGameplayTag, FAttributeAccessorDelegate> AttributeAccessorRegistry;
+    
+    /** Initialize the registry during construction */
+    void InitializeAttributeRegistry();
+
+public:
+    /** Get the attribute registry for external iteration */
+    const TMap<FGameplayTag, FAttributeAccessorDelegate>& GetAttributeRegistry() const 
+    { 
+        return AttributeAccessorRegistry; 
+    }
+    
+    // ... existing attribute definitions
+};
+
+// In AttributeSet implementation
+void UTDAttributeSet::InitializeAttributeRegistry()
+{
+    const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
+    
+    // Register primary attributes
+    AttributeAccessorRegistry.Add(
+        GameplayTags.Attributes_Primary_Strength,
+        FAttributeAccessorDelegate::CreateUObject(this, &UTDAttributeSet::GetStrengthAttribute)
+    );
+    
+    AttributeAccessorRegistry.Add(
+        GameplayTags.Attributes_Primary_Intelligence,
+        FAttributeAccessorDelegate::CreateUObject(this, &UTDAttributeSet::GetIntelligenceAttribute)
+    );
+    
+    // Register secondary attributes
+    AttributeAccessorRegistry.Add(
+        GameplayTags.Attributes_Secondary_Armor,
+        FAttributeAccessorDelegate::CreateUObject(this, &UTDAttributeSet::GetArmorAttribute)
+    );
+    
+    // ... Continue for all attributes
+}
+```
+
+Widget Controller usage with delegate approach:
+
+```cpp
+// In AttributeMenuWidgetController
+void UTDAttributeMenuWidgetController::BroadcastInitialValues_Registry()
+{
+    if (!AttributeSet)
+    {
+        return;
+    }
+
+    const UTDAttributeSet* TDAttributeSet = CastChecked<UTDAttributeSet>(AttributeSet);
+    const TMap<FGameplayTag, FAttributeAccessorDelegate>& Registry = TDAttributeSet->GetAttributeRegistry();
+
+    // Iterate over registry entries
+    for (const auto& RegistryPair : Registry)
+    {
+        const FGameplayTag& AttributeTag = RegistryPair.Key;
+        const FAttributeAccessorDelegate& AccessorDelegate = RegistryPair.Value;
+        
+        // Execute delegate to get FGameplayAttribute
+        FGameplayAttribute GameplayAttr = AccessorDelegate.ExecuteIfBound();
+        
+        // Get current value using the attribute
+        float CurrentValue = AttributeSet->GetNumericAttribute(GameplayAttr);
+        
+        // Broadcast using existing pattern
+        BroadcastAttributeInfo(AttributeTag, CurrentValue);
+    }
+}
+```
+
+### Approach 5B: Function Pointer Registry (Refined)
+
+The refined approach replaces delegates with static function pointers for better performance and simpler syntax:
+
+```cpp
+// Function pointer type for attribute getters
+using FAttrGetter = FGameplayAttribute(*)();
+
+class UTDAttributeSet : public UGASCoreAttributeSet  
+{
+private:
+    /** Registry mapping GameplayTags to static function pointers */
+    TMap<FGameplayTag, FAttrGetter> AttributeFunctionRegistry;
+    
+    /** Initialize the function pointer registry */
+    void InitializeAttributeFunctionRegistry();
+
+public:
+    /** Get the function pointer registry for external iteration */
+    const TMap<FGameplayTag, FAttrGetter>& GetAttributeFunctionRegistry() const
+    {
+        return AttributeFunctionRegistry; 
+    }
+    
+    // Static accessor functions for registry
+    static FGameplayAttribute GetStrengthAttributeStatic() { return GetStrengthAttribute(); }
+    static FGameplayAttribute GetIntelligenceAttributeStatic() { return GetIntelligenceAttribute(); }
+    static FGameplayAttribute GetArmorAttributeStatic() { return GetArmorAttribute(); }
+    // ... Continue for all attributes
+    
+    // ... existing attribute definitions
+};
+
+// In AttributeSet implementation  
+void UTDAttributeSet::InitializeAttributeFunctionRegistry()
+{
+    const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
+    
+    // Register function pointers for primary attributes
+    AttributeFunctionRegistry.Add(GameplayTags.Attributes_Primary_Strength, &GetStrengthAttributeStatic);
+    AttributeFunctionRegistry.Add(GameplayTags.Attributes_Primary_Intelligence, &GetIntelligenceAttributeStatic);
+    
+    // Register function pointers for secondary attributes  
+    AttributeFunctionRegistry.Add(GameplayTags.Attributes_Secondary_Armor, &GetArmorAttributeStatic);
+    
+    // ... Continue for all attributes
+}
+```
+
+Widget Controller usage with function pointer approach:
+
+```cpp
+// In AttributeMenuWidgetController
+void UTDAttributeMenuWidgetController::BroadcastInitialValues_FunctionRegistry()
+{
+    if (!AttributeSet)
+    {
+        return;
+    }
+
+    const UTDAttributeSet* TDAttributeSet = CastChecked<UTDAttributeSet>(AttributeSet);
+    const TMap<FGameplayTag, FAttrGetter>& Registry = TDAttributeSet->GetAttributeFunctionRegistry();
+
+    // Iterate over registry entries  
+    for (const auto& RegistryPair : Registry)
+    {
+        const FGameplayTag& AttributeTag = RegistryPair.Key;
+        const FAttrGetter& AttributeGetter = RegistryPair.Value;
+        
+        // Call function pointer to get FGameplayAttribute
+        FGameplayAttribute GameplayAttr = AttributeGetter();
+        
+        // Get current value using the attribute
+        float CurrentValue = AttributeSet->GetNumericAttribute(GameplayAttr);
+        
+        // Broadcast using existing pattern
+        BroadcastAttributeInfo(AttributeTag, CurrentValue);
+    }
+}
+```
+
+### Alternative: Member Function Pointer Approach
+
+For scenarios where static functions are not preferred, member function pointers provide another option:
+
+```cpp
+// Member function pointer type
+using FAttrMemberGetter = FGameplayAttribute(UTDAttributeSet::*)() const;
+
+class UTDAttributeSet : public UGASCoreAttributeSet
+{
+private:
+    /** Registry mapping GameplayTags to member function pointers */
+    TMap<FGameplayTag, FAttrMemberGetter> AttributeMemberFunctionRegistry;
+
+public:
+    const TMap<FGameplayTag, FAttrMemberGetter>& GetAttributeMemberFunctionRegistry() const
+    {
+        return AttributeMemberFunctionRegistry;
+    }
+};
+
+// Usage in Widget Controller
+void UTDAttributeMenuWidgetController::BroadcastInitialValues_MemberFunctionRegistry()
+{
+    const UTDAttributeSet* TDAttributeSet = CastChecked<UTDAttributeSet>(AttributeSet);
+    const TMap<FGameplayTag, FAttrMemberGetter>& Registry = TDAttributeSet->GetAttributeMemberFunctionRegistry();
+
+    for (const auto& RegistryPair : Registry)
+    {
+        const FGameplayTag& AttributeTag = RegistryPair.Key;
+        const FAttrMemberGetter& MemberGetter = RegistryPair.Value;
+        
+        // Call member function pointer
+        FGameplayAttribute GameplayAttr = (TDAttributeSet->*MemberGetter)();
+        
+        float CurrentValue = AttributeSet->GetNumericAttribute(GameplayAttr);
+        BroadcastAttributeInfo(AttributeTag, CurrentValue);
+    }
+}
+```
+
+### Registry Initialization Patterns
+
+**Constructor Initialization**:
+```cpp
+UTDAttributeSet::UTDAttributeSet()
+{
+    InitializeAttributeFunctionRegistry();
+}
+```
+
+**Lazy Initialization**:
+```cpp
+const TMap<FGameplayTag, FAttrGetter>& UTDAttributeSet::GetAttributeFunctionRegistry() const
+{
+    if (AttributeFunctionRegistry.Num() == 0)
+    {
+        // const_cast acceptable for lazy initialization
+        const_cast<UTDAttributeSet*>(this)->InitializeAttributeFunctionRegistry();
+    }
+    return AttributeFunctionRegistry;
+}
+```
+
+**Static Initialization (Shared Registry)**:
+```cpp
+// Static registry shared across all instances
+static TMap<FGameplayTag, FAttrGetter> StaticAttributeRegistry;
+
+const TMap<FGameplayTag, FAttrGetter>& UTDAttributeSet::GetStaticAttributeRegistry()
+{
+    static bool bInitialized = false;
+    if (!bInitialized)
+    {
+        InitializeStaticAttributeRegistry();
+        bInitialized = true;
+    }
+    return StaticAttributeRegistry;
+}
+```
+
+### Strategy 5 Trade-offs
+
+**Approach 5A (Delegates) Advantages**:
+- ✅ Familiar Unreal delegate patterns
+- ✅ Type-safe callable interface  
+- ✅ Supports member function binding
+- ✅ Memory management handled by delegate system
+- ✅ Can capture additional context if needed
+
+**Approach 5A (Delegates) Disadvantages**:
+- ❌ Higher memory overhead per registry entry
+- ❌ Slightly more complex syntax for execution
+- ❌ Potential for delegate invalidation if AttributeSet is destroyed
+- ❌ More setup code required for delegate creation
+
+**Approach 5B (Function Pointers) Advantages**:
+- ✅ Minimal memory footprint (just function addresses)
+- ✅ Maximum performance - direct function calls
+- ✅ Simple, direct calling syntax
+- ✅ No lifetime management concerns
+- ✅ Clean separation of concerns
+
+**Approach 5B (Function Pointers) Disadvantages**:
+- ❌ Requires static wrapper functions for each attribute
+- ❌ Less flexible than delegates for future extensions
+- ❌ Static functions cannot access instance data easily
+- ❌ More boilerplate code for static wrappers
+
+**Overall Strategy 5 Benefits**:
+- ✅ **Centralized Mapping**: All attribute access logic contained in AttributeSet
+- ✅ **Eliminates Widget Controller Boilerplate**: No per-attribute broadcasting code needed
+- ✅ **Type Safety**: Compile-time verification of attribute accessors
+- ✅ **Maintainability**: Adding new attributes only requires registry entries
+- ✅ **Performance**: Direct attribute access without string-based lookups
+- ✅ **Scalability**: Registry approach scales linearly with attribute count
+
+**Overall Strategy 5 Disadvantages**:
+- ❌ **Setup Complexity**: Requires careful registry initialization
+- ❌ **AttributeSet Coupling**: Widget Controller becomes dependent on AttributeSet registry format
+- ❌ **Memory Usage**: Registry storage adds overhead compared to hardcoded approach
+- ❌ **Debugging Complexity**: Indirect calls through registry can complicate debugging
+
+**Best For**:
+- Projects with 30+ attributes where hardcoded approaches become unwieldy
+- Teams prioritizing maintainability and seeking to eliminate boilerplate code
+- Architectures where AttributeSet should be the authoritative source for attribute access patterns
+- Performance-sensitive contexts where function pointer calls are preferred over reflection
+- Long-term projects where attribute sets are expected to grow significantly
+
+**Comparison with Other Strategies**:
+- **vs Strategy 1 (Data Asset)**: More type-safe, better performance, but requires registry setup
+- **vs Strategy 2 (Tag Lists)**: More automated, eliminates configuration maintenance
+- **vs Strategy 3 (Reflection)**: Better performance, more predictable, but requires more setup code
+- **vs Strategy 4 (Hybrid)**: Simpler architecture, more centralized, but less metadata flexibility
+
 ## Recommendation and Implementation Path
 
-### Recommended Approach: Strategy 2 (Tag Lists)
+### Recommended Approach by Project Scale
 
-For most projects, **Strategy 2 (Tag List Configuration)** provides the best balance of:
+**Small to Medium Projects (10-30 attributes): Strategy 2 (Tag List Configuration)**
 - **Maintainability**: Clear, organized structure
 - **Designer Control**: Configurable without code changes  
 - **Performance**: Minimal overhead during broadcasting
-- **Scalability**: Supports growth to 50+ attributes
 - **Debugging**: Easy to understand and troubleshoot
 
+**Large Projects (30+ attributes): Strategy 5B (Function Pointer Registry)**
+- **Scalability**: Handles unlimited attribute growth
+- **Maintainability**: Eliminates all Widget Controller boilerplate
+- **Performance**: Direct function calls with minimal overhead
+- **Centralization**: AttributeSet becomes single source of truth for access patterns
+
+**Performance-Critical Projects: Strategy 5B (Function Pointer Registry)**
+- **Maximum Performance**: Direct function pointer calls
+- **Minimal Memory**: Only function addresses stored
+- **Type Safety**: Compile-time verification of all accessors
+- **Predictable Execution**: No reflection or string-based lookups
+
 ### Implementation Phases
+
+**Strategy 2 Implementation (Tag Lists)**:
 
 **Phase 1: Proof of Concept**
 - Create single category tag list (Primary attributes only)
@@ -485,21 +808,85 @@ For most projects, **Strategy 2 (Tag List Configuration)** provides the best bal
 - Support runtime attribute addition/removal
 - Add performance profiling and optimization
 
+**Strategy 5 Implementation (Registry-Based)**:
+
+**Phase 1: Registry Foundation**
+- Choose approach (5A Delegates vs 5B Function Pointers vs Member Function Pointers)
+- Implement basic registry data structure in AttributeSet
+- Create registry initialization method
+- Test registry population with subset of attributes
+
+**Phase 2: Accessor Integration**
+- Add static wrapper functions (for 5B approach) or delegate setup (for 5A approach)  
+- Populate registry with all primary attributes
+- Implement Widget Controller registry iteration
+- Validate identical behavior to hardcoded approach
+
+**Phase 3: Full Attribute Coverage**
+- Add secondary and vital attributes to registry
+- Test with complete attribute set
+- Performance profile vs existing hardcoded approach
+- Implement error handling for missing registry entries
+
+**Phase 4: Production Hardening**
+- Add registry validation and diagnostic logging
+- Implement lazy vs eager initialization options
+- Create unit tests for registry correctness
+- Document registry extension patterns for new attributes
+
+**Phase 5: Advanced Registry Features**
+- Support for conditional attribute registration
+- Category-based registry subsets
+- Runtime registry modification capabilities  
+- Integration with existing data asset systems
+
 ### Migration Strategy
 
-**Gradual Migration**:
+**Gradual Migration (Strategy 2)**:
 1. **Keep Existing Code**: Don't remove hardcoded broadcasts immediately
 2. **Add New System**: Implement tag list approach alongside existing code
 3. **Feature Flag**: Use boolean property to switch between old/new broadcasting
 4. **Test Thoroughly**: Validate identical behavior between approaches
 5. **Remove Legacy**: Delete hardcoded broadcasts once new system is validated
 
-**Validation Steps**:
+**Registry Migration (Strategy 5)**:
+1. **Registry Preparation**: Implement registry infrastructure without changing broadcasting
+2. **Parallel Implementation**: Add registry-based broadcasting as alternative method
+3. **Validation Phase**: Run both approaches side-by-side with comparison logging
+4. **Gradual Switchover**: Enable registry-based approach on specific attribute categories first
+5. **Legacy Cleanup**: Remove hardcoded approach once registry is fully validated
+
+**Validation Steps (All Strategies)**:
 - Compare broadcast timing between old and new approaches
 - Verify all attributes are broadcast in both systems
 - Test with various attribute counts and UI configurations
 - Performance profile both approaches under load
 - Validate multiplayer behavior remains consistent
+- Ensure identical attribute values are broadcast by both methods
+
+**Rollback Strategy (Strategy 5)**:
+- **Feature Flag**: Maintain ability to switch back to hardcoded approach
+- **Registry Validation**: Add runtime checks to verify registry completeness
+- **Fallback Mechanism**: If registry entry is missing, fall back to hardcoded value
+- **Diagnostic Logging**: Log registry misses and performance differences
+
+```cpp
+// Example feature flag implementation
+UPROPERTY(EditAnywhere, Category = "Attribute Broadcasting")
+bool bUseRegistryBroadcasting = false;
+
+void UTDAttributeMenuWidgetController::BroadcastInitialValues()
+{
+    if (bUseRegistryBroadcasting)
+    {
+        BroadcastInitialValues_FunctionRegistry();
+    }
+    else
+    {
+        BroadcastInitialValues_Hardcoded(); // Legacy approach
+    }
+}
+```
 
 ## Future Considerations
 
@@ -511,25 +898,102 @@ For most projects, **Strategy 2 (Tag List Configuration)** provides the best bal
 - Social attributes (reputation, faction standing)
 - Temporary attributes (buffs, debuffs with expiration)
 
+**Registry-Based Extensions (Strategy 5)**:
+- **Conditional Registration**: Registry entries that are only active under certain conditions
+- **Category Registries**: Separate registries for different attribute types (Primary, Secondary, Combat, etc.)
+- **Metadata Integration**: Registry entries that include additional metadata (display formatting, UI category, etc.)
+- **Runtime Registration**: Support for plugins or mods to register new attributes at runtime
+
+```cpp
+// Advanced registry with metadata
+struct FAttributeRegistryEntry
+{
+    FGameplayTag AttributeTag;
+    FAttrGetter AttributeGetter;
+    FText DisplayCategory;      // For UI organization
+    bool bIsVisible = true;     // For conditional display
+    float DisplayPriority = 0.0f; // For sorting
+};
+
+// Conditional registry example
+void UTDAttributeSet::RegisterCombatAttributes()
+{
+    // Only register combat attributes if combat system is enabled
+    if (GetWorld()->GetGameState<ATDGameState>()->IsCombatSystemEnabled())
+    {
+        AttributeFunctionRegistry.Add(GameplayTags.Attributes_Combat_WeaponDamage, &GetWeaponDamageAttributeStatic);
+        AttributeFunctionRegistry.Add(GameplayTags.Attributes_Combat_SpellPower, &GetSpellPowerAttributeStatic);
+    }
+}
+```
+
 **Dynamic Attribute Systems**:
 - Runtime attribute creation for modding support
 - Attribute templates for different character types
 - Conditional attribute visibility based on player progression
 - Localized attribute names and descriptions
 
+**Registry Evolution Patterns**:
+- **Versioned Registries**: Support for different registry versions for backwards compatibility
+- **Plugin Integration**: Allow plugins to extend the base registry with additional attributes
+- **Configuration-Driven**: Move registry definitions to external configuration files
+- **Template-Based**: Support for attribute templates that generate registry entries automatically
+
 ### Performance Optimization
 
-**Caching Strategies**:
+**Caching Strategies (General)**:
 - Cache tag-to-attribute mappings at controller initialization
 - Pre-calculate frequently-accessed attribute information
 - Batch attribute updates to minimize broadcast overhead
 - Implement selective broadcasting for visible-only attributes
 
+**Registry-Specific Optimizations (Strategy 5)**:
+- **Static Registry Sharing**: Use static registry shared across all AttributeSet instances
+- **Registry Precomputation**: Initialize registry once at startup rather than per-instance
+- **Direct Access Caching**: Cache frequently-accessed attribute function pointers
+- **Category-Based Registries**: Separate registries by attribute category to reduce iteration overhead
+
+```cpp
+// Optimized registry with category separation
+class UTDAttributeSet : public UGASCoreAttributeSet
+{
+private:
+    // Separate registries for different categories
+    static TMap<FGameplayTag, FAttrGetter> PrimaryAttributeRegistry;
+    static TMap<FGameplayTag, FAttrGetter> SecondaryAttributeRegistry;
+    static TMap<FGameplayTag, FAttrGetter> VitalAttributeRegistry;
+    
+public:
+    // Category-specific broadcasting for better performance
+    void BroadcastPrimaryAttributes(UTDAttributeMenuWidgetController* Controller);
+    void BroadcastSecondaryAttributes(UTDAttributeMenuWidgetController* Controller);
+    void BroadcastVitalAttributes(UTDAttributeMenuWidgetController* Controller);
+};
+
+// Performance-optimized broadcasting
+void UTDAttributeMenuWidgetController::BroadcastInitialValues_Optimized()
+{
+    const UTDAttributeSet* TDAttributeSet = CastChecked<UTDAttributeSet>(AttributeSet);
+    
+    // Broadcast only requested categories to minimize work
+    if (ShouldBroadcastPrimaryAttributes())
+    {
+        BroadcastAttributeCategory(TDAttributeSet->GetPrimaryAttributeRegistry());
+    }
+    
+    if (ShouldBroadcastSecondaryAttributes())
+    {
+        BroadcastAttributeCategory(TDAttributeSet->GetSecondaryAttributeRegistry());
+    }
+}
+```
+
 **Memory Management**:
 - Optimize data asset loading and caching
-- Minimize delegate binding overhead
+- Minimize delegate binding overhead (for Strategy 5A)
 - Consider object pooling for frequently-created widgets
 - Profile memory usage with large attribute sets
+- Use lightweight function pointers over delegates where possible (Strategy 5B)
 
 ### Architecture Evolution
 
@@ -539,11 +1003,128 @@ For most projects, **Strategy 2 (Tag List Configuration)** provides the best bal
 - Add priority-based broadcasting for critical vs. informational attributes
 - Support for attribute change animations and transitions
 
+**Registry-Driven Architecture (Strategy 5)**:
+- **Centralized Attribute Management**: AttributeSet becomes single source of truth for all attribute access
+- **Plugin-Based Extension**: Registry allows plugins to add attributes without modifying core files
+- **Data-Driven Registration**: Move registry initialization to external configuration files
+- **Automatic Discovery**: Use reflection to automatically populate registry from AttributeSet properties
+
+```cpp
+// Advanced registry-driven architecture
+class UTDAttributeSet : public UGASCoreAttributeSet
+{
+public:
+    /** Configuration-driven registry initialization */
+    void InitializeRegistryFromDataAsset(UAttributeRegistryDataAsset* RegistryConfig);
+    
+    /** Automatic registry population using reflection */
+    void InitializeRegistryFromReflection();
+    
+    /** Plugin-safe registry extension */
+    void RegisterPluginAttributes(const TMap<FGameplayTag, FAttrGetter>& PluginAttributes);
+    
+    /** Category-filtered registry access */
+    TMap<FGameplayTag, FAttrGetter> GetAttributeRegistryByCategory(const FGameplayTag& CategoryTag) const;
+};
+
+// Configuration data asset for registry-driven approach
+UCLASS()
+class UAttributeRegistryDataAsset : public UDataAsset
+{
+    GENERATED_BODY()
+    
+public:
+    /** Attribute registration entries */
+    UPROPERTY(EditAnywhere, Category = "Registry")
+    TArray<FAttributeRegistrationEntry> RegistryEntries;
+};
+
+USTRUCT()
+struct FAttributeRegistrationEntry
+{
+    GENERATED_BODY()
+    
+    UPROPERTY(EditAnywhere, Category = "Registry")
+    FGameplayTag AttributeTag;
+    
+    UPROPERTY(EditAnywhere, Category = "Registry")
+    FString AttributeAccessorName; // Name of the static accessor function
+    
+    UPROPERTY(EditAnywhere, Category = "Registry")
+    FGameplayTag CategoryTag;
+    
+    UPROPERTY(EditAnywhere, Category = "Registry")
+    bool bIsEnabled = true;
+};
+```
+
 **Modding Support**:
 - Plugin-based attribute registration
 - Runtime attribute discovery and broadcasting
 - Scriptable attribute behavior and formatting
 - Community-contributed attribute types and UI layouts
+
+## Integration with AttributeSetManager
+
+The registry-based approach can be further enhanced by integrating with an AttributeSetManager that provides centralized management of multiple AttributeSet instances and their registries:
+
+```cpp
+// AttributeSetManager.h - Centralized registry management
+class UAttributeSetManager : public UObject
+{
+    GENERATED_BODY()
+    
+private:
+    /** Master registry combining all AttributeSet registries */
+    TMap<FGameplayTag, FAttrGetter> MasterAttributeRegistry;
+    
+    /** Registered AttributeSet instances */
+    TArray<TWeakObjectPtr<UTDAttributeSet>> RegisteredAttributeSets;
+
+public:
+    /** Register an AttributeSet and merge its registry */
+    void RegisterAttributeSet(UTDAttributeSet* AttributeSet);
+    
+    /** Get the combined registry from all registered AttributeSets */
+    const TMap<FGameplayTag, FAttrGetter>& GetMasterRegistry() const;
+    
+    /** Get attribute value by tag from any registered AttributeSet */
+    float GetAttributeValueByTag(const FGameplayTag& AttributeTag) const;
+    
+    /** Broadcast all attributes from all registered AttributeSets */
+    void BroadcastAllAttributes(UTDAttributeMenuWidgetController* Controller) const;
+    
+    /** Get singleton instance */
+    static UAttributeSetManager* Get();
+};
+
+// Widget Controller integration with AttributeSetManager
+void UTDAttributeMenuWidgetController::BroadcastInitialValues_Manager()
+{
+    UAttributeSetManager* Manager = UAttributeSetManager::Get();
+    if (!Manager)
+    {
+        return;
+    }
+    
+    // Use manager's master registry for broadcasting
+    const TMap<FGameplayTag, FAttrGetter>& MasterRegistry = Manager->GetMasterRegistry();
+    
+    for (const auto& RegistryPair : MasterRegistry)
+    {
+        const FGameplayTag& AttributeTag = RegistryPair.Key;
+        float CurrentValue = Manager->GetAttributeValueByTag(AttributeTag);
+        BroadcastAttributeInfo(AttributeTag, CurrentValue);
+    }
+}
+```
+
+**AttributeSetManager Benefits**:
+- **Multi-AttributeSet Support**: Handle characters with multiple AttributeSet instances
+- **Centralized Registry**: Single source for all attribute access across the game
+- **Automatic Discovery**: Manager can automatically discover and register AttributeSets
+- **Plugin Coordination**: Manage attribute registries from multiple plugins
+- **Lifetime Management**: Handle AttributeSet creation/destruction and registry updates
 
 ## Related Documentation
 
