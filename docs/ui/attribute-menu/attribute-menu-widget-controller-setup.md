@@ -200,7 +200,139 @@ WCParams.AttributeSet = AttributeSet;
 AttributeMenuWidgetController = AuraHUD->GetAttributeMenuWidgetController(WCParams);
 ```
 
-## Blueprint Function Library Helpers
+## Self-initializing via Blueprint Library
+
+### Overview
+
+Instead of relying on the HUD Overlay to initialize the Attribute Menu widget controller, widgets can now initialize themselves using a Blueprint Function Library. This approach provides better decoupling and allows widgets to manage their own lifecycle.
+
+### Event Construct Workflow
+
+The self-initialization pattern follows this sequence in the widget's **Event Construct**:
+
+```
+Event Construct
+    ↓
+Get Attribute Menu Widget Controller (World Context: Self)
+    ↓ [TD Attribute Menu Widget Controller]
+Set Widget Controller
+    ↓ (Optional)
+[Controller] → Broadcast Initial Values
+```
+
+### Step-by-Step Blueprint Setup
+
+1. **Open Attribute Menu Widget Blueprint**
+2. **Navigate to Event Construct**
+3. **Add Blueprint Library Node**:
+   - Right-click in graph
+   - Search for "Get Attribute Menu Widget Controller"
+   - Connect **Self** to **World Context** input
+4. **Connect Controller**:
+   - Connect output to **Set Widget Controller** node
+5. **Optional Initial Values**:
+   - From controller reference, call **Broadcast Initial Values**
+
+### Blueprint Library Implementation Example
+
+Create a Blueprint Function Library with TD project naming:
+
+```cpp
+UCLASS()
+class RPG_TOPDOWN_API UTDWidgetBlueprintLibrary : public UBlueprintFunctionLibrary
+{
+    GENERATED_BODY()
+
+public:
+    /**
+     * Get Attribute Menu Widget Controller from any widget context
+     * @param WorldContext - Widget or other world context object
+     * @return The cached attribute menu widget controller, or nullptr if unavailable
+     */
+    UFUNCTION(BlueprintCallable, Category = "TD Widget Library", 
+              CallInEditor = true, meta = (WorldContext = "WorldContext"))
+    static UTDAttributeMenuWidgetController* GetAttributeMenuWidgetController(const UObject* WorldContext);
+
+    /**
+     * Get HUD Widget Controller from any widget context
+     * @param WorldContext - Widget or other world context object  
+     * @return The cached HUD widget controller, or nullptr if unavailable
+     */
+    UFUNCTION(BlueprintCallable, Category = "TD Widget Library", 
+              CallInEditor = true, meta = (WorldContext = "WorldContext"))
+    static UTDHUDWidgetController* GetHUDWidgetController(const UObject* WorldContext);
+};
+
+// Implementation
+UTDAttributeMenuWidgetController* UTDWidgetBlueprintLibrary::GetAttributeMenuWidgetController(const UObject* WorldContext)
+{
+    if (APlayerController* PC = UGameplayStatics::GetPlayerController(WorldContext, 0))
+    {
+        if (ATDHUD* TDHUD = Cast<ATDHUD>(PC->GetHUD()))
+        {
+            // Resolve all required parameters
+            APlayerState* PS = PC->GetPlayerState();
+            if (!PS) return nullptr;
+
+            UAbilitySystemComponent* ASC = nullptr;
+            if (IAbilitySystemInterface* ASI = Cast<IAbilitySystemInterface>(PS))
+            {
+                ASC = ASI->GetAbilitySystemComponent();
+            }
+            if (!ASC) return nullptr;
+
+            UAttributeSet* AttributeSet = ASC->GetAttributeSet(UTDAttributeSet::StaticClass());
+            if (!AttributeSet) return nullptr;
+
+            // Compose parameters and get controller from HUD
+            const FGASCoreUIWidgetControllerParams WCParams(PC, PS, ASC, AttributeSet);
+            return TDHUD->GetAttributeMenuWidgetController(WCParams);
+        }
+    }
+    return nullptr;
+}
+```
+
+### Timing Considerations
+
+**Important:** Self-initialization may occur before the HUD Overlay is fully initialized:
+
+- **HUD Overlay Timing**: Initialized by `ATDHUD::InitializeHUD()` during game startup
+- **Attribute Menu Timing**: Initialized when widget's Event Construct fires
+- **Race Condition**: Attribute Menu may construct before player systems are ready
+
+### Defensive Programming
+
+Always check for null returns from Blueprint Library:
+
+```cpp
+// In Blueprint: Use "Is Valid" node after Get Attribute Menu Widget Controller
+// In C++: Always validate return value
+
+if (UTDAttributeMenuWidgetController* Controller = UTDWidgetBlueprintLibrary::GetAttributeMenuWidgetController(this))
+{
+    SetWidgetController(Controller);
+    Controller->BroadcastInitialValues();
+}
+else
+{
+    // Handle case where controller isn't ready yet
+    // Consider retry timer or event-driven initialization
+}
+```
+
+### Benefits of Self-Initialization
+
+- **Decoupling**: Widget doesn't depend on HUD Overlay initialization order
+- **Flexibility**: Widget can initialize whenever it's created
+- **Reusability**: Same pattern works for any widget type
+- **Singleton Access**: Automatic access to cached controller instances
+
+For detailed implementation guidance, see the [Widget Controller Access Guide](../blueprint-library/widget-controller-access-guide.md).
+
+## Blueprint Function Library Helpers (Legacy)
+
+> **Note**: The following section shows legacy Aura naming for reference. Use the self-initializing approach above with proper TD naming instead.
 
 ### Utility Functions for Widget Access
 
@@ -297,10 +429,11 @@ void UAuraAttributeMenuWidgetController::BroadcastAttributeInfo(const FGameplayT
 - [ ] Verify all attribute tags in data asset match FAuraGameplayTags
 - [ ] Test attribute lookup functionality
 
-### Blueprint Function Library (Optional)
+### Blueprint Function Library (Recommended)
 - [ ] Create helper functions for easy controller access from widgets
-- [ ] Implement GetAttributeMenuWidgetController() utility
-- [ ] Add CreateAttributeMenuWidgetController() for initialization
+- [ ] Implement GetAttributeMenuWidgetController() utility using TD naming
+- [ ] Enable self-initializing widget pattern for decoupling
+- [ ] See [Widget Controller Access Guide](../blueprint-library/widget-controller-access-guide.md) for complete implementation
 
 ## Related Documentation
 
@@ -308,3 +441,5 @@ void UAuraAttributeMenuWidgetController::BroadcastAttributeInfo(const FGameplayT
 - [Attributes Gameplay Tags](../../../systems/attributes-gameplay-tags.md) - Tag initialization and usage patterns
 - [Attribute Info Data Asset](../../../data/attribute-info.md) - Data asset structure and authoring
 - [UI Widget Controller](../../ui-widget-controller.md) - Base controller patterns and lifecycle
+- [Widget Controller Access Guide](../blueprint-library/widget-controller-access-guide.md) - Blueprint Function Library implementation guide
+- [Widget Controllers Singletons FAQ](../../faq/widget-controllers-singletons.md) - Common questions and best practices
