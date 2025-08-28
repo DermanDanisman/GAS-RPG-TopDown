@@ -10,6 +10,7 @@
 
 // Forward declare widget/controller classes to minimize dependencies.
 class UTDHUDWidgetController;
+class UTDAttributeMenuWidgetController;
 class UTDUserWidget;
 class UAttributeSet;
 class UAbilitySystemComponent;
@@ -38,6 +39,13 @@ public:
 	 * @return                          A valid pointer to the widget controller for HUD widgets.
 	 */
 	UTDHUDWidgetController* GetHUDWidgetController(const FGASCoreUIWidgetControllerParams& InWidgetControllerParams);
+
+	/**
+	 * Returns a pointer to the Attribute Menu Widget Controller, creating and initializing it if none exists.
+	 * @param InWidgetControllerParams   The struct of references required by the widget controller.
+	 * @return                          A valid pointer to the widget controller for Attribute Menu widgets.
+	 */
+	UTDAttributeMenuWidgetController* GetAttributeMenuWidgetController(const FGASCoreUIWidgetControllerParams& InWidgetControllerParams);
 
 	/**
 	 * Initializes the HUD widget and its controller, and adds the widget to the viewport.
@@ -70,4 +78,16 @@ private:
 	  */
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UTDHUDWidgetController> HUDWidgetControllerClass;
+
+	/** The instance of the Attribute Menu widget controller.
+	  * Created at runtime, owned by this HUD.
+	  */
+	UPROPERTY()
+	TObjectPtr<UTDAttributeMenuWidgetController> AttributeMenuWidgetController;
+
+	/** The class used to instantiate the Attribute Menu widget controller.
+	  * Settable in the editor or Blueprint.
+	  */
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UTDAttributeMenuWidgetController> AttributeMenuWidgetControllerClass;
 };

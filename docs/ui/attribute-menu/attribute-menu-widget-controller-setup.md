@@ -302,6 +302,47 @@ void UAuraAttributeMenuWidgetController::BroadcastAttributeInfo(const FGameplayT
 - [ ] Implement GetAttributeMenuWidgetController() utility
 - [ ] Add CreateAttributeMenuWidgetController() for initialization
 
+## Self-initializing via Blueprint Library
+
+The new **UAuraAbilitySystemLib** Blueprint Function Library allows Attribute Menu widgets to initialize themselves without coupling to overlay or HUD implementations.
+
+### Setup Steps
+
+1. **Event Construct**: In your Attribute Menu widget's Event Construct
+2. **Get Controller**: Add a **Get Attribute Menu Widget Controller** node (found under UI|Widget Controller category)
+   - Set **World Context** to **Self**
+3. **Set Controller**: Connect the returned controller to your widget's **Set Widget Controller** method
+4. **Optional Broadcast**: Call **Broadcast Initial Values** on the controller if needed
+
+### Blueprint Node Setup
+
+```
+Event Construct
+├── Get Attribute Menu Widget Controller (World Context: Self)
+├── Set Widget Controller (Controller: [output from previous node])
+└── [Optional] Controller → Broadcast Initial Values
+```
+
+### Benefits
+
+- **No HUD Coupling**: Widget doesn't need references to specific HUD or overlay widgets  
+- **Automatic Resolution**: Library automatically resolves PlayerController, PlayerState, ASC, and AttributeSet
+- **Controller Caching**: Returns the same cached controller instance across multiple widgets
+- **Error Handling**: Returns `nullptr` if prerequisites aren't met, allowing graceful failure
+
+### Prerequisites
+
+Ensure your **BP_TDHUD** has the **Attribute Menu Widget Controller Class** property set to your controller Blueprint class.
+
+### Troubleshooting
+
+**Controller is null**: 
+- Verify BP_TDHUD has AttributeMenuWidgetControllerClass assigned
+- Check that PlayerController has valid ASC and AttributeSet
+- Ensure the widget has proper world context
+
+For complete library documentation, see [Widget Controller Library](../widget-controller-library.md).
+
 ## Related Documentation
 
 - [Attribute Menu Widget Controller](./attribute-menu-controller.md) - Overall controller design and data flow

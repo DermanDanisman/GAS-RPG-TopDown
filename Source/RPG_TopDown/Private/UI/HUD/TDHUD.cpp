@@ -7,6 +7,7 @@
 
 #include "Blueprint/UserWidget.h"
 #include "UI/WidgetControllers/TDHUDWidgetController.h"
+#include "UI/WidgetControllers/TDAttributeMenuWidgetController.h"
 #include "UI/Widgets/TDUserWidget.h"
 
 
@@ -30,13 +31,34 @@ UTDHUDWidgetController* ATDHUD::GetHUDWidgetController(const FGASCoreUIWidgetCon
 	return HUDWidgetController;
 }
 
+UTDAttributeMenuWidgetController* ATDHUD::GetAttributeMenuWidgetController(const FGASCoreUIWidgetControllerParams& InWidgetControllerParams)
+{
+	// If the controller hasn't been created yet, instantiate it and initialize.
+	if (AttributeMenuWidgetController == nullptr)
+	{
+		// Create a new widget controller of the specified class, owned by this HUD.
+		AttributeMenuWidgetController = NewObject<UTDAttributeMenuWidgetController>(this, AttributeMenuWidgetControllerClass);
+
+		// Initialize the widget controller with all gameplay references.
+		AttributeMenuWidgetController->SetWidgetControllerParams(InWidgetControllerParams);
+
+		AttributeMenuWidgetController->BindCallbacksToDependencies();
+
+		// Return the newly created and initialized controller.
+		return AttributeMenuWidgetController;
+	}
+	// If already created, just return the existing controller.
+	return AttributeMenuWidgetController;
+}
+
 void ATDHUD::InitializeHUD(APlayerController* InPlayerController, APlayerState* InPlayerState,
                            UAbilitySystemComponent* InAbilitySystemComponent, UAttributeSet* InAttributeSet)
 {
 	// Ensure that the widget and controller classes are set in the Blueprint or C++.
 	// If not, crash with a clear message so the developer/designer can fix the setup.
-	checkf(HUDWidgetClass, TEXT("HUD Widget Class uninitialized, please fill out BP_GASHUD"));
-	checkf(HUDWidgetControllerClass, TEXT("HUD Widget Controller Class uninitialized, please fill out BP_GASHUD"));
+	checkf(HUDWidgetClass, TEXT("HUD Widget Class uninitialized, please fill out BP_TDHUD"));
+	checkf(HUDWidgetControllerClass, TEXT("HUD Widget Controller Class uninitialized, please fill out BP_TDHUD"));
+	checkf(AttributeMenuWidgetControllerClass, TEXT("Attribute Menu Widget Controller Class uninitialized, please fill out BP_TDHUD"));
 
 	// Create the HUD widget instance using the specified class.
 	// This creates a UUserWidget, which we then cast to our custom UGASUserWidget class.
