@@ -206,6 +206,12 @@ AttributeMenuWidgetController = AuraHUD->GetAttributeMenuWidgetController(WCPara
 
 Instead of relying on the HUD Overlay to initialize the Attribute Menu widget controller, widgets can now initialize themselves using a Blueprint Function Library. This approach provides better decoupling and allows widgets to manage their own lifecycle.
 
+**Key Benefits**:
+- **Decoupling**: Widget doesn't depend on Overlay initialization order
+- **Flexibility**: Widget can initialize whenever it's created  
+- **Reusability**: Same pattern works for any widget type
+- **Singleton Access**: Automatic access to cached controller instances
+
 ### Event Construct Workflow
 
 The self-initialization pattern follows this sequence in the widget's **Event Construct**:
@@ -214,24 +220,73 @@ The self-initialization pattern follows this sequence in the widget's **Event Co
 Event Construct
     ↓
 Get Attribute Menu Widget Controller (World Context: Self)
-    ↓ [TD Attribute Menu Widget Controller]
-Set Widget Controller
-    ↓ (Optional)
-[Controller] → Broadcast Initial Values
+    ↓ [TD Attribute Menu Widget Controller or Null]
+Branch (Is Valid?)
+    ├── True: Set Widget Controller → (Optional) Broadcast Initial Values
+    └── False: Handle Error (retry timer, show loading, log warning)
 ```
+
+### Detailed Event Construct Steps
+
+1. **Widget Creation**: Attribute Menu widget is created (via CreateWidget or Blueprint spawn)
+2. **Event Construct Fires**: UE5 calls Event Construct automatically
+3. **Library Function Call**: Widget calls "Get Attribute Menu Widget Controller" with Self as WorldContext
+4. **System Resolution**: Library resolves PlayerController → PlayerState → ASC → AttributeSet
+5. **HUD Controller Retrieval**: Library calls HUD getter method, returns cached controller
+6. **Validation Check**: Widget validates controller is not null using "Is Valid" node
+7. **Controller Assignment**: Widget calls "Set Widget Controller" to establish connection
+8. **Initial Values**: (Optional) Call "Broadcast Initial Values" to populate UI immediately
+9. **UI Ready**: Widget displays current attribute data and receives ongoing updates
 
 ### Step-by-Step Blueprint Setup
 
 1. **Open Attribute Menu Widget Blueprint**
-2. **Navigate to Event Construct**
+   - Navigate to your project's Attribute Menu widget Blueprint
+   - Open the Event Graph if not already selected
+
+2. **Locate Event Construct**
+   - Find the "Event Construct" node (created automatically)
+   - This event fires once when the widget is created
+
 3. **Add Blueprint Library Node**:
-   - Right-click in graph
+   - Right-click in the graph to open context menu
    - Search for "Get Attribute Menu Widget Controller"
-   - Connect **Self** to **World Context** input
-4. **Connect Controller**:
-   - Connect output to **Set Widget Controller** node
-5. **Optional Initial Values**:
+   - Add the node to the graph and position after Event Construct
+
+4. **Connect WorldContext**:
+   - Connect **Self** pin to **World Context** input on the library node
+   - This provides the widget's context for player/world resolution
+
+5. **Add Validation**:
+   - Add **Is Valid** node after the library function
+   - Connect the controller output to the Is Valid input
+   - This prevents errors if the controller isn't available yet
+
+6. **Handle Success Path**:
+   - From Is Valid **True** branch, add **Set Widget Controller** node
+   - Connect controller reference to Set Widget Controller input
+   - This establishes the widget-controller connection
+
+7. **Optional: Add Initial Values**:
    - From controller reference, call **Broadcast Initial Values**
+   - This immediately populates the UI with current attribute data
+   - Recommended for immediate visual feedback
+
+8. **Handle Failure Path**:
+   - From Is Valid **False** branch, add error handling
+   - Options: Print String warning, Set Timer for retry, Show placeholder UI
+   - Ensures graceful behavior if controller isn't ready
+
+**Example Blueprint Flow**:
+```
+[Event Construct]
+        ↓
+[Get Attribute Menu Widget Controller] (World Context: Self)
+        ↓
+    [Is Valid]
+    ├─True──→ [Set Widget Controller] ──→ [Broadcast Initial Values]
+    └─False─→ [Print String: "Controller not ready, retrying..."] ──→ [Set Timer: 0.1s, Looping]
+```
 
 ### Blueprint Library Implementation Example
 
@@ -328,7 +383,19 @@ else
 - **Reusability**: Same pattern works for any widget type
 - **Singleton Access**: Automatic access to cached controller instances
 
-For detailed implementation guidance, see the [Widget Controller Access Guide](../blueprint-library/widget-controller-access-guide.md).
+### Implementation Resources
+
+**For Complete Implementation Details**:
+- [Attribute Menu Controller Guide](./attribute-menu-controller-guide.md) - Step-by-step HUD setup and Blueprint Library implementation
+- [Attribute Menu Node Usage](../blueprint-library/attribute-menu-node-usage.md) - API reference, troubleshooting, and multiplayer considerations  
+- [Widget Controller Access Guide](../blueprint-library/widget-controller-access-guide.md) - General Blueprint Function Library patterns
+
+**Quick Start Checklist**:
+- [ ] HUD has AttributeMenuWidgetController property and getter method
+- [ ] Blueprint Library has GetAttributeMenuWidgetController function  
+- [ ] Widget Event Construct calls library function with Self as WorldContext
+- [ ] Widget validates controller with "Is Valid" before using
+- [ ] Widget calls Set Widget Controller and optionally Broadcast Initial Values
 
 ## Blueprint Function Library Helpers (Legacy)
 
