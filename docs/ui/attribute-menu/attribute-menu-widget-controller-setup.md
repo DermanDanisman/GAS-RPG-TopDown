@@ -685,8 +685,42 @@ When widgets aren't showing initial data:
 - [ ] Enable self-initializing widget pattern for decoupling
 - [ ] See [Widget Controller Access Guide](../blueprint-library/widget-controller-access-guide.md) for complete implementation
 
+## Set Row AttributeTags Before Initial Broadcast
+
+### Critical Setup Step
+
+Before calling `BroadcastInitialValues()`, ensure all child row widgets have their `AttributeTag` properties properly assigned. This enables tag-based filtering where each widget only updates when receiving broadcasts for its specific attribute.
+
+### Setup Checklist
+
+- [ ] **Assign AttributeTag Properties**: Set the `AttributeTag` property on each TextValueRow and TextValueButtonRow widget
+- [ ] **Toggle "Is Variable"**: Ensure AttributeTag properties are marked as variables in Blueprint editor
+- [ ] **Use Descriptive Names**: Name row widgets clearly (StrengthRow, IntelligenceRow, ArmorRow, etc.)
+- [ ] **Set Tags Before Controller**: Assign AttributeTags before calling `SetWidgetController` on the parent menu
+- [ ] **Validate Tag Values**: Ensure AttributeTag values exactly match tags defined in FAuraGameplayTags
+- [ ] **Test Tag Matching**: Verify each widget receives only its intended attribute updates
+
+### Implementation Pattern
+
+```
+Attribute Menu Event Construct Sequence:
+1. Set AttributeTags on all child row widgets
+2. Set Widget Controller (triggers child widget binding)
+3. Broadcast Initial Values (widgets filter by their AttributeTags)
+```
+
+This pattern ensures widgets can properly filter the initial broadcast and display the correct attribute data from the start.
+
+### Cross-References
+
+For complete implementation details, see:
+- [Attribute Tags and Binding Pattern](./attribute-tags-and-binding.md) - Step-by-step AttributeTag assignment and filtering implementation
+- [Scalable Broadcasting Plan](./scalable-broadcasting-plan.md) - Strategies for evolving beyond hardcoded per-attribute broadcasts
+
 ## Related Documentation
 
+- [Attribute Tags and Binding Pattern](./attribute-tags-and-binding.md) - Per-row AttributeTag assignment, widget binding, and exact tag matching implementation
+- [Scalable Broadcasting Plan](./scalable-broadcasting-plan.md) - Planning document for evolving from hardcoded broadcasts to data-driven approaches
 - [Broadcast and Binding System](./broadcast-and-binding.md) - Detailed guide to the delegate-based broadcast pattern and widget binding
 - [Attribute Info Data Asset](../data-asset/attribute-info.md) - Complete data asset structure, configuration, and usage guide
 - [Attribute Menu Widget Controller](./attribute-menu-controller.md) - Overall controller design and data flow
