@@ -104,7 +104,7 @@ public:
 	 * - If cast fails, disable related UI features gracefully
 	 */
 	UFUNCTION(BlueprintPure, Category = "GASCore|User Widget|Widget Controller")
-	UObject* GetWidgetController() { return WidgetController; }
+	UObject* GetAssociatedWidgetController() { return WidgetController; }
 
 	/**
 	 * Assigns the Widget Controller and triggers the Blueprint initialization event.

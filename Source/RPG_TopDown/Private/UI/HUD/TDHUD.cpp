@@ -6,6 +6,7 @@
 #include "UI/HUD/TDHUD.h"
 
 #include "Blueprint/UserWidget.h"
+#include "UI/WidgetControllers/TDAttributeMenuWidgetController.h"
 #include "UI/WidgetControllers/TDHUDWidgetController.h"
 #include "UI/Widgets/TDUserWidget.h"
 
@@ -22,12 +23,23 @@ UTDHUDWidgetController* ATDHUD::GetHUDWidgetController(const FGASCoreUIWidgetCon
 		HUDWidgetController->SetWidgetControllerParams(InWidgetControllerParams);
 
 		HUDWidgetController->BindCallbacksToDependencies();
-
-		// Return the newly created and initialized controller.
-		return HUDWidgetController;
 	}
 	// If already created, just return the existing controller.
 	return HUDWidgetController;
+}
+
+UTDAttributeMenuWidgetController* ATDHUD::GetAttributeMenuWidgetController(
+	const FGASCoreUIWidgetControllerParams& InWidgetControllerParams)
+{
+	if (AttributeMenuWidgetController == nullptr)
+	{
+		AttributeMenuWidgetController = NewObject<UTDAttributeMenuWidgetController>(this, AttributeMenuWidgetControllerClass);
+
+		AttributeMenuWidgetController->SetWidgetControllerParams(InWidgetControllerParams);
+
+		AttributeMenuWidgetController->BindCallbacksToDependencies();
+	}
+	return AttributeMenuWidgetController;
 }
 
 void ATDHUD::InitializeHUD(APlayerController* InPlayerController, APlayerState* InPlayerState,
