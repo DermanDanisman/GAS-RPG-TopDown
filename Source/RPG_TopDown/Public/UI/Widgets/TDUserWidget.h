@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GASCoreUI/Public/UI/Widgets/CoreUserWidget.h"
+#include "GASCoreUI/Public/UI/Widgets/GASCoreUIUserWidget.h"
 #include "TDUserWidget.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class RPG_TOPDOWN_API UTDUserWidget : public UCoreUserWidget
+class RPG_TOPDOWN_API UTDUserWidget : public UGASCoreUIUserWidget
 {
 	GENERATED_BODY()
 

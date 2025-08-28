@@ -3,12 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GASCore/Public/Components/CoreAbilitySystemComponent.h"
+#include "GASCore/Public/AbilitySystem/Components/GASCoreAbilitySystemComponent.h"
 #include "TDAbilitySystemComponent.generated.h"
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class RPG_TOPDOWN_API UTDAbilitySystemComponent : public UCoreAbilitySystemComponent
+class RPG_TOPDOWN_API UTDAbilitySystemComponent : public UGASCoreAbilitySystemComponent
 {
 	GENERATED_BODY()
 

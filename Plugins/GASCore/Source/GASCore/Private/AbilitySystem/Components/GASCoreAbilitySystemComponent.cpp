@@ -9,16 +9,16 @@
 // - If you grant/remove abilities repeatedly or re-init actor info (e.g., on possession changes),
 //   ensure you don't bind multiple times (track a bool or remove binding if needed).
 
-#include "GASCore/Public/Components/CoreAbilitySystemComponent.h"
+#include "GASCore/Public/AbilitySystem/Components/GASCoreAbilitySystemComponent.h"
 
-void UCoreAbilitySystemComponent::BindASCDelegates()
+void UGASCoreAbilitySystemComponent::BindASCDelegates()
 {
 	// Register to receive a callback whenever a GameplayEffect is applied to self.
 	// Using AddUObject ties the delegate lifetime to this UObject (safe unbinding on destruction).
-	OnGameplayEffectAppliedDelegateToSelf.AddUObject(this, &UCoreAbilitySystemComponent::HandleGameplayEffectAppliedToSelf);
+	OnGameplayEffectAppliedDelegateToSelf.AddUObject(this, &UGASCoreAbilitySystemComponent::HandleGameplayEffectAppliedToSelf);
 }
 
-void UCoreAbilitySystemComponent::HandleGameplayEffectAppliedToSelf(
+void UGASCoreAbilitySystemComponent::HandleGameplayEffectAppliedToSelf(
 	UAbilitySystemComponent* AbilitySystemComponent,
 	const FGameplayEffectSpec& GameplayEffectSpec,
 	FActiveGameplayEffectHandle ActiveGameplayEffectHandle)

@@ -4,9 +4,9 @@
 
 #include "Charcters/TDPlayerCharacter.h"
 
-#include "GASCore/Public/Attributes/CoreAttributeSet.h"
-#include "Components/TDAbilitySystemComponent.h"
-#include "Components/TDDefaultAttributeInitComponent.h"
+#include "AbilitySystem/Attributes/TDAttributeSet.h"
+#include "AbilitySystem/Components/TDAbilitySystemComponent.h"
+#include "AbilitySystem/Components/TDDefaultAttributeInitComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Player/TDPlayerController.h"
 #include "Player/TDPlayerState.h"
@@ -68,7 +68,7 @@ void ATDPlayerCharacter::InitializeAbilityActorInfo()
 			{
 				// The ASC and AttributeSet live on the PlayerState for player characters.
 				AbilitySystemComponent = Cast<UTDAbilitySystemComponent>(TDPlayerState->GetAbilitySystemComponent());
-				AttributeSet = Cast<UCoreAttributeSet>(TDPlayerState->GetAttributeSet());
+				AttributeSet = Cast<UTDAttributeSet>(TDPlayerState->GetAttributeSet());
 
 				// Initialize the ASC's actor info, specifying the player state as the owner and this character as the avatar.
 				if (AbilitySystemComponent)

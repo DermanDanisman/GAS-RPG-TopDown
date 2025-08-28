@@ -22,13 +22,13 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemComponent.h"
-#include "CoreAbilitySystemComponent.generated.h"
+#include "GASCoreAbilitySystemComponent.generated.h"
 
 /** Multicast delegate that carries GameplayEffect asset tags gathered from the applied spec. */
 DECLARE_MULTICAST_DELEGATE_OneParam(FEffectAssetTagsSignature, const FGameplayTagContainer& /*AssetTags*/);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class GASCORE_API UCoreAbilitySystemComponent : public UAbilitySystemComponent
+class GASCORE_API UGASCoreAbilitySystemComponent : public UAbilitySystemComponent
 {
 	GENERATED_BODY()
 

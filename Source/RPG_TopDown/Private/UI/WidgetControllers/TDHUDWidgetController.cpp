@@ -5,8 +5,8 @@
 
 #include "UI/WidgetControllers/TDHUDWidgetController.h"
 
-#include "GASCore/Public/Attributes/CoreAttributeSet.h"
-#include "Components/TDAbilitySystemComponent.h"
+#include "AbilitySystem/Attributes/TDAttributeSet.h"
+#include "AbilitySystem/Components/TDAbilitySystemComponent.h"
 
 void UTDHUDWidgetController::BroadcastInitialValues()
 {
@@ -16,7 +16,7 @@ void UTDHUDWidgetController::BroadcastInitialValues()
 void UTDHUDWidgetController::BindCallbacksToDependencies()
 {
 	// Validate and cast the bound AttributeSet to your game's concrete type.
-	const UCoreAttributeSet* CoreAttributeSet = CastChecked<UCoreAttributeSet>(AttributeSet);
+	const UTDAttributeSet* CoreAttributeSet = CastChecked<UTDAttributeSet>(AttributeSet);
 
 	// Subscribe to GAS attribute change notifications.
 	// Each delegate receives FOnAttributeChangeData with the new value; we forward the float to UI.
@@ -67,12 +67,12 @@ void UTDHUDWidgetController::BindCallbacksToDependencies()
 	// Forward GameplayEffect asset tags (e.g., "UI.Message.HealthPotion") to the UI for display.
 	//
 	// HOW IT WORKS:
-	// 1. UCoreAbilitySystemComponent broadcasts effect asset tags when GEs are applied
+	// 1. UGASCoreAbilitySystemComponent broadcasts effect asset tags when GEs are applied
 	// 2. We filter for "UI.Message.*" tags and look up corresponding DataTable rows
 	// 3. Broadcast the full row data to widgets via MessageWidgetRowDelegate
 	//
 	// DATATABLE SETUP REQUIREMENTS:
-	// - Create a DataTable with FUIMessageWidgetRow as the row type
+	// - Create a DataTable with FGASCoreUIMessageWidgetRow as the row type
 	// - Row keys must match tag FNames (e.g., row key "UI.Message.HealthPotion" for tag "UI.Message.HealthPotion")
 	// - Populate MessageTag, MessageText, optional MessageWidget class, and MessageImage
 	// - Assign the DataTable to MessageWidgetDataTable property
@@ -90,7 +90,7 @@ void UTDHUDWidgetController::BindCallbacksToDependencies()
 				if (Tag.MatchesTag(MessageTag))
 				{
 					// DataTable lookup: row key should match the tag's FName
-					const FUIMessageWidgetRow* MessageRow = GetDataTableRowByTag<FUIMessageWidgetRow>(MessageWidgetDataTable, Tag);
+					const FGASCoreUIMessageWidgetRow* MessageRow = GetDataTableRowByTag<FGASCoreUIMessageWidgetRow>(MessageWidgetDataTable, Tag);
 					if (MessageRow && MessageRow->MessageTag.IsValid())
 					{
 						// Broadcast the complete row to widgets for display

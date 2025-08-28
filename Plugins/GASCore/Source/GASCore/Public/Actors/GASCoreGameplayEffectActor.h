@@ -15,7 +15,7 @@
 //               to enable precise removal later (periodic effects are covered because they’re non-instant).
 //
 // Usage (typical Blueprint workflow):
-//   - Place ACoreGameplayEffectActor in the level and add desired collision component(s).
+//   - Place AGASCoreGameplayEffectActor in the level and add desired collision component(s).
 //   - Configure GameplayEffects array (EffectClass, ApplicationPolicy, RemovalPolicy, etc.).
 //   - Bind the collision's Begin/End overlap to OnOverlap/EndOverlap respectively.
 //   - If you configure bDestroyOnEffectApplication on multiple entries, consider deferring destruction
@@ -33,7 +33,7 @@
 #include "ActiveGameplayEffectHandle.h"
 #include "GameplayEffect.h"
 #include "GameFramework/Actor.h"
-#include "CoreGameplayEffectActor.generated.h"
+#include "GASCoreGameplayEffectActor.generated.h"
 
 class UAbilitySystemComponent;
 class UGameplayEffect;
@@ -46,7 +46,7 @@ class UGameplayEffect;
  * When to apply the effect relative to overlap events.
  */
 UENUM(BlueprintType)
-enum class ECoreEffectApplicationPolicy : uint8
+enum class EGASCoreEffectApplicationPolicy : uint8
 {
 	ApplyOnOverlap   UMETA(DisplayName = "Apply On Overlap"),    // Fire during OnOverlap
 	ApplyEndOverlap  UMETA(DisplayName = "Apply On End Overlap"),// Fire during EndOverlap
@@ -58,7 +58,7 @@ enum class ECoreEffectApplicationPolicy : uint8
  * Only meaningful for non-instant effects (HasDuration/Infinite; Periodic is non-instant).
  */
 UENUM(BlueprintType)
-enum class ECoreEffectRemovalPolicy : uint8
+enum class EGASCoreEffectRemovalPolicy : uint8
 {
 	RemoveOnOverlap     UMETA(DisplayName = "Remove On Overlap"),    // Remove during OnOverlap
 	RemoveOnEndOverlap  UMETA(DisplayName = "Remove On End Overlap"),// Remove during EndOverlap
@@ -74,7 +74,7 @@ enum class ECoreEffectRemovalPolicy : uint8
  * Designers add multiple rows; each row applies/removes independently.
  */
 USTRUCT(BlueprintType)
-struct FCoreEffectConfig
+struct FGASCoreEffectConfig
 {
 	GENERATED_BODY()
 
@@ -84,11 +84,11 @@ struct FCoreEffectConfig
 
 	/** When this effect should be applied relative to overlaps. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|Effect")
-	ECoreEffectApplicationPolicy ApplicationPolicy;
+	EGASCoreEffectApplicationPolicy ApplicationPolicy;
 
 	/** When this effect should be removed relative to overlaps (non-instant effects only). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|Effect")
-	ECoreEffectRemovalPolicy RemovalPolicy;
+	EGASCoreEffectRemovalPolicy RemovalPolicy;
 
 	/** Destroy this actor immediately after applying this effect (consumables, one-shots). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|Effect")
@@ -111,11 +111,11 @@ struct FCoreEffectConfig
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|Effect", meta = (ClampMin = "-1"))
 	int32 StacksToRemove;
 
-	FCoreEffectConfig()
+	FGASCoreEffectConfig()
 	{
 		EffectClass = nullptr;
-		ApplicationPolicy = ECoreEffectApplicationPolicy::DoNotApply;
-		RemovalPolicy = ECoreEffectRemovalPolicy::DoNotRemove;
+		ApplicationPolicy = EGASCoreEffectApplicationPolicy::DoNotApply;
+		RemovalPolicy = EGASCoreEffectRemovalPolicy::DoNotRemove;
 		bDestroyOnEffectApplication = false;
 		bDestroyOnEffectRemoval = false;
 		ActorLevel = 1.0f;
@@ -137,7 +137,7 @@ struct FCoreEffectConfig
  *   so multiple config rows using the same GE class with different intentions won’t conflict.
  */
 USTRUCT()
-struct FTrackedEffect
+struct FGASCoreTrackedEffect
 {
 	GENERATED_BODY()
 
@@ -155,7 +155,7 @@ struct FTrackedEffect
 };
 
 /**
- * ACoreGameplayEffectActor
+ * AGASCoreGameplayEffectActor
  *
  * A world actor that applies and manages Gameplay Effects on overlapping targets.
  * - Supports Instant, Duration, Periodic, and Infinite effects
@@ -163,12 +163,12 @@ struct FTrackedEffect
  * - Blueprint-callable OnOverlap/EndOverlap entry points (bind these to collision events)
  */
 UCLASS()
-class GASCORE_API ACoreGameplayEffectActor : public AActor
+class GASCORE_API AGASCoreGameplayEffectActor : public AActor
 {
 	GENERATED_BODY()
 
 public:
-	ACoreGameplayEffectActor();
+	AGASCoreGameplayEffectActor();
 
 protected:
 	virtual void BeginPlay() override;
@@ -184,7 +184,7 @@ public:
 	 *
 	 * @param TargetActor The actor that began overlapping with this actor.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "GASCore|Gameplay Effect Actor")
+	UFUNCTION(BlueprintCallable, Category = "GASCore|Gameplay Effect Actor|Functions")
 	void OnOverlap(AActor* TargetActor);
 
 	/**
@@ -193,7 +193,7 @@ public:
 	 *
 	 * @param TargetActor The actor that ended overlapping with this actor.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "GASCore|Gameplay Effect Actor")
+	UFUNCTION(BlueprintCallable, Category = "GASCore|Gameplay Effect |Functions")
 	void EndOverlap(AActor* TargetActor);
 
 protected:
@@ -211,8 +211,8 @@ protected:
 	 * IMPORTANT:
 	 * - For multiple Infinite effects, use distinct GE classes to avoid ambiguous tracking.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|Gameplay Effects", meta = (TitleProperty = "EffectClass"))
-	TArray<FCoreEffectConfig> GameplayEffects;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|Gameplay Effect Actor|Gameplay Effects", meta = (TitleProperty = "EffectClass"))
+	TArray<FGASCoreEffectConfig> GameplayEffects;
 
 private:
 	// -----------------------------------------------------------------------
@@ -220,7 +220,7 @@ private:
 	// -----------------------------------------------------------------------
 
 	/** Root scene component so designers can attach any collision/visual components in BP. */
-	UPROPERTY(VisibleAnywhere, Category = "GASCore|Components")
+	UPROPERTY(VisibleAnywhere, Category = "GASCore|Gameplay Effect Actor|Components")
 	TObjectPtr<USceneComponent> DefaultSceneRoot;
 
 	// -----------------------------------------------------------------------
@@ -233,23 +233,23 @@ private:
 	 * Val: per-handle tracking info (weak ASC, class, stacks, destroy-on-removal).
 	 */
 	UPROPERTY()
-	TMap<FActiveGameplayEffectHandle, FTrackedEffect> ActiveGameplayEffects;
+	TMap<FActiveGameplayEffectHandle, FGASCoreTrackedEffect> ActiveGameplayEffects;
 
 	// -----------------------------------------------------------------------
 	// CORE OPERATIONS
 	// -----------------------------------------------------------------------
 
 	/** Apply all effects whose ApplicationPolicy matches the given timing. */
-	void ApplyAllGameplayEffects(AActor* TargetActor, ECoreEffectApplicationPolicy ApplicationPolicy);
+	void ApplyAllGameplayEffects(AActor* TargetActor, EGASCoreEffectApplicationPolicy ApplicationPolicy);
 
 	/** Remove all effects whose RemovalPolicy matches the given timing. */
-	void RemoveAllGameplayEffects(AActor* TargetActor, ECoreEffectRemovalPolicy RemovalPolicy);
+	void RemoveAllGameplayEffects(AActor* TargetActor, EGASCoreEffectRemovalPolicy RemovalPolicy);
 
 	/** Build context/spec and apply a single configured effect to the target. */
-	void ApplyGameplayEffectToTarget(AActor* TargetActor, const FCoreEffectConfig& EffectConfig);
+	void ApplyGameplayEffectToTarget(AActor* TargetActor, const FGASCoreEffectConfig& EffectConfig);
 
 	/** Remove stacks/effects previously applied by this actor that match the config. */
-	void RemoveGameplayEffectFromTarget(AActor* TargetActor, const FCoreEffectConfig& EffectConfig);
+	void RemoveGameplayEffectFromTarget(AActor* TargetActor, const FGASCoreEffectConfig& EffectConfig);
 
 	// -----------------------------------------------------------------------
 	// HELPERS (inspect GE class characteristics)

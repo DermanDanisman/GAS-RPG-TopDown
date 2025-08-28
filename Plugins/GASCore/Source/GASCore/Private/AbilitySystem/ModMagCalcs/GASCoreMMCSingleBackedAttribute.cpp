@@ -4,19 +4,19 @@
 // Consider renaming to "MM_Calculation_Actor.cpp" (or similar) and adding it to your build.
 // Also update includes to match the actual header path used in your project layout.
 
-#include "GASCore/Public/AbilitySystem/ModMagCalcs/CoreMMC_SingleBackedAttribute.h"
+#include "GASCore/Public/AbilitySystem/ModMagCalcs/GASCoreMMCSingleBackedAttribute.h"
 
-#include "GASCore/Public/Attributes/CoreAttributeSet.h"
-#include "GASCore/Public/Interfaces/CoreCombatInterface.h"
+#include "GASCore/Public/Attributes/GASCoreAttributeSet.h"
+#include "GASCore/Public/Interfaces/GASCoreCombatInterface.h"
 
-UCoreMMC_SingleBackedAttribute::UCoreMMC_SingleBackedAttribute()
+UGASCoreMMCSingleBackedAttribute::UGASCoreMMCSingleBackedAttribute()
 {
 	// Intentionally empty.
 	// Set CapturedAttributeDef and coefficients (BaseMagnitude/AttributeMultiplier/LevelMultiplier)
 	// either in a Blueprint child (recommended for iteration) or in a small C++ child constructor.
 }
 
-float UCoreMMC_SingleBackedAttribute::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const
+float UGASCoreMMCSingleBackedAttribute::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const
 {
 	/*
 		About this function:
@@ -56,7 +56,7 @@ float UCoreMMC_SingleBackedAttribute::CalculateBaseMagnitude_Implementation(cons
 	// 2) External (non-attribute) dependency: Level from SourceObject via ICombatInterface.
 	//    Best practice: when creating the GE spec, the applier sets Context.AddSourceObject(SomeActorImplementingICombatInterface).
 	//    If absent, we default to 1 here. Alternatively (and more robustly), you can fall back to Spec.GetLevel().
-	ICoreCombatInterface* CombatInterface = Cast<ICoreCombatInterface>(Spec.GetContext().GetSourceObject());
+	IGASCoreCombatInterface* CombatInterface = Cast<IGASCoreCombatInterface>(Spec.GetContext().GetSourceObject());
 	const int32 PlayerLevel = CombatInterface ? CombatInterface->GetActorLevel() : 1;
 
 	// 3) Compute the base value. Designers can further scale this in the GE modifier if desired.
@@ -68,7 +68,7 @@ float UCoreMMC_SingleBackedAttribute::CalculateBaseMagnitude_Implementation(cons
 	return FinalizeOutput(FinalValue);
 }
 
-const TArray<FGameplayEffectAttributeCaptureDefinition>& UCoreMMC_SingleBackedAttribute::GetAttributeCaptureDefinitions() const
+const TArray<FGameplayEffectAttributeCaptureDefinition>& UGASCoreMMCSingleBackedAttribute::GetAttributeCaptureDefinitions() const
 {
 	// Ensure the engine captures whatever attribute is configured on the CDO.
 	// Returning this list here (instead of pushing into RelevantAttributesToCapture) guarantees that the
@@ -81,15 +81,15 @@ const TArray<FGameplayEffectAttributeCaptureDefinition>& UCoreMMC_SingleBackedAt
 	return CachedCaptures;
 }
 
-float UCoreMMC_SingleBackedAttribute::FinalizeOutput(float Value) const
+float UGASCoreMMCSingleBackedAttribute::FinalizeOutput(float Value) const
 {
 	switch (RoundingPolicy)
 	{
-	case EMMCRoundingPolicy::RoundHalfToEven:
+	case EGASCoreMMCRoundingPolicy::RoundHalfToEven:
 		return FMath::RoundHalfToEven(Value);
-	case EMMCRoundingPolicy::Floor:
+	case EGASCoreMMCRoundingPolicy::Floor:
 		return FMath::FloorToFloat(Value);
-	case EMMCRoundingPolicy::Ceil:
+	case EGASCoreMMCRoundingPolicy::Ceil:
 		return FMath::CeilToFloat(Value);
 	default:
 		return Value; // EMMCRoundingPolicy::None

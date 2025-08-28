@@ -2,18 +2,18 @@
 // and is protected by copyright law. Unauthorized reproduction, distribution, or use of this material is strictly prohibited.
 // Unreal Engine and its associated trademarks are used under license from Epic Games.
 
-#include "GASCore/Public/Components/CoreDefaultAttributeInitComponent.h"
+#include "GASCore/Public/AbilitySystem/Components/GASCoreAttributeInitComponent.h"
 
 #include "AbilitySystemComponent.h"
 #include "GameplayEffect.h"
 
-UCoreDefaultAttributeInitComponent::UCoreDefaultAttributeInitComponent()
+UGASCoreAttributeInitComponent::UGASCoreAttributeInitComponent()
 {
 	// This is a fire-and-forget initialization helper; no need to tick every frame.
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
-void UCoreDefaultAttributeInitComponent::InitializeDefaultAttributes(UAbilitySystemComponent* TargetAbilitySystemComponent) const
+void UGASCoreAttributeInitComponent::InitializeDefaultAttributes(UAbilitySystemComponent* TargetAbilitySystemComponent) const
 {
 	// Apply initial attributes in dependency order:
 	// 1) Primary (base stats) -> 2) Secondary (derived, often MMC-based) -> 3) Vital (set current = max).
@@ -22,7 +22,7 @@ void UCoreDefaultAttributeInitComponent::InitializeDefaultAttributes(UAbilitySys
 	ApplyEffectToSelf(DefaultVitalAttributes, 1.f, TargetAbilitySystemComponent);
 }
 
-void UCoreDefaultAttributeInitComponent::ApplyEffectToSelf(
+void UGASCoreAttributeInitComponent::ApplyEffectToSelf(
 	TSubclassOf<UGameplayEffect> GameplayEffectClass,
 	float Level,
 	UAbilitySystemComponent* TargetAbilitySystemComponent) const

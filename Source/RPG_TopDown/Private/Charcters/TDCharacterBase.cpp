@@ -5,15 +5,12 @@
 
 #include "Charcters/TDCharacterBase.h"
 
-#include "Components/TDDefaultAttributeInitComponent.h"
-
-
 ATDCharacterBase::ATDCharacterBase()
 {
 	// Disable tick by default for performance. Subclasses can enable as needed.
     PrimaryActorTick.bCanEverTick = false;
 
-	DefaultAttributeInitComponent = CreateDefaultSubobject<UTDDefaultAttributeInitComponent>("DefaultAttributeInitComponent");
+	/*DefaultAttributeInitComponent = CreateDefaultSubobject<UTDDefaultAttributeInitComponent>("DefaultAttributeInitComponent");*/
 
     // Create the skeletal mesh component for the weapon.
     WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>("Weapon");

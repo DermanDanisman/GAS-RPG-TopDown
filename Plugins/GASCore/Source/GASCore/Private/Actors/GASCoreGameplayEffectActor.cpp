@@ -13,27 +13,27 @@
 // Multiplayer authority:
 // - In networked games, prefer guarding OnOverlap/EndOverlap with HasAuthority() or perform server RPCs.
 
-#include "GASCore/Public/Actors/CoreGameplayEffectActor.h"
+#include "GASCore/Public/Actors/GASCoreGameplayEffectActor.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "GameplayEffect.h"
 #include "GameplayEffectTypes.h"
 
-ACoreGameplayEffectActor::ACoreGameplayEffectActor()
+AGASCoreGameplayEffectActor::AGASCoreGameplayEffectActor()
 {
 	// Provide a neutral root so designers can add collision/visuals in BP as needed.
 	DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultRootComponent"));
 	SetRootComponent(DefaultSceneRoot);
 }
 
-void ACoreGameplayEffectActor::BeginPlay()
+void AGASCoreGameplayEffectActor::BeginPlay()
 {
 	Super::BeginPlay();
 	
 }
 
-void ACoreGameplayEffectActor::OnOverlap(AActor* TargetActor)
+void AGASCoreGameplayEffectActor::OnOverlap(AActor* TargetActor)
 {
 	// Early-out for safety: we need a target actor to proceed.
 	if (!TargetActor) return;
@@ -51,11 +51,11 @@ void ACoreGameplayEffectActor::OnOverlap(AActor* TargetActor)
 	// - RemoveOnOverlap: Rare (toggle behaviors, entry-triggered removal)
 	// - DoNotRemove: Permanent effects or manual control
 	
-	ApplyAllGameplayEffects(TargetActor, ECoreEffectApplicationPolicy::ApplyOnOverlap);
-	RemoveAllGameplayEffects(TargetActor, ECoreEffectRemovalPolicy::RemoveOnOverlap);
+	ApplyAllGameplayEffects(TargetActor, EGASCoreEffectApplicationPolicy::ApplyOnOverlap);
+	RemoveAllGameplayEffects(TargetActor, EGASCoreEffectRemovalPolicy::RemoveOnOverlap);
 }
 
-void ACoreGameplayEffectActor::EndOverlap(AActor* TargetActor)
+void AGASCoreGameplayEffectActor::EndOverlap(AActor* TargetActor)
 {
 	// Early-out for safety.
 	if (!TargetActor) return;
@@ -67,16 +67,16 @@ void ACoreGameplayEffectActor::EndOverlap(AActor* TargetActor)
 	// - ApplyEndOverlap: Grant-on-exit designs (rare but valid)
 	// - RemoveOnEndOverlap: Typical AoE cleanup (fire areas, aura buffs, temporary zones)
 	
-	ApplyAllGameplayEffects(TargetActor, ECoreEffectApplicationPolicy::ApplyEndOverlap);
-	RemoveAllGameplayEffects(TargetActor, ECoreEffectRemovalPolicy::RemoveOnEndOverlap);
+	ApplyAllGameplayEffects(TargetActor, EGASCoreEffectApplicationPolicy::ApplyEndOverlap);
+	RemoveAllGameplayEffects(TargetActor, EGASCoreEffectRemovalPolicy::RemoveOnEndOverlap);
 }
 
-void ACoreGameplayEffectActor::ApplyAllGameplayEffects(AActor* TargetActor, ECoreEffectApplicationPolicy ApplicationPolicy)
+void AGASCoreGameplayEffectActor::ApplyAllGameplayEffects(AActor* TargetActor, EGASCoreEffectApplicationPolicy ApplicationPolicy)
 {
 	// Iterate all rows and apply only those matching this timing.
 	// Note: If multiple rows set bDestroyOnEffectApplication, calling Destroy() inside ApplyGameplayEffectToTarget
 	// will end processing early. If you need "apply all then destroy", aggregate a flag and Destroy() once after this loop.
-	for (const FCoreEffectConfig& EffectConfig : GameplayEffects)
+	for (const FGASCoreEffectConfig& EffectConfig : GameplayEffects)
 	{
 		if (EffectConfig.EffectClass && EffectConfig.ApplicationPolicy == ApplicationPolicy)
 		{
@@ -85,11 +85,11 @@ void ACoreGameplayEffectActor::ApplyAllGameplayEffects(AActor* TargetActor, ECor
 	}
 }
 
-void ACoreGameplayEffectActor::RemoveAllGameplayEffects(AActor* TargetActor, ECoreEffectRemovalPolicy RemovalPolicy)
+void AGASCoreGameplayEffectActor::RemoveAllGameplayEffects(AActor* TargetActor, EGASCoreEffectRemovalPolicy RemovalPolicy)
 {
 	// Iterate all rows and remove only those matching this timing.
 	// Removal is per-handle and GC-safe (tracked ASC is weak).
-	for (const FCoreEffectConfig& EffectConfig : GameplayEffects)
+	for (const FGASCoreEffectConfig& EffectConfig : GameplayEffects)
 	{
 		if (EffectConfig.EffectClass && EffectConfig.RemovalPolicy == RemovalPolicy)
 		{
@@ -98,7 +98,7 @@ void ACoreGameplayEffectActor::RemoveAllGameplayEffects(AActor* TargetActor, ECo
 	}
 }
 
-void ACoreGameplayEffectActor::ApplyGameplayEffectToTarget(AActor* TargetActor, const FCoreEffectConfig& EffectConfig)
+void AGASCoreGameplayEffectActor::ApplyGameplayEffectToTarget(AActor* TargetActor, const FGASCoreEffectConfig& EffectConfig)
 {
 	// 1) Resolve the target ASC (supports IAbilitySystemInterface or direct component search).
 	UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetActor);
@@ -139,9 +139,9 @@ void ACoreGameplayEffectActor::ApplyGameplayEffectToTarget(AActor* TargetActor, 
 
 	// 6) Track non-instant effects if a removal policy is configured.
 	// Periodic effects are either HasDuration or Infinite; both count as non-instant.
-	if (ActiveEffectHandle.IsValid() && EffectConfig.RemovalPolicy != ECoreEffectRemovalPolicy::DoNotRemove && IsNonInstant(EffectConfig.EffectClass))
+	if (ActiveEffectHandle.IsValid() && EffectConfig.RemovalPolicy != EGASCoreEffectRemovalPolicy::DoNotRemove && IsNonInstant(EffectConfig.EffectClass))
 	{
-		FTrackedEffect Track;
+		FGASCoreTrackedEffect Track;
 		Track.ASC = TargetASC;
 		Track.EffectClass = EffectConfig.EffectClass;
 		Track.bDestroyOnRemoval = EffectConfig.bDestroyOnEffectRemoval;
@@ -164,7 +164,7 @@ void ACoreGameplayEffectActor::ApplyGameplayEffectToTarget(AActor* TargetActor, 
 	}
 }
 
-void ACoreGameplayEffectActor::RemoveGameplayEffectFromTarget(AActor* TargetActor, const FCoreEffectConfig& EffectConfig)
+void AGASCoreGameplayEffectActor::RemoveGameplayEffectFromTarget(AActor* TargetActor, const FGASCoreEffectConfig& EffectConfig)
 {
 	// 1) Resolve the target ASC.
 	UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetActor);
@@ -178,9 +178,9 @@ void ACoreGameplayEffectActor::RemoveGameplayEffectFromTarget(AActor* TargetActo
 	TArray<FActiveGameplayEffectHandle> HandlesForThisASC;
 	HandlesForThisASC.Reserve(ActiveGameplayEffects.Num());
 	
-	for (TPair<FActiveGameplayEffectHandle, FTrackedEffect>& TrackedPair : ActiveGameplayEffects)
+	for (TPair<FActiveGameplayEffectHandle, FGASCoreTrackedEffect>& TrackedPair : ActiveGameplayEffects)
 	{
-		const FTrackedEffect& TrackedEffect = TrackedPair.Value;
+		const FGASCoreTrackedEffect& TrackedEffect = TrackedPair.Value;
 		
 		// Skip if the weak ASC is no longer valid (its owner was GC’d or destroyed)
 		if (!TrackedEffect.ASC.IsValid())
@@ -201,7 +201,7 @@ void ACoreGameplayEffectActor::RemoveGameplayEffectFromTarget(AActor* TargetActo
 
 	for (const FActiveGameplayEffectHandle& EffectHandle : HandlesForThisASC)
 	{
-		const FTrackedEffect* TrackedEffect = ActiveGameplayEffects.Find(EffectHandle);
+		const FGASCoreTrackedEffect* TrackedEffect = ActiveGameplayEffects.Find(EffectHandle);
 		if (!TrackedEffect) continue;
 
 		// Defensive: ASC could have become invalid between collection and removal
@@ -222,7 +222,7 @@ void ACoreGameplayEffectActor::RemoveGameplayEffectFromTarget(AActor* TargetActo
 	// 4) Cleanup: erase entries that no longer exist on the ASC OR whose weak ASC is invalid.
 	for (const FActiveGameplayEffectHandle& Handle : HandlesForThisASC)
 	{
-		const FTrackedEffect* TrackedEffect = ActiveGameplayEffects.Find(Handle);
+		const FGASCoreTrackedEffect* TrackedEffect = ActiveGameplayEffects.Find(Handle);
 
 		// If ASC invalid, or the handle no longer exists on the ASC, purge it
 		const bool bASCInvalid = !TrackedEffect || !TrackedEffect->ASC.IsValid();
@@ -244,7 +244,7 @@ void ACoreGameplayEffectActor::RemoveGameplayEffectFromTarget(AActor* TargetActo
 // ------------ Helper queries on GE classes ------------
 // These helpers inspect GameplayEffect class defaults to determine behavior at design time.
 
-EGameplayEffectDurationType ACoreGameplayEffectActor::GetDurationPolicyOf(const TSubclassOf<UGameplayEffect>& EffectClass)
+EGameplayEffectDurationType AGASCoreGameplayEffectActor::GetDurationPolicyOf(const TSubclassOf<UGameplayEffect>& EffectClass)
 {
 	if (!EffectClass) return EGameplayEffectDurationType::Instant;
 
@@ -257,7 +257,7 @@ EGameplayEffectDurationType ACoreGameplayEffectActor::GetDurationPolicyOf(const 
 	return EffectCDO ? EffectCDO->DurationPolicy : EGameplayEffectDurationType::Instant;
 }
 
-bool ACoreGameplayEffectActor::IsPeriodic(const TSubclassOf<UGameplayEffect>& EffectClass)
+bool AGASCoreGameplayEffectActor::IsPeriodic(const TSubclassOf<UGameplayEffect>& EffectClass)
 {
 	if (!EffectClass) return false;
 
@@ -268,7 +268,7 @@ bool ACoreGameplayEffectActor::IsPeriodic(const TSubclassOf<UGameplayEffect>& Ef
 	return EffectCDO && EffectCDO->Period.GetValue() > 0.f;
 }
 
-bool ACoreGameplayEffectActor::IsInfinite(const TSubclassOf<UGameplayEffect>& EffectClass)
+bool AGASCoreGameplayEffectActor::IsInfinite(const TSubclassOf<UGameplayEffect>& EffectClass)
 {
 	// INFINITE DETECTION: Simple duration policy check
 	// Infinite effects last until explicitly removed and require handle tracking.
@@ -276,7 +276,7 @@ bool ACoreGameplayEffectActor::IsInfinite(const TSubclassOf<UGameplayEffect>& Ef
 	return GetDurationPolicyOf(EffectClass) == EGameplayEffectDurationType::Infinite;
 }
 
-bool ACoreGameplayEffectActor::IsNonInstant(const TSubclassOf<UGameplayEffect>& EffectClass)
+bool AGASCoreGameplayEffectActor::IsNonInstant(const TSubclassOf<UGameplayEffect>& EffectClass)
 {
 	// Non-instant if DurationPolicy != Instant (covers HasDuration and Infinite; periodic is included).
 	return GetDurationPolicyOf(EffectClass) != EGameplayEffectDurationType::Instant;

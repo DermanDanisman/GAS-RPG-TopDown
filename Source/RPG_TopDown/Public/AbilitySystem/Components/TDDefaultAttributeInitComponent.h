@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GASCore/Public/Components/CoreDefaultAttributeInitComponent.h"
+#include "GASCore/Public/AbilitySystem/Components/GASCoreAttributeInitComponent.h"
 #include "TDDefaultAttributeInitComponent.generated.h"
 
 /**
@@ -17,7 +17,7 @@
  * In multiplayer, call on the server and let replication update clients.
  */
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class RPG_TOPDOWN_API UTDDefaultAttributeInitComponent : public UCoreDefaultAttributeInitComponent
+class RPG_TOPDOWN_API UTDDefaultAttributeInitComponent : public UGASCoreAttributeInitComponent
 {
 	GENERATED_BODY()
 

@@ -10,7 +10,7 @@
 //
 // Pattern (UI MVC):
 //   - Model: GAS (AbilitySystemComponent + AttributeSet)
-//   - Controller: UCoreWidgetController (reads model, broadcasts to UI)
+//   - Controller: UGASCoreUIWidgetController (reads model, broadcasts to UI)
 //   - View: UUserWidget-derived widgets (bind to controller delegates, display only)
 //
 // Responsibilities of derived controllers:
@@ -32,8 +32,8 @@
 //   - MessageWidgetRowDelegate broadcasts whole rows; keep row structs lightweight.
 //
 // Related types:
-//   - FUIMessageWidgetRow: DataTable row mapping a GameplayTag to message content/widget/icon.
-//   - UCoreAbilitySystemComponent: can broadcast effect asset tags to drive UI messages.
+//   - FGASCoreUIMessageWidgetRow: DataTable row mapping a GameplayTag to message content/widget/icon.
+//   - UGASCoreAbilitySystemComponent: can broadcast effect asset tags to drive UI messages.
 
 #pragma once
 
@@ -41,27 +41,27 @@
 #include "GameplayTagContainer.h"
 #include "UObject/Object.h"
 #include "Engine/DataTable.h" // FTableRowBase
-#include "CoreWidgetController.generated.h"
+#include "GASCoreUIWidgetController.generated.h"
 
-class UCoreUserWidget;
+class UGASCoreUIUserWidget;
 class UTexture2D;
 class UAttributeSet;
 class UAbilitySystemComponent;
 
 /**
- * FWidgetControllerParams
+ * FGASCoreUIWidgetControllerParams
  *
  * Struct for passing references to all systems a GAS widget controller needs.
  * - BlueprintType: designers can initialize controllers from Blueprints.
  * - Members are TObjectPtr<> for GC awareness.
  */
 USTRUCT(BlueprintType)
-struct FWidgetControllerParams
+struct FGASCoreUIWidgetControllerParams
 {
 	GENERATED_BODY()
 
 	/** Default constructor: initializes pointers to nullptr (safe default). */
-	FWidgetControllerParams() = default;
+	FGASCoreUIWidgetControllerParams() = default;
 
 	/**
 	 * Parameterized constructor for initializing all system references at once.
@@ -70,7 +70,7 @@ struct FWidgetControllerParams
 	 * @param InAbilitySystemComponent   GAS component (abilities/effects/tags).
 	 * @param InAttributeSet             Attributes (health, mana, etc.).
 	 */
-	explicit FWidgetControllerParams(APlayerController* InPlayerController,
+	explicit FGASCoreUIWidgetControllerParams(APlayerController* InPlayerController,
 	                                 APlayerState* InPlayerState,
 	                                 UAbilitySystemComponent* InAbilitySystemComponent,
 	                                 UAttributeSet* InAttributeSet)
@@ -98,13 +98,58 @@ struct FWidgetControllerParams
 };
 
 /**
- * UCoreWidgetController
+ * FGASCoreUIMessageWidgetRow
+ *
+ * Row type for UI message DataTables.
+ * A GameplayTag addresses a message payload
+ * (localized text, a widget class, and an optional image) to drive notifications/toasts.
+ *
+ * Typical usage:
+ * - In a controller, listen for "UI.Message.*" tags from the ASC (e.g., effect asset tags).
+ * - Look up the row by tag (row name == tag's FName).
+ * - Broadcast row via MessageWidgetRowDelegate for the HUD to render.
+ */
+USTRUCT(BlueprintType)
+struct FGASCoreUIMessageWidgetRow : public FTableRowBase
+{
+	GENERATED_BODY()
+
+	/** The unique tag for this message (e.g., UI.Message.HealthPotion). */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|UI|Message")
+	FGameplayTag MessageTag;
+
+	/** Localized user-facing message text. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|UI|Message")
+	FText MessageText;
+
+	/** Optional widget class to render the message. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|UI|Message")
+	TSubclassOf<UGASCoreUIUserWidget> MessageWidget;
+
+	/** Optional icon displayed with the message. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|UI|Message")
+	TObjectPtr<UTexture2D> MessageImage;
+
+	FGASCoreUIMessageWidgetRow()
+	{
+		MessageTag = FGameplayTag();
+		MessageText = FText();
+		MessageWidget = nullptr;
+		MessageImage = nullptr;
+	}
+};
+
+/** Broadcasts a message widget row to the UI (e.g., HUD overlay). */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUIMessageWidgetRowSignature, FGASCoreUIMessageWidgetRow, MessageWidgetRow);
+
+/**
+ * UGASCoreUIWidgetController
  *
  * Base class for GAS widget controllers. Manages references to gameplay systems
  * and defines a standard initialization contract for derived controllers.
  */
 UCLASS()
-class GASCOREUI_API UCoreWidgetController : public UObject
+class GASCOREUI_API UGASCoreUIWidgetController : public UObject
 {
 	GENERATED_BODY()
 
@@ -115,7 +160,7 @@ public:
 	 * Safe to call multiple times to refresh references (e.g., on pawn possession changes).
 	 */
 	UFUNCTION(BlueprintCallable, Category = "GASCore|WidgetController")
-	void SetWidgetControllerParams(const FWidgetControllerParams& InWidgetControllerParams);
+	void SetWidgetControllerParams(const FGASCoreUIWidgetControllerParams& InWidgetControllerParams);
 
 	/**
 	 * Broadcast the initial values of attributes to the UI.

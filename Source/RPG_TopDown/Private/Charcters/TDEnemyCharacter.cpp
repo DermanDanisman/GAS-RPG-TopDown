@@ -5,9 +5,9 @@
 #include "Charcters/TDEnemyCharacter.h"
 
 #include "HighlightActor.h"
-#include "GASCore/Public/Attributes/CoreAttributeSet.h"
-#include "GASCore/Public/Components/CoreAbilitySystemComponent.h"
-#include "Components/TDAbilitySystemComponent.h"
+#include "AbilitySystem/Attributes/TDAttributeSet.h"
+#include "GASCore/Public/AbilitySystem/Components/GASCoreAbilitySystemComponent.h"
+#include "AbilitySystem/Components/TDAbilitySystemComponent.h"
 #include "RPG_TopDown/RPG_TopDown.h"
 
 // Sets default values
@@ -23,7 +23,7 @@ ATDEnemyCharacter::ATDEnemyCharacter()
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal); // Minimal: fewer network updates.
 
 	// Create the Attribute Set for this AI character.
-	AttributeSet = CreateDefaultSubobject<UCoreAttributeSet>("AttributeSet");
+	AttributeSet = CreateDefaultSubobject<UTDAttributeSet>("AttributeSet");
 }
 
 // Called when the game starts or when spawned

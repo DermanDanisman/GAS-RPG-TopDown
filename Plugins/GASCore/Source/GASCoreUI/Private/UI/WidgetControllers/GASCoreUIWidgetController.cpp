@@ -16,7 +16,7 @@
 //  - Binds to controller delegates to receive state updates
 //  - Sends user input back to controller (which routes to appropriate systems)
 //
-// CONTROLLER: UCoreWidgetController (this class)
+// CONTROLLER: UGASCoreUIWidgetController (this class)
 //  - Bridges Model and View layers
 //  - Subscribes to Model change events, rebroadcasts to View
 //  - Processes View input and calls appropriate Model methods
@@ -44,9 +44,9 @@
 //   - AddLambda: Convenient but requires manual cleanup if controller lifetime differs
 //   - AddUObject: Automatic cleanup when UObject is destroyed, safer for most cases
 
-#include "GASCoreUI/Public/UI/WidgetControllers/CoreWidgetController.h"
+#include "GASCoreUI/Public/UI/WidgetControllers/GASCoreUIWidgetController.h"
 
-void UCoreWidgetController::SetWidgetControllerParams(const FWidgetControllerParams& InWidgetControllerParams)
+void UGASCoreUIWidgetController::SetWidgetControllerParams(const FGASCoreUIWidgetControllerParams& InWidgetControllerParams)
 {
 	// DEPENDENCY INJECTION: Assign all gameplay system references at once
 	// This should be the first call after constructing the controller, before any UI binding occurs.
@@ -65,7 +65,7 @@ void UCoreWidgetController::SetWidgetControllerParams(const FWidgetControllerPar
 	// check(AttributeSet);
 }
 
-void UCoreWidgetController::BroadcastInitialValues()
+void UGASCoreUIWidgetController::BroadcastInitialValues()
 {
 	// BASE CLASS IMPLEMENTATION: Intentionally empty (no-op).
 	//
@@ -89,7 +89,7 @@ void UCoreWidgetController::BroadcastInitialValues()
 	//   // ... etc for all attributes that have corresponding UI elements
 }
 
-void UCoreWidgetController::BindCallbacksToDependencies()
+void UGASCoreUIWidgetController::BindCallbacksToDependencies()
 {
 	// BASE CLASS IMPLEMENTATION: Intentionally empty (no-op).
 	//

@@ -4,11 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "CoreCombatInterface.generated.h"
+#include "GASCoreCombatInterface.generated.h"
 
 // This class does not need to be modified.
 UINTERFACE()
-class UCoreCombatInterface : public UInterface
+class UGASCoreCombatInterface : public UInterface
 {
 	GENERATED_BODY()
 };
@@ -25,7 +25,7 @@ class UCoreCombatInterface : public UInterface
  *   direct C++ calls via native pointers. If you need Blueprint implementability
  *   or network RPC hooks, make it a UFUNCTION(BlueprintNativeEvent).
  */
-class GASCORE_API ICoreCombatInterface
+class GASCORE_API IGASCoreCombatInterface
 {
 	GENERATED_BODY()
 

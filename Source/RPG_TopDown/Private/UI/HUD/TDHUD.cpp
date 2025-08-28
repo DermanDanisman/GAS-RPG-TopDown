@@ -10,7 +10,7 @@
 #include "UI/Widgets/TDUserWidget.h"
 
 
-UTDHUDWidgetController* ATDHUD::GetHUDWidgetController(const FWidgetControllerParams& InWidgetControllerParams)
+UTDHUDWidgetController* ATDHUD::GetHUDWidgetController(const FGASCoreUIWidgetControllerParams& InWidgetControllerParams)
 {
 	// If the controller hasn't been created yet, instantiate it and initialize.
 	if (HUDWidgetController == nullptr)
@@ -48,7 +48,7 @@ void ATDHUD::InitializeHUD(APlayerController* InPlayerController, APlayerState* 
 
 	// Compose all relevant gameplay references (controller, state, ability system, attributes)
 	// into a single struct for easier, cleaner parameter passing.
-	const FWidgetControllerParams WidgetControllerParams(
+	const FGASCoreUIWidgetControllerParams WidgetControllerParams(
 		InPlayerController, 
 		InPlayerState, 
 		InAbilitySystemComponent, 

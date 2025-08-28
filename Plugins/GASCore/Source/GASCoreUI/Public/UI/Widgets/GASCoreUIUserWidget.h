@@ -11,12 +11,12 @@
 //     * Authoritative game state and business logic
 //     * Emits change notifications when state updates
 //
-//   - CONTROLLER: UCoreWidgetController and derived classes
+//   - CONTROLLER: UGASCoreUIWidgetController and derived classes
 //     * Bridges Model and View layers  
 //     * Subscribes to Model change events, rebroadcasts to View
 //     * Processes View input and routes to appropriate Model methods
 //
-//   - VIEW: UCoreUserWidget and derived Blueprint/C++ widgets (this class)
+//   - VIEW: UGASCoreUIUserWidget and derived Blueprint/C++ widgets (this class)
 //     * Pure presentation layer focused on display and user interaction
 //     * No direct access to gameplay systems (all data flows through Controller)
 //     * Binds to Controller delegates to receive reactive state updates
@@ -60,10 +60,10 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "CoreUserWidget.generated.h"
+#include "GASCoreUIUserWidget.generated.h"
 
 /**
- * UCoreUserWidget
+ * UGASCoreUIUserWidget
  *
  * Base class for all GAS TopDown RPG user widgets that integrate with the Controller layer.
  * Implements the View side of our UI MVC pattern with a standardized Controller handoff process.
@@ -85,7 +85,7 @@
  * 4. Bind to MessageWidgetRowDelegate → Display Notifications
  */
 UCLASS()
-class GASCOREUI_API UCoreUserWidget : public UUserWidget
+class GASCOREUI_API UGASCoreUIUserWidget : public UUserWidget
 {
 	GENERATED_BODY()
 

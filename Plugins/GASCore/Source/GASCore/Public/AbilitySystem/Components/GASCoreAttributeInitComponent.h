@@ -36,7 +36,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "CoreDefaultAttributeInitComponent.generated.h"
+#include "GASCoreAttributeInitComponent.generated.h"
 
 class UAbilitySystemComponent;
 class UGameplayEffect;
@@ -54,14 +54,14 @@ class UGameplayEffect;
  * - Use Override modifiers in the init GE to make starting values explicit.
  */
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class GASCORE_API UCoreDefaultAttributeInitComponent : public UActorComponent
+class GASCORE_API UGASCoreAttributeInitComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this component's properties.
 	// We disable ticking; this component performs a one-shot initialization.
-	UCoreDefaultAttributeInitComponent();
+	UGASCoreAttributeInitComponent();
 
 	/**
 	 * Gameplay Effect that sets initial primary attributes (e.g., STR/DEX/INT/END/VIG).

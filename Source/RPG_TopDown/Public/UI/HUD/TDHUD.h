@@ -13,7 +13,7 @@ class UTDHUDWidgetController;
 class UTDUserWidget;
 class UAttributeSet;
 class UAbilitySystemComponent;
-struct FWidgetControllerParams;
+struct FGASCoreUIWidgetControllerParams;
 
 /**
  * ATDHUD
@@ -37,7 +37,7 @@ public:
 	 * @param InWidgetControllerParams   The struct of references required by the widget controller.
 	 * @return                          A valid pointer to the widget controller for HUD widgets.
 	 */
-	UTDHUDWidgetController* GetHUDWidgetController(const FWidgetControllerParams& InWidgetControllerParams);
+	UTDHUDWidgetController* GetHUDWidgetController(const FGASCoreUIWidgetControllerParams& InWidgetControllerParams);
 
 	/**
 	 * Initializes the HUD widget and its controller, and adds the widget to the viewport.

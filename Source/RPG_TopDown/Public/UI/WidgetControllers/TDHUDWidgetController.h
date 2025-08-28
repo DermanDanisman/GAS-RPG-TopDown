@@ -6,54 +6,10 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
-#include "UI/WidgetControllers/CoreWidgetController.h"
+#include "UI/WidgetControllers/GASCoreUIWidgetController.h"
 #include "TDHUDWidgetController.generated.h"
 
 class UTDUserWidget;
-/**
- * FUIMessageWidgetRow
- *
- * Row type for UI message DataTables.
- * A GameplayTag addresses a message payload
- * (localized text, a widget class, and an optional image) to drive notifications/toasts.
- *
- * Typical usage:
- * - In a controller, listen for "UI.Message.*" tags from the ASC (e.g., effect asset tags).
- * - Look up the row by tag (row name == tag's FName).
- * - Broadcast row via MessageWidgetRowDelegate for the HUD to render.
- */
-USTRUCT(BlueprintType)
-struct FUIMessageWidgetRow : public FTableRowBase
-{
-	GENERATED_BODY()
-
-	/** The unique tag for this message (e.g., UI.Message.HealthPotion). */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|UI|Message")
-	FGameplayTag MessageTag;
-
-	/** Localized user-facing message text. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|UI|Message")
-	FText MessageText;
-
-	/** Optional widget class to render the message. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|UI|Message")
-	TSubclassOf<UTDUserWidget> MessageWidget;
-
-	/** Optional icon displayed with the message. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GASCore|UI|Message")
-	TObjectPtr<UTexture2D> MessageImage;
-
-	FUIMessageWidgetRow()
-	{
-		MessageTag = FGameplayTag();
-		MessageText = FText();
-		MessageWidget = nullptr;
-		MessageImage = nullptr;
-	}
-};
-
-/** Broadcasts a message widget row to the UI (e.g., HUD overlay). */
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUIMessageWidgetRowSignature, FUIMessageWidgetRow, MessageWidgetRow);
 
 // Declare multicast delegates for different HUD attribute changes.
 // These are BlueprintAssignable so widgets can bind in BP to receive updates.
@@ -68,7 +24,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttributeChangedSignature, float,
  * - Listens for GameplayEffect asset tags (from ASC) and forwards matching UI message rows
  */
 UCLASS(BlueprintType, Blueprintable)
-class RPG_TOPDOWN_API UTDHUDWidgetController : public UCoreWidgetController
+class RPG_TOPDOWN_API UTDHUDWidgetController : public UGASCoreUIWidgetController
 {
 	GENERATED_BODY()
 

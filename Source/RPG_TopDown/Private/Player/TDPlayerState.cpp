@@ -4,8 +4,8 @@
 
 #include "Player/TDPlayerState.h"
 
-#include "GASCore/Public/Attributes/CoreAttributeSet.h"
-#include "Components/TDAbilitySystemComponent.h"
+#include "AbilitySystem/Attributes/TDAttributeSet.h"
+#include "AbilitySystem/Components/TDAbilitySystemComponent.h"
 #include "Net/UnrealNetwork.h"
 
 ATDPlayerState::ATDPlayerState()
@@ -20,7 +20,7 @@ ATDPlayerState::ATDPlayerState()
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed); // Server sends important GE data.
 
 	// Create the GAS AttributeSet as a default subobject.
-	AttributeSet = CreateDefaultSubobject<UCoreAttributeSet>("AttributeSet");
+	AttributeSet = CreateDefaultSubobject<UTDAttributeSet>("AttributeSet");
 }
 
 void ATDPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const

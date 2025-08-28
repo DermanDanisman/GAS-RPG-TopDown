@@ -5,10 +5,10 @@
 #include "CoreMinimal.h"
 #include "GameplayModMagnitudeCalculation.h"
 
-#include "CoreMMC_SingleBackedAttribute.generated.h"
+#include "GASCoreMMCSingleBackedAttribute.generated.h"
 
 UENUM(BlueprintType)
-enum class EMMCRoundingPolicy : uint8
+enum class EGASCoreMMCRoundingPolicy : uint8
 {
 	None,
 	RoundHalfToEven,
@@ -38,12 +38,12 @@ enum class EMMCRoundingPolicy : uint8
  * - Keep this calculation allocation-free and fast; it runs on the game thread.
  */
 UCLASS()
-class GASCORE_API UCoreMMC_SingleBackedAttribute : public UGameplayModMagnitudeCalculation
+class GASCORE_API UGASCoreMMCSingleBackedAttribute : public UGameplayModMagnitudeCalculation
 {
 	GENERATED_BODY()
 
 public:
-	UCoreMMC_SingleBackedAttribute();
+	UGASCoreMMCSingleBackedAttribute();
 
 	// Called by GAS to compute the base magnitude for a GE modifier that references this MMC.
 	virtual float CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const override;
@@ -54,27 +54,27 @@ public:
 protected:
 	// Single attribute to capture (choose Attribute, Source, and Snapshot in BP).
 	// Example (C++):
-	//   CaptureDef.AttributeToCapture = UCoreAttributeSet::GetVigorAttribute();
+	//   CaptureDef.AttributeToCapture = UGASCoreAttributeSet::GetVigorAttribute();
 	//   CaptureDef.AttributeSource = EGameplayEffectAttributeCaptureSource::Target;
 	//   CaptureDef.bSnapshot = false; // live updates when attribute changes
-	UPROPERTY(EditAnywhere, Category="MMC|Properties", meta=(ToolTip="Attribute capture definition (Attribute/Source/Snapshot). Must be set on the class default object so GAS can capture it."))
+	UPROPERTY(EditAnywhere, Category="GASCore|MMC|Properties", meta=(ToolTip="Attribute capture definition (Attribute/Source/Snapshot). Must be set on the class default object so GAS can capture it."))
 	FGameplayEffectAttributeCaptureDefinition CapturedAttributeDef;
 
 	// Constant base part of the formula.
-	UPROPERTY(EditAnywhere, Category="MMC|Properties")
+	UPROPERTY(EditAnywhere, Category="GASCore|MMC|Properties")
 	float BaseMagnitude = 100.f;
 
 	// Multiplies the Actor Level (see .cpp).
-	UPROPERTY(EditAnywhere, Category="MMC|Properties", meta=(ToolTip="Coefficient applied to Level. Consider reapplying the GE on level change, or model Level as an attribute for live recompute."))
+	UPROPERTY(EditAnywhere, Category="GASCore|MMC|Properties", meta=(ToolTip="Coefficient applied to Level. Consider reapplying the GE on level change, or model Level as an attribute for live recompute."))
 	float LevelMultiplier = 10.f;
 
 	// Multiplies the captured attribute value.
-	UPROPERTY(EditAnywhere, Category="MMC|Properties")
+	UPROPERTY(EditAnywhere, Category="GASCore|MMC|Properties")
 	float AttributeMultiplier = 1.f;
 
 	// Optional rounding of the final output (display convenience).
-	UPROPERTY(EditAnywhere, Category="MMC|Rounding Policy")
-	EMMCRoundingPolicy RoundingPolicy = EMMCRoundingPolicy::RoundHalfToEven;
+	UPROPERTY(EditAnywhere, Category="GASCore|MMC|Rounding Policy")
+	EGASCoreMMCRoundingPolicy RoundingPolicy = EGASCoreMMCRoundingPolicy::RoundHalfToEven;
 
 private:
 	// Backing array returned by GetAttributeCaptureDefinitions(); must be a stable ref.
