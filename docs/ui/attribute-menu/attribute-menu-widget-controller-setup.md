@@ -477,6 +477,183 @@ void UAuraAttributeMenuWidgetController::BroadcastAttributeInfo(const FGameplayT
 }
 ```
 
+## BroadcastInitialValues Timing and Widget Binding
+
+### Critical Timing Requirements
+
+When setting up the Attribute Menu system, the timing of `BroadcastInitialValues()` is crucial. The broadcast must occur **after** widgets have bound to the controller's delegates, or widgets will miss the initial data.
+
+#### Recommended Initialization Sequence
+
+```cpp
+// 1. Create and configure controller (usually cached in HUD)
+UTDAttributeMenuWidgetController* Controller = HUD->GetAttributeMenuWidgetController(WidgetControllerParams);
+
+// 2. Assign controller to the Attribute Menu widget
+AttributeMenuWidget->SetWidgetController(Controller);
+
+// 3. Widget's OnWidgetControllerSet Blueprint event should:
+//    - Cast controller to correct type
+//    - Bind to OnAttributeInfoChanged delegate  
+//    - Set up child widget bindings
+//    - Configure any other UI subscriptions
+
+// 4. ONLY AFTER all bindings are complete:
+Controller->BroadcastInitialValues();
+```
+
+### Widget Binding Pattern
+
+In the Attribute Menu Widget's Blueprint, implement `OnWidgetControllerSet` to handle binding:
+
+#### Blueprint Event Implementation
+
+```
+Event OnWidgetControllerSet
+├── Cast to TD Attribute Menu Widget Controller
+│   ├── [Valid] Store reference as AttributeMenuController
+│   └── [Valid] Call BindDelegates Custom Function
+└── [After binding] Call BroadcastInitialValues on Controller
+```
+
+#### Binding Custom Function Example
+
+```
+Custom Function: BindDelegates
+├── Input: AttributeMenuController (UTDAttributeMenuWidgetController)
+├── Bind Event to OnAttributeInfoChanged
+│   └── Target: Custom Event "HandleAttributeInfoUpdate"
+├── [Optional] Bind to other controller delegates
+└── Return: Success (Boolean)
+```
+
+### Child Widget Subscription
+
+Child widgets (TextValueButtonRow, TextValueRow) should subscribe in their own `OnWidgetControllerSet`:
+
+#### TextValueButtonRow Binding Example
+
+```
+Event OnWidgetControllerSet (in TextValueButtonRow)
+├── Cast to TD Attribute Menu Widget Controller
+│   └── [Valid] Bind Event to OnAttributeInfoChanged
+│       └── Target: Custom Event "OnAttributeInfoReceived"
+```
+
+```
+Custom Event: OnAttributeInfoReceived
+├── Input: AttributeInfo (FAuraAttributeInfo)
+├── Branch: AttributeInfo.AttributeTag == MyAttributeTag
+│   └── [True] Update UI Elements
+│       ├── Set Text (AttributeNameText) ← AttributeInfo.AttributeName
+│       ├── Format Text (AttributeValueText) ← AttributeInfo.ValueFormat + AttributeInfo.AttributeValue
+│       └── Set Brush (AttributeIcon) ← AttributeInfo.AttributeIcon
+```
+
+### Common Timing Issues and Solutions
+
+#### Issue 1: Empty Widgets on First Load
+**Symptoms**: Attribute rows show default/empty values when menu first opens
+**Cause**: `BroadcastInitialValues()` called before widget binding
+
+**Solution**: Ensure binding happens before broadcast:
+```cpp
+// DON'T: Call broadcast immediately after SetWidgetController
+AttributeMenuWidget->SetWidgetController(Controller);
+Controller->BroadcastInitialValues(); // Too early!
+
+// DO: Let widget handle the timing via OnWidgetControllerSet
+AttributeMenuWidget->SetWidgetController(Controller);
+// Widget's Blueprint will call BroadcastInitialValues() after binding
+```
+
+#### Issue 2: Some Widgets Update, Others Don't
+**Symptoms**: Inconsistent widget updates, some show correct data
+**Cause**: Race condition between widget binding and broadcast timing
+
+**Solution**: Centralize binding and use proper event order:
+```cpp
+// In Attribute Menu Widget's OnWidgetControllerSet
+void UAttributeMenuWidget::OnWidgetControllerSet_Implementation()
+{
+    UTDAttributeMenuWidgetController* AttributeController = Cast<UTDAttributeMenuWidgetController>(WidgetController);
+    if (!AttributeController)
+    {
+        return;
+    }
+    
+    // Bind self first
+    AttributeController->OnAttributeInfoChanged.AddDynamic(this, &UAttributeMenuWidget::HandleAttributeInfoUpdate);
+    
+    // Ensure child widgets have bound (may need slight delay or callback system)
+    
+    // Finally broadcast initial values
+    AttributeController->BroadcastInitialValues();
+}
+```
+
+#### Issue 3: Widgets Binding Too Late
+**Symptoms**: Widgets miss initial broadcast, only update on subsequent attribute changes
+**Cause**: Child widgets binding after parent broadcasts
+
+**Solution**: Implement cascading binding pattern:
+```cpp
+// Parent widget coordinates child binding before broadcasting
+void UAttributeMenuWidget::EnsureChildrenBound()
+{
+    // Force child widget initialization if needed
+    for (UWidget* Child : GetAllChildren())
+    {
+        if (UTextValueButtonRow* AttributeRow = Cast<UTextValueButtonRow>(Child))
+        {
+            AttributeRow->EnsureControllerBound(WidgetController);
+        }
+    }
+}
+```
+
+### Blueprint Library Integration
+
+If using Blueprint Function Library helpers, the timing pattern remains the same:
+
+```cpp
+// In Widget's OnWidgetControllerSet
+Event OnWidgetControllerSet
+├── Get Attribute Menu Widget Controller (WorldContext = Self)
+├── Store reference for later use
+├── Bind to OnAttributeInfoChanged delegate
+└── Call BroadcastInitialValues on controller
+```
+
+### Troubleshooting Checklist
+
+When widgets aren't showing initial data:
+
+- [ ] **Controller Reference**: Verify `GetAttributeMenuWidgetController()` returns valid controller
+- [ ] **Binding Success**: Confirm delegate binding doesn't return false
+- [ ] **Delegate Signature**: Ensure Blueprint event signature matches C++ delegate exactly
+- [ ] **Broadcast Timing**: Check `BroadcastInitialValues()` called after binding, not before
+- [ ] **Widget Lifecycle**: Verify widgets are fully constructed before binding attempts
+- [ ] **Controller Dependencies**: Ensure controller has valid ASC/AttributeSet references
+- [ ] **Data Asset Assignment**: Confirm `AttributeInfoDataAsset` is assigned and loaded
+
+### Performance Notes
+
+#### Binding Overhead
+- Delegate bindings are lightweight once established
+- Multiple widgets binding to same delegate has minimal performance impact
+- Consider unbinding on widget destruction for memory cleanup
+
+#### Broadcast Frequency  
+- Initial broadcast happens once per widget creation
+- Ongoing broadcasts only occur on actual attribute changes
+- High-frequency attributes (like Health/Mana) should use HUD controller instead
+
+#### Memory Management
+- Widget controllers are cached in HUD, not owned by widgets
+- Delegate bindings cleaned up automatically when widgets are destroyed
+- Data asset remains loaded in memory once referenced
+
 ## Configuration and Setup Checklist
 
 ### Class Configuration
@@ -496,6 +673,12 @@ void UAuraAttributeMenuWidgetController::BroadcastAttributeInfo(const FGameplayT
 - [ ] Verify all attribute tags in data asset match FAuraGameplayTags
 - [ ] Test attribute lookup functionality
 
+### Widget Binding Setup
+- [ ] Implement OnWidgetControllerSet in Attribute Menu Widget Blueprint
+- [ ] Ensure child widgets bind to controller delegates before broadcast
+- [ ] Call BroadcastInitialValues() after all binding is complete
+- [ ] Test widget updates with debug logging if needed
+
 ### Blueprint Function Library (Recommended)
 - [ ] Create helper functions for easy controller access from widgets
 - [ ] Implement GetAttributeMenuWidgetController() utility using TD naming
@@ -504,9 +687,10 @@ void UAuraAttributeMenuWidgetController::BroadcastAttributeInfo(const FGameplayT
 
 ## Related Documentation
 
+- [Broadcast and Binding System](./broadcast-and-binding.md) - Detailed guide to the delegate-based broadcast pattern and widget binding
+- [Attribute Info Data Asset](../data-asset/attribute-info.md) - Complete data asset structure, configuration, and usage guide
 - [Attribute Menu Widget Controller](./attribute-menu-controller.md) - Overall controller design and data flow
 - [Attributes Gameplay Tags](../../../systems/attributes-gameplay-tags.md) - Tag initialization and usage patterns
-- [Attribute Info Data Asset](../../../data/attribute-info.md) - Data asset structure and authoring
 - [UI Widget Controller](../../ui-widget-controller.md) - Base controller patterns and lifecycle
 - [Widget Controller Access Guide](../blueprint-library/widget-controller-access-guide.md) - Blueprint Function Library implementation guide
 - [Widget Controllers Singletons FAQ](../../faq/widget-controllers-singletons.md) - Common questions and best practices
