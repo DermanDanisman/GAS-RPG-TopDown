@@ -8,6 +8,8 @@
 #include "Engine/DataAsset.h"
 #include "GASCoreAttributeInfo.generated.h"
 
+class UTexture2D;
+
 /**
  * FGASCoreAttributeInfo
  *

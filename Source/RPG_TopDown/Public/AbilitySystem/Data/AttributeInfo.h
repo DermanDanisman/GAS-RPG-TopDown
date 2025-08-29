@@ -9,6 +9,8 @@
 #include "Engine/DataAsset.h"
 #include "AttributeInfo.generated.h"
 
+class UTexture2D;
+
 USTRUCT(Blueprintable)
 struct FTDAttributeInfo
 {
