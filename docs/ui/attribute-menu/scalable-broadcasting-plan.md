@@ -1126,10 +1126,90 @@ void UTDAttributeMenuWidgetController::BroadcastInitialValues_Manager()
 - **Plugin Coordination**: Manage attribute registries from multiple plugins
 - **Lifetime Management**: Handle AttributeSet creation/destruction and registry updates
 
-## Related Documentation
+## Strategy Decision Matrix
+
+To help you choose the best approach for your project, use this decision matrix based on your requirements:
+
+| Strategy | Complexity | Performance | Scalability | Maintainability | Best For |
+|----------|------------|-------------|-------------|-----------------|----------|
+| **Strategy 1: Data Asset Iteration** | Low | Medium | Medium | Medium | Small projects, simple attribute sets |
+| **Strategy 2: GameplayTag Array** | Low | Medium | Medium | Low | Prototypes, temporary solutions |
+| **Strategy 3: Reflection-Based** | High | Low | High | High | Complex projects with many attribute types |
+| **Strategy 4: Hybrid Data Asset + Reflection** | Medium | Medium | High | High | Medium-large projects, good compromise |
+| **Strategy 5A: Delegate Registry** | Medium | Medium | High | High | Projects prioritizing Unreal patterns |
+| **Strategy 5B: Function Pointer Registry** | Medium | High | High | High | **Production recommendation** |
+| **Strategy 6: Central Manager** | High | High | High | Medium | Large projects with multiple AttributeSet types |
+
+### Decision Factors
+
+**Choose Strategy 5B (Function Pointer Registry) if**:
+- You want maximum performance with minimal memory overhead
+- Your project has 10+ attributes that will grow over time
+- You prefer simple, direct function calls
+- You need compile-time type safety
+- You want the best balance of performance and maintainability
+
+**Choose Strategy 4 (Hybrid) if**:
+- You need to support designers adding attributes via data assets
+- Your project mixes hardcoded and data-driven attributes
+- You want flexibility between performance and designer control
+
+**Choose Strategy 6 (Central Manager) if**:
+- You have multiple AttributeSet classes
+- Your project uses plugins that add their own attributes
+- You need centralized control over all attribute access
+
+**Avoid Strategy 2 (GameplayTag Array) for**:
+- Production projects (maintenance nightmare)
+- Projects with frequent attribute additions
+- Any project expected to scale beyond a few attributes
+
+### Implementation Priority
+
+1. **Start with Strategy 5B** (Function Pointer Registry) for most projects
+2. **Add Strategy 6** (Central Manager) if you later need multi-AttributeSet support
+3. **Consider Strategy 4** (Hybrid) if designers need to add attributes without code changes
+
+For a comprehensive tutorial on implementing Strategy 5B, see [Attribute Map Deep Dive](./attribute-map-deep-dive.md).
+
+## Cross-References and Deep Dive Resources
+
+### Primary Resources
+
+- **[Attribute Map Deep Dive](./attribute-map-deep-dive.md)** - **⭐ START HERE** - Comprehensive teacher-level tutorial covering:
+  - Detailed explanation of delegate vs function pointer approaches
+  - Type aliasing patterns with `using` and templated aliases
+  - Step-by-step implementation guide
+  - Controller-side iteration patterns
+  - UI initialization order and timing
+  - Common pitfalls and best practices
+
+- **[Controller Broadcasting from Map](./controller-broadcast-from-map.md)** - Detailed walkthrough of:
+  - Registry iteration implementation
+  - Error handling patterns  
+  - Performance optimization strategies
+  - Troubleshooting common issues
+
+- **[Attribute Map FAQ](./faq-attribute-map.md)** - Quick answers to:
+  - Delegates vs function pointers trade-offs
+  - Multiplayer and networking considerations
+  - Performance optimization questions
+  - Debugging and troubleshooting guide
+
+### Supporting Documentation
 
 - [Attribute Tags and Binding Pattern](./attribute-tags-and-binding.md) - Implementation details for widget tag assignment and filtering
 - [Attribute Menu Widget Controller Setup](./attribute-menu-widget-controller-setup.md) - Current controller implementation with hardcoded broadcasts
 - [Broadcast and Binding System](./broadcast-and-binding.md) - Overview of the delegate-based broadcasting architecture
 - [Attribute Info Data Asset](../data-asset/attribute-info.md) - Data asset structure and configuration for attribute metadata
 - [Attributes Gameplay Tags](../../../systems/attributes-gameplay-tags.md) - GameplayTag definitions and registration patterns
+
+### Learning Path
+
+**Beginner**: Start with [Broadcast and Binding System](./broadcast-and-binding.md) to understand the current architecture, then read this document for strategy overview.
+
+**Intermediate**: Read [Attribute Map Deep Dive](./attribute-map-deep-dive.md) for comprehensive implementation guidance, then [Controller Broadcasting from Map](./controller-broadcast-from-map.md) for detailed iteration patterns.
+
+**Advanced**: Review [Attribute Map FAQ](./faq-attribute-map.md) for edge cases and optimization strategies. Consider Strategy 6 (Central Manager) for complex multi-AttributeSet scenarios.
+
+**Troubleshooting**: Start with [Controller Broadcasting from Map FAQ section](./controller-broadcast-from-map.md#faq-common-issues-and-solutions), then check [Attribute Map FAQ](./faq-attribute-map.md) for advanced debugging techniques.
