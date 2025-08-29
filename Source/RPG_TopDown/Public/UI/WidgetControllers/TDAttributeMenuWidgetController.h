@@ -4,13 +4,20 @@
 
 #include "CoreMinimal.h"
 #include "UI/WidgetControllers/GASCoreUIWidgetController.h"
+#include "AbilitySystem/Data/AttributeInfo.h"
 #include "TDAttributeMenuWidgetController.generated.h"
 
 // These are BlueprintAssignable so widgets can bind in BP to receive updates.
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttributeChangedSignature, float, NewValue);
 
+/** Delegate signature for attribute info changes */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttributeInfoChangedSignature, const FTDAttributeInfo&, AttributeInfo);
+
 /**
+ * UTDAttributeMenuWidgetController
  * 
+ * Manages attribute display for menus/character sheets.
+ * Handles initial value broadcasting and live updates via ASC delegates.
  */
 UCLASS(BlueprintType, Blueprintable)
 class RPG_TOPDOWN_API UTDAttributeMenuWidgetController : public UGASCoreUIWidgetController
@@ -35,4 +42,22 @@ public:
 	/** Delegate for listening to Health value changes (NewHealth). */
 	UPROPERTY(BlueprintAssignable, Category="GASCore|HUD Widget Controller|Attributes")
 	FOnAttributeChangedSignature OnHealthChanged;
+
+	/** Generic delegate for broadcasting attribute info changes */
+	UPROPERTY(BlueprintAssignable, Category = "GASCore|Attribute Menu|Delegates")
+	FOnAttributeInfoChangedSignature OnAttributeInfoChanged;
+
+protected:
+	/** Data Asset containing attribute metadata for lookup */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Attribute Info")
+	TObjectPtr<UAttributeInfo> AttributeInfoDataAsset;
+
+private:
+	/**
+	 * Helper method to broadcast attribute information for a specific tag and attribute.
+	 * Looks up metadata from the data asset and broadcasts the complete info.
+	 * @param AttributeTag - The gameplay tag identifying the attribute
+	 * @param Attribute - The FGameplayAttribute for reading current value
+	 */
+	void BroadcastAttributeInfo(const FGameplayTag& AttributeTag, const FGameplayAttribute& Attribute) const;
 };
