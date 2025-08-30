@@ -1,12 +1,15 @@
 #include "AbilitySystem/Attributes/TDAttributeSet.h"
+
+#include "TDGameplayTags.h"
 #include "Net/UnrealNetwork.h"
 
 UTDAttributeSet::UTDAttributeSet()
 {
-	// Register current↔max pairs once; base class handles all clamping
-	RegisterCurrentMaxPair(GetHealthAttribute(), GetMaxHealthAttribute());
-	RegisterCurrentMaxPair(GetManaAttribute(), GetMaxManaAttribute());
-	RegisterCurrentMaxPair(GetStaminaAttribute(), GetMaxStaminaAttribute());
+	// Register current↔max pairs once; base class handles all clamping and rounding consistently.
+	// This centralizes the rule: Current ∈ [0, Max] and ensures policy is enforced in Pre/Post callbacks.
+	RegisterCurrentMaxPair(GetHealthAttribute(),   GetMaxHealthAttribute());
+	RegisterCurrentMaxPair(GetManaAttribute(),     GetMaxManaAttribute());
+	RegisterCurrentMaxPair(GetStaminaAttribute(),  GetMaxStaminaAttribute());
 }
 
 void UTDAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -16,34 +19,34 @@ void UTDAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	// ===================
 	// Primary Attributes 
 	// ===================
-	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, Strength, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, Dexterity, COND_None, REPNOTIFY_Always);
+	// REPNOTIFY_Always → even equivalent values still trigger OnRep for prediction/UI reconciliation.
+	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, Strength,     COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, Dexterity,    COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, Intelligence, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, Endurance, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, Vigor, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, Endurance,    COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, Vigor,        COND_None, REPNOTIFY_Always);
 
 	// ===================
 	// Secondary Attributes 
 	// ===================
-
-	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, Armor, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, ArmorPenetration, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, BlockChance, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, CriticalHitChance, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, CriticalHitDamage, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, CriticalHitResistance, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, HealthRegeneration, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, MaxHealth, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, ManaRegeneration, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, MaxMana, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, StaminaRegeneration, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, MaxStamina, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, Armor,                 COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, ArmorPenetration,     COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, BlockChance,          COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, CriticalHitChance,    COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, CriticalHitDamage,    COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, CriticalHitResistance,COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, HealthRegeneration,   COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, MaxHealth,            COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, ManaRegeneration,     COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, MaxMana,              COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, StaminaRegeneration,  COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, MaxStamina,           COND_None, REPNOTIFY_Always);
 
 	// ===================
 	// Vital Attributes
 	// ===================
-	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, Health, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, Mana, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, Health,  COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, Mana,    COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UTDAttributeSet, Stamina, COND_None, REPNOTIFY_Always);
 }
 
@@ -53,6 +56,8 @@ void UTDAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 
 void UTDAttributeSet::OnRep_Strength(const FGameplayAttributeData& OldStrength) const
 {
+	// Macro emits ASC->HandleGameplayAttributeValuesChange notifications.
+	// Listeners (UI, prediction systems) will be informed of the updated value.
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UTDAttributeSet, Strength, OldStrength);
 }
 

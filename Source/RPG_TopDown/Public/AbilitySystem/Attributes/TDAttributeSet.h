@@ -5,13 +5,19 @@
 #include "Attributes/GASCoreAttributeSet.h"
 #include "TDAttributeSet.generated.h"
 
-// Same ATTRIBUTE_ACCESSORS macro you already use
-#define ATTRIBUTE_ACCESSORS(ClassName, PropertyName) \
-	GAMEPLAYATTRIBUTE_PROPERTY_GETTER(ClassName, PropertyName) \
-	GAMEPLAYATTRIBUTE_VALUE_GETTER(PropertyName) \
-	GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName) \
-	GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
-
+/**
+ * UTDAttributeSet
+ *
+ * Game-specific AttributeSet that:
+ * - Declares primary, secondary, and vital attributes.
+ * - Uses RepNotify to propagate server-authoritative changes to clients.
+ * - In the constructor (see .cpp), registers Current↔Max pairs and fills the
+ *   Tag→Accessor registry which powers generic UI broadcasting.
+ *
+ * Replication note:
+ * - We use REPNOTIFY_Always so even "equivalent" updates still trigger RepNotifies
+ *   (important for client prediction reconciliation and UI consistency).
+ */
 UCLASS()
 class RPG_TOPDOWN_API UTDAttributeSet : public UGASCoreAttributeSet
 {

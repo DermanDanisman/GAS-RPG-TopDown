@@ -51,6 +51,17 @@ class AController;
 class ACharacter;
 struct FGameplayEffectModCallbackData;
 
+// Same ATTRIBUTE_ACCESSORS macro you already use
+// - Defines a static FGameplayAttribute getter (Get<PropertyName>Attribute())
+// - Defines value getters/setters/initters for FGameplayAttributeData property
+// These accessors are essential for our Tag→Accessor registry because we store
+// function pointers to the static FGameplayAttribute getters.
+#define ATTRIBUTE_ACCESSORS(ClassName, PropertyName) \
+	GAMEPLAYATTRIBUTE_PROPERTY_GETTER(ClassName, PropertyName) \
+	GAMEPLAYATTRIBUTE_VALUE_GETTER(PropertyName) \
+	GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName) \
+	GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
+
 /**
  * Lightweight container describing source and target context for a GameplayEffect
  * during PostGameplayEffectExecute (or any GE callback).
@@ -103,7 +114,6 @@ struct FGASCoreEffectContext
 	TObjectPtr<ACharacter> TargetCharacter = nullptr;
 };
 
-
 /**
  * UGASCoreAttributeSet
  *
@@ -113,14 +123,11 @@ struct FGASCoreEffectContext
  * - Final authoritative clamping in PostGameplayEffectExecute when Max changes.
  * - A rounding policy applied consistently to both Current and Base values.
  * - A helper to populate a shared effect context for convenience in callbacks.
+ * - A Tag→AttributeAccessor registry to support generic UI broadcasting.
  *
  * Design:
  * - This class does not declare any attributes. Your game derives and declares attributes it needs.
  * - Derived classes typically do replication (GetLifetimeReplicatedProps + RepNotify).
- *
- * Extend points:
- * - Override GetRoundingDecimals(Attribute) to return different decimals per attribute.
- * - Override OnCurrentClampedByMax / OnMaxAttributeChangedAndClamped to react to clamp events.
  */
 UCLASS(Abstract)
 class GASCORE_API UGASCoreAttributeSet : public UAttributeSet
@@ -225,6 +232,7 @@ protected:
 							       FGASCoreEffectContext& InEffectContext) const;
 
 private:
+	
 	// Fast lookup maps for Current <-> Max pairs; populated by RegisterCurrentMaxPair.
 	TMap<FGameplayAttribute, FGameplayAttribute> CurrentToMax;
 	TMap<FGameplayAttribute, FGameplayAttribute> MaxToCurrent;

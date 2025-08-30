@@ -24,11 +24,18 @@
 
 UGASCoreAttributeSet::UGASCoreAttributeSet()
 {
+	// Base constructor intentionally empty.
+	// Derived classes will:
+	//  - Declare attributes (UPROPERTY FGameplayAttributeData ...).
+	//  - Register Current↔Max pairs via RegisterCurrentMaxPair().
+	//  - Populate TagsToAttributes with their Tag→Accessor entries.
 }
 
 void UGASCoreAttributeSet::RegisterCurrentMaxPair(const FGameplayAttribute& Current, const FGameplayAttribute& Max)
 {
 	// Register both directions for fast lookup.
+	//  CurrentToMax:  Current -> Max
+	//  MaxToCurrent:  Max     -> Current
 	if (Current.IsValid() && Max.IsValid())
 	{
 		CurrentToMax.Add(Current, Max);
@@ -38,6 +45,7 @@ void UGASCoreAttributeSet::RegisterCurrentMaxPair(const FGameplayAttribute& Curr
 
 bool UGASCoreAttributeSet::TryGetMaxForCurrent(const FGameplayAttribute& Current, FGameplayAttribute& OutMax) const
 {
+	// Quickly retrieve the Max associated with a Current attribute, if registered.
 	if (const FGameplayAttribute* Found = CurrentToMax.Find(Current))
 	{
 		OutMax = *Found;
@@ -48,6 +56,7 @@ bool UGASCoreAttributeSet::TryGetMaxForCurrent(const FGameplayAttribute& Current
 
 bool UGASCoreAttributeSet::TryGetCurrentForMax(const FGameplayAttribute& Max, FGameplayAttribute& OutCurrent) const
 {
+	// Quickly retrieve the Current associated with a Max attribute, if registered.
 	if (const FGameplayAttribute* Found = MaxToCurrent.Find(Max))
 	{
 		OutCurrent = *Found;
@@ -59,6 +68,7 @@ bool UGASCoreAttributeSet::TryGetCurrentForMax(const FGameplayAttribute& Max, FG
 const FGameplayAttributeData* UGASCoreAttributeSet::FindAttributeDataConst(const FGameplayAttribute& Attr, const UAttributeSet* Set)
 {
 	// All attributes on UAttributeSet are FGameplayAttributeData fields; use reflection to access storage.
+	// Safe for read-only access.
 	if (!Attr.IsValid()) return nullptr;
 	if (FProperty* Prop = Attr.GetUProperty())
 	{
@@ -113,6 +123,8 @@ float UGASCoreAttributeSet::GetBaseNumeric(const FGameplayAttribute& Attr) const
 float UGASCoreAttributeSet::RoundToDecimals(float Value, int32 Decimals)
 {
 	// Half-away-from-zero rounding.
+	//  - Decimals <= 0 → integer rounding.
+	//  - Decimals > 0  → round to that many fractional digits.
 	if (Decimals <= 0)
 	{
 		return static_cast<float>(FMath::RoundToInt(Value));
@@ -130,6 +142,7 @@ void UGASCoreAttributeSet::SetCurrentNumeric(const FGameplayAttribute& Attr, flo
 	if (UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponent())
 	{
 		// Use SetNumericAttributeBase to update the authoritative base value for the attribute.
+		// This ensures server authority and replication align with the final rounded value.
 		ASC->SetNumericAttributeBase(Attr, Rounded);
 	}
 }
@@ -150,6 +163,7 @@ void UGASCoreAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribut
 		const int32 Decimals = GetRoundingDecimals(Attribute);
 		NewValue = RoundToDecimals(NewValue, Decimals);
 
+		// Optional hook for analytics/UI cues.
 		if (!FMath::IsNearlyEqual(Old, NewValue))
 		{
 			OnCurrentClampedByMax(Attribute, MaxAttr, Old, NewValue);

@@ -167,6 +167,7 @@ public:
 	 * Derived classes should override and push current values (e.g., health/mana)
 	 * after widgets have bound to the controller's delegates.
 	 */
+	UFUNCTION(BlueprintCallable, Category = "GASCore|WidgetController")
 	virtual void BroadcastInitialValues();
 
 	/**
