@@ -4,14 +4,17 @@
 
 #pragma once
 
+// ===== Engine & Module Includes =====
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
+
 #include "TDHUD.generated.h"
 
-class UTDAttributeMenuWidgetController;
-// Forward declare widget/controller classes to minimize dependencies.
+// ===== Forward Declarations =====
 class UTDHUDWidgetController;
+class UTDAttributeMenuWidgetController;
 class UTDUserWidget;
+class UUserWidget;
 class UAttributeSet;
 class UAbilitySystemComponent;
 struct FGASCoreUIWidgetControllerParams;
@@ -20,7 +23,8 @@ struct FGASCoreUIWidgetControllerParams;
  * ATDHUD
  *
  * Custom HUD class for GAS-driven games.
- * Responsible for widget/controller creation and initialization.
+ * - Creates and owns UI widgets and their controllers.
+ * - Provides accessors to retrieve or lazily create controllers with correct references.
  */
 UCLASS()
 class RPG_TOPDOWN_API ATDHUD : public AHUD
@@ -28,22 +32,26 @@ class RPG_TOPDOWN_API ATDHUD : public AHUD
 	GENERATED_BODY()
 
 public:
-	
+	// ===== Controller accessors =====
+
 	/**
+	 * GetHUDWidgetController
 	 * Returns a pointer to the HUD Widget Controller, creating and initializing it if none exists.
-	 * @param InWidgetControllerParams   The struct of references required by the widget controller.
-	 * @return                          A valid pointer to the widget controller for HUD widgets.
+	 * @param InWidgetControllerParams   References required by the widget controller.
 	 */
 	UTDHUDWidgetController* GetHUDWidgetController(const FGASCoreUIWidgetControllerParams& InWidgetControllerParams);
 
+	/**
+	 * GetAttributeMenuWidgetController
+	 * Returns the Attribute Menu controller, creating and initializing it if needed.
+	 */
 	UTDAttributeMenuWidgetController* GetAttributeMenuWidgetController(const FGASCoreUIWidgetControllerParams& InWidgetControllerParams);
 
+	// ===== Initialization =====
+
 	/**
-	 * Initializes the HUD widget and its controller, and adds the widget to the viewport.
-	 * @param InPlayerController         Pointer to the player's controller.
-	 * @param InPlayerState              Pointer to the player's state.
-	 * @param InAbilitySystemComponent   Pointer to the player's GAS component.
-	 * @param InAttributeSet             Pointer to the player's attribute set.
+	 * InitializeHUD
+	 * Spawns the HUD widget, creates/initializes its controller, and adds the widget to the viewport.
 	 */
 	void InitializeHUD(APlayerController* InPlayerController,
 		APlayerState* InPlayerState,
@@ -51,32 +59,30 @@ public:
 		UAttributeSet* InAttributeSet);
 
 private:
+	// ===== Widget instances =====
 
-	/** Pointer to the on-screen HUD widget instance (your custom user widget). */
+	/** On-screen HUD widget instance (your custom user widget). */
 	UPROPERTY()
 	TObjectPtr<UTDUserWidget> HUDWidget;
 
-	/** The class used to spawn the HUD widget at runtime.
-	 * Settable in the editor or Blueprint.
-	 */
-	UPROPERTY(EditAnywhere)
+	/** Concrete class used to spawn the HUD widget at runtime (set in BP). */
+	UPROPERTY(EditAnywhere, Category="UI|Classes")
 	TSubclassOf<UUserWidget> HUDWidgetClass;
 
-	/** The instance of the HUD widget controller.
-	 * Created at runtime, owned by this HUD.
-	 */
+	/** HUD widget controller instance. Owned by this HUD. */
 	UPROPERTY()
 	TObjectPtr<UTDHUDWidgetController> HUDWidgetController;
 
-	/** The class used to instantiate the HUD widget controller.
-	 * Settable in the editor or Blueprint.
-	 */
-	UPROPERTY(EditAnywhere)
+	/** Concrete class used to instantiate the HUD widget controller (set in BP). */
+	UPROPERTY(EditAnywhere, Category="UI|Classes")
 	TSubclassOf<UTDHUDWidgetController> HUDWidgetControllerClass;
 
+	/** Attribute Menu widget controller instance. */
 	UPROPERTY()
 	TObjectPtr<UTDAttributeMenuWidgetController> AttributeMenuWidgetController;
 
-	UPROPERTY(EditAnywhere)
+	/** Concrete class used to instantiate the Attribute Menu widget controller (set in BP). */
+	UPROPERTY(EditAnywhere, Category="UI|Classes")
 	TSubclassOf<UTDAttributeMenuWidgetController> AttributeMenuWidgetControllerClass;
-};
+}
+;

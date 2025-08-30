@@ -12,7 +12,7 @@
 //   - PostGameplayEffectExecute re-clamps Current when its paired Max changed and writes the rounded value.
 //   - Helpers access FGameplayAttributeData via property reflection to read/write numeric values.
 
-#include "Attributes/GASCoreAttributeSet.h"
+#include "AbilitySystem/Attributes/GASCoreAttributeSet.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
@@ -28,7 +28,7 @@ UGASCoreAttributeSet::UGASCoreAttributeSet()
 	// Derived classes will:
 	//  - Declare attributes (UPROPERTY FGameplayAttributeData ...).
 	//  - Register Current↔Max pairs via RegisterCurrentMaxPair().
-	//  - Populate TagsToAttributes with their Tag→Accessor entries.
+	//4  - Populate TagsToAttributes with their Tag→Accessor entries.
 }
 
 void UGASCoreAttributeSet::RegisterCurrentMaxPair(const FGameplayAttribute& Current, const FGameplayAttribute& Max)

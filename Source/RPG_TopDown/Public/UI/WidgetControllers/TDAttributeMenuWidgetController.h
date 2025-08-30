@@ -2,13 +2,18 @@
 
 #pragma once
 
+// ===== Module Includes =====
 #include "CoreMinimal.h"
 #include "UI/WidgetControllers/GASCoreUIWidgetController.h"
-#include "TDAttributeMenuWidgetController.generated.h"
 
+// Forward declarations to keep compile-time dependencies minimal
 class UTDAttributeInfo;
 struct FGASCoreAttributeInformation;
+struct FGameplayTag; // used by the private helper signature below
 
+#include "TDAttributeMenuWidgetController.generated.h"
+
+// ===== Delegates =====
 // These are BlueprintAssignable so widgets can bind in BP to receive updates.
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAttributeInfoSignature, const FGASCoreAttributeInformation&, AttributeInfo);
 
@@ -16,21 +21,24 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAttributeInfoSignature, const FGASC
  * UTDAttributeMenuWidgetController
  *
  * Purpose:
- * - Drive the Attribute Menu UI with attribute data.
+ * - Drive the Attribute Menu UI with attribute data sourced from a Data Asset.
  * - Broadcast initial values once dependencies are valid.
- * - (Future) Bind to AbilitySystemComponent (ASC) change delegates for live updates.
+ * - Bind to AbilitySystemComponent (ASC) change delegates for live updates.
  *
  * High-level flow:
  * - BroadcastInitialValues():
- *     1) Cast the base AttributeSet to your concrete UTDAttributeSet.
- *     2) For each (Tag → AttributeAccessor) entry in the AttributeSet registry:
- *         a) Look up UI metadata from UAttributeInfo (name, description, icon, etc.).
- *         b) Call the accessor to get FGameplayAttribute identity.
- *         c) Resolve the current numeric value from the AttributeSet.
- *         d) Fill FTDAttributeInfo and broadcast via AttributeInfoDelegate.
+ *     1) Iterate the UI rows defined in the Data Asset.
+ *     2) Validate the row's AttributeGetter (FGameplayAttribute identity).
+ *     3) Compute the current numeric value via AttributeGetter.GetNumericValue(AttributeSet).
+ *     4) Broadcast a filled FGASCoreAttributeInformation to the UI.
+ *
  * - BindCallbacksToDependencies():
- *     - Intended to subscribe to ASC attribute change delegates so the UI updates live.
- *     - Keeps the controller generic (no per-attribute boilerplate).
+ *     - For each row, subscribe to ASC's value change delegate keyed by the row's FGameplayAttribute.
+ *     - On change, re-broadcast only that row (minimal UI update).
+ *
+ * Notes:
+ * - This controller remains generic; adding/removing attributes is handled by editing the Data Asset.
+ * - Widgets filter or react to updates by comparing their Tag to the incoming AttributeInfo.AttributeTag.
  */
 UCLASS(BlueprintType, Blueprintable)
 class RPG_TOPDOWN_API UTDAttributeMenuWidgetController : public UGASCoreUIWidgetController
@@ -38,43 +46,48 @@ class RPG_TOPDOWN_API UTDAttributeMenuWidgetController : public UGASCoreUIWidget
 	GENERATED_BODY()
 
 public:
+	// ===== UGASCoreUIWidgetController overrides =====
 
 	/**
-	 * Broadcast initial values to the UI.
-	 * Called once the controller has valid references (PlayerController, PlayerState, ASC, AttributeSet).
-	 * Override from base to push initial attribute values to widgets.
-	 *
-	 * Design note:
-	 * - This implementation is generic: it loops over a Tag→Accessor registry
-	 *   defined in the AttributeSet, so you don't need per-attribute code here.
+	 * Broadcast initial values to the UI once the controller has valid references
+	 * (PlayerController, PlayerState, ASC, AttributeSet, and AttributeInfoDataAsset).
+	 * Generic implementation that loops the Data Asset rows.
 	 */
 	virtual void BroadcastInitialValues() override;
 
 	/**
-	 * Subscribe to attribute/value change delegates on the AbilitySystemComponent.
-	 * Override from base to bind your attribute delegates and any custom ASC delegates.
-	 *
-	 * Recommended usage:
-	 * - Iterate the same Tag→Accessor registry to subscribe to ASC change delegates
-	 *   keyed by FGameplayAttribute. In the handler, rebuild FTDAttributeInfo
-	 *   for the changed tag and rebroadcast.
+	 * Subscribe to ASC attribute/value change delegates for live updates.
+	 * Binds one delegate per configured FGASCoreAttributeInformation row (via AttributeGetter).
 	 */
 	virtual void BindCallbacksToDependencies() override;
 
-	/** Multicast event for UI rows; rows bind in BP and update when their Tag matches Info.Tag exactly. */
+	// ===== Delegates (UI consumption) =====
+
+	/** Multicast event for UI rows; widgets bind in BP and update when their Tag matches Info.AttributeTag. */
 	UPROPERTY(BlueprintAssignable, Category="Top Down|Attribute Widget Controller|Delegates")
 	FAttributeInfoSignature AttributeInfoDelegate;
 
 protected:
+	// ===== Data sources =====
 	
 	/**
-	 * Data asset that maps FGameplayTag → display metadata (name, description, icon, formatting).
-	 * The controller consults this for each broadcast so the UI renders consistent, data-driven labels.
+	 * Data Asset that maps FGameplayTag → display metadata (name, description, icon/formatting)
+	 * and carries the FGameplayAttribute identity (AttributeGetter) per row.
+	 * The controller consults this asset for both initial and change broadcasts.
 	 */
 	UPROPERTY(EditDefaultsOnly, Category="Top Down|Attribute Widget Controller|Data Asset")
-	TObjectPtr<UTDAttributeInfo> AttributeInfoDataAsset;
+	TObjectPtr<UTDAttributeInfo> AttributeInfoDataAsset = nullptr;
 
 private:
+	// ===== Internal helpers =====
 
+	/**
+	 * Look up metadata by AttributeTag, compute the current numeric value via the row's AttributeGetter,
+	 * and broadcast a filled FGASCoreAttributeInformation to UI listeners.
+	 *
+	 * Expected to be called:
+	 * - During initial broadcast (for each row).
+	 * - From ASC change delegates (only for the changed row).
+	 */
 	void BroadcastAttributeInfo(const FGameplayTag& AttributeTag) const;
 };

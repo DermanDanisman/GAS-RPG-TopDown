@@ -6,7 +6,7 @@
 
 #include "GASCore/Public/AbilitySystem/ModMagCalcs/GASCoreMMCSingleBackedAttribute.h"
 
-#include "GASCore/Public/Attributes/GASCoreAttributeSet.h"
+#include "GASCore/Public/AbilitySystem/Attributes/GASCoreAttributeSet.h"
 #include "GASCore/Public/Interfaces/GASCoreCombatInterface.h"
 
 UGASCoreMMCSingleBackedAttribute::UGASCoreMMCSingleBackedAttribute()

@@ -4,68 +4,80 @@
 
 #pragma once
 
+// ===== Engine & Module Includes =====
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
+
+// GASCore Interfaces
 #include "GASCore/Public/Interfaces/GASCoreCombatInterface.h"
+
 #include "TDCharacterBase.generated.h"
 
+// ===== Forward Declarations =====
 class UTDDefaultAttributeInitComponent;
-// Forward declaration to minimize dependencies. AttributeSet is used as a pointer member.
 class UAttributeSet;
+class UAbilitySystemComponent;
 
 /**
  * ATDCharacterBase
  *
- * Abstract base character class implementing the AbilitySystemInterface for GAS (Gameplay Ability System).
- * - Inherit from this class for both player and AI characters that require ability system integration.
- * - Handles setup of the ability system and attribute set references, and provides accessors for UI/controllers.
+ * Abstract base character class implementing IAbilitySystemInterface for GAS.
+ * - Use as base for both player and AI characters that require Ability System integration.
+ * - Owns references to Ability System Component (ASC) and Attribute Set.
+ * - Provides initialization path and accessors for UI/controllers.
  */
-UCLASS()
+UCLASS(Abstract)
 class RPG_TOPDOWN_API ATDCharacterBase : public ACharacter, public IAbilitySystemInterface, public IGASCoreCombatInterface
 {
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
+	// ===== Construction & Lifecycle =====
+
+	/** Sets default values for this character's properties. */
 	ATDCharacterBase();
 
-	/** Returns the owned Ability System Component (ASC) for GAS integration.
-	  * Required override for IAbilitySystemInterface.
-	  */
+	// ===== IAbilitySystemInterface =====
+
+	/** Returns the owned Ability System Component (ASC). Required by IAbilitySystemInterface. */
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
-	/** Returns the owned Attribute Set for this character (used for GAS stats).
-	  * Not part of the GAS interface, but commonly used for convenience.
-	  */
+	// ===== Project Convenience =====
+
+	/** Returns the owned Attribute Set for this character (used for GAS stats). */
 	virtual UAttributeSet* GetAttributeSet() const;
 
 protected:
-	
+	// ===== Engine overrides =====
 	virtual void BeginPlay() override;
 
-	/** Initializes all GAS-related references and connects them to the correct actors/components.
-	  * Called by subclasses or externally after possession/state acquisition.
-	  * Handles both player-controlled and AI characters.
-	  */
+	// ===== Initialization =====
+
+	/**
+	 * InitializeAbilityActorInfo
+	 * Initializes all GAS-related references and connects them to the correct actors/components.
+	 * Expected to be called after possession/state acquisition.
+	 */
 	virtual void InitializeAbilityActorInfo();
 
-	/** Skeletal mesh for the character's weapon.
-	  * Exposed to the editor for easy assignment and setup.
-	  */
-	UPROPERTY(EditAnywhere, Category = "Combat")
+	// ===== Components & GAS References =====
+
+	/** Skeletal mesh for the character's weapon. Exposed to the editor for assignment and setup. */
+	UPROPERTY(EditAnywhere, Category="Combat")
 	TObjectPtr<USkeletalMeshComponent> WeaponMesh;
 
-	/** The Ability System Component for this actor.
-	  * May be owned by the PlayerState (for players) or by the character (for AI).
+	/** Ability System Component for this actor.
+	  * For players, often owned by the PlayerState; for AI, by the Character.
 	  */
 	UPROPERTY()
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 
-	/** The AttributeSet for this actor, containing all modifiable gameplay stats. */
+	/** AttributeSet for this actor, containing all modifiable gameplay stats. */
 	UPROPERTY()
 	TObjectPtr<UAttributeSet> AttributeSet;
 
-	UPROPERTY(EditAnywhere)
+	/** Component responsible for applying default attribute GameplayEffects. */
+	UPROPERTY(EditAnywhere, Category="GAS|Attributes")
 	TObjectPtr<UTDDefaultAttributeInitComponent> DefaultAttributeInitComponent;
 };

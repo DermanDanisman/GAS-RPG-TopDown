@@ -2,32 +2,41 @@
 // and is protected by copyright law. Unauthorized reproduction, distribution, or use of this material is strictly prohibited.
 // Unreal Engine and its associated trademarks are used under license from Epic Games.
 
+#include "Charcters/TDCharacterBase.h" // NOTE: Path as per project include; ensure module path is correct.
 
-#include "Charcters/TDCharacterBase.h"
+#include "AbilitySystem/Components/TDDefaultAttributeInitComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 
 ATDCharacterBase::ATDCharacterBase()
 {
 	// Disable tick by default for performance. Subclasses can enable as needed.
-    PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = false;
 
-	/*DefaultAttributeInitComponent = CreateDefaultSubobject<UTDDefaultAttributeInitComponent>("DefaultAttributeInitComponent");*/
+	// Optionally create default attribute init component in derived classes or via BP.
+	DefaultAttributeInitComponent = CreateDefaultSubobject<UTDDefaultAttributeInitComponent>("DefaultAttributeInitComponent");
 
-    // Create the skeletal mesh component for the weapon.
-    WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>("Weapon");
-    // Attach the weapon mesh to the main character mesh at the "WeaponHandSocket" sockeSt.
-    WeaponMesh->SetupAttachment(GetMesh(), "WeaponHandSocket");
-    // Disable collision on the weapon mesh (can be enabled in subclasses if needed).
-    WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	// Create the skeletal mesh component for the weapon and attach to character mesh.
+	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>("Weapon");
+	WeaponMesh->SetupAttachment(GetMesh(), TEXT("WeaponHandSocket"));
+
+	// Disable collision on the weapon mesh (enable in subclasses if you need weapon traces).
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void ATDCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	// Post-begin initialization for GAS can be placed here or in possession/OnRep_PlayerState for players.
 }
 
 void ATDCharacterBase::InitializeAbilityActorInfo()
 {
+	// Intended for subclasses:
+	// - Resolve owning ASC (PlayerState vs Character)
+	// - Call ASC->InitAbilityActorInfo(OwnerActor, AvatarActor)
+	// - Apply default attributes (DefaultAttributeInitComponent->InitializeDefaultAttributes)
+	// - Grant startup abilities
 }
 
 UAbilitySystemComponent* ATDCharacterBase::GetAbilitySystemComponent() const
@@ -39,4 +48,3 @@ UAttributeSet* ATDCharacterBase::GetAttributeSet() const
 {
 	return AttributeSet;
 }
-

@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemComponent.h"
-#include "Attributes/GASCoreAttributeSet.h"
+#include "AbilitySystem/Attributes/GASCoreAttributeSet.h"
 #include "TDAttributeSet.generated.h"
 
 /**
