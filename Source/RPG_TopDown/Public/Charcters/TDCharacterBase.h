@@ -69,6 +69,14 @@ protected:
 	 */
 	virtual void GrantStartupAbilities();
 
+	/**
+	 * TestActivateAbilities (Optional)
+	 * Attempts to activate the first granted ability for testing purposes.
+	 * Only works if abilities are granted and activatable without input.
+	 */
+	UFUNCTION(BlueprintCallable, Category="GAS|Testing", CallInEditor=true)
+	virtual void TestActivateFirstAbility();
+
 	// ===== Components & GAS References =====
 
 	/** Skeletal mesh for the character's weapon. Exposed to the editor for assignment and setup. */
@@ -92,4 +100,8 @@ protected:
 	/** Array of abilities to grant to this character on initialization. */
 	UPROPERTY(EditAnywhere, Category="GAS|Abilities")
 	TArray<TSubclassOf<UTDGameplayAbility>> StartupAbilities;
+
+	/** Whether to automatically test-activate the first granted ability on initialization (for testing). */
+	UPROPERTY(EditAnywhere, Category="GAS|Abilities")
+	bool bAutoTestActivateFirstAbility = false;
 };

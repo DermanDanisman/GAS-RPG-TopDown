@@ -7,6 +7,7 @@
 #include "AbilitySystem/Components/TDDefaultAttributeInitComponent.h"
 #include "AbilitySystem/Abilities/TDGameplayAbility.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Engine/Engine.h"
 
 ATDCharacterBase::ATDCharacterBase()
 {
@@ -58,10 +59,67 @@ void ATDCharacterBase::GrantStartupAbilities()
 	{
 		if (AbilityClass)
 		{
+			// Validate that this is actually a TDGameplayAbility subclass
+			if (!AbilityClass->IsChildOf<UTDGameplayAbility>())
+			{
+				UE_LOG(LogTemp, Warning, TEXT("GrantStartupAbilities: %s is not a valid TDGameplayAbility subclass, skipping"), *AbilityClass->GetName());
+				continue;
+			}
+
 			// Grant the ability to the ASC
 			// The ability level defaults to 1, and InputID defaults to INDEX_NONE (no input binding)
 			FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(AbilityClass, 1, INDEX_NONE, this);
-			AbilitySystemComponent->GiveAbility(AbilitySpec);
+			FGameplayAbilitySpecHandle Handle = AbilitySystemComponent->GiveAbility(AbilitySpec);
+			
+			UE_LOG(LogTemp, Log, TEXT("GrantStartupAbilities: Granted ability %s to %s"), *AbilityClass->GetName(), *GetName());
+		}
+	}
+
+	// Optionally test-activate the first ability for debugging/testing
+	if (bAutoTestActivateFirstAbility && StartupAbilities.Num() > 0)
+	{
+		// Small delay to ensure abilities are fully granted before testing
+		GetWorld()->GetTimerManager().SetTimerForNextTick([this]()
+		{
+			TestActivateFirstAbility();
+		});
+	}
+}
+
+void ATDCharacterBase::TestActivateFirstAbility()
+{
+	if (!AbilitySystemComponent)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("TestActivateFirstAbility: No AbilitySystemComponent found"));
+		return;
+	}
+
+	// Get all granted abilities
+	TArray<FGameplayAbilitySpec*> ActivatableAbilities;
+	AbilitySystemComponent->GetActivatableAbilities(ActivatableAbilities);
+
+	if (ActivatableAbilities.Num() == 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("TestActivateFirstAbility: No abilities granted to test"));
+		return;
+	}
+
+	// Try to activate the first ability
+	FGameplayAbilitySpec* FirstAbility = ActivatableAbilities[0];
+	if (FirstAbility && FirstAbility->Ability)
+	{
+		UE_LOG(LogTemp, Log, TEXT("TestActivateFirstAbility: Attempting to activate %s"), *FirstAbility->Ability->GetName());
+		
+		// Try to activate the ability
+		bool bActivated = AbilitySystemComponent->TryActivateAbility(FirstAbility->Handle);
+		
+		if (bActivated)
+		{
+			UE_LOG(LogTemp, Log, TEXT("TestActivateFirstAbility: Successfully activated ability"));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("TestActivateFirstAbility: Failed to activate ability (may require specific conditions)"));
 		}
 	}
 }

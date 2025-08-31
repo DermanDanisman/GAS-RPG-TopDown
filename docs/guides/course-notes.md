@@ -17,3 +17,4 @@ This file maps course transcripts to implemented patterns in this project.
 - gameplay_effect_stacking.cpp — Stacking types and policies
 - infinite_gameplay_effect.cpp — Infinite effects; removal policies; area-of-effect fire example
 - gameplay_tags_intro.cpp / effect_applied_callback.cpp / effect_asset_tags_delegate.cpp — Gameplay tags; ASC delegate binding; broadcasting asset tags to Widget Controller
+- startup_abilities.md — Base TDGameplayAbility class; StartupAbilities array on characters; server-authoritative ability granting pipeline
