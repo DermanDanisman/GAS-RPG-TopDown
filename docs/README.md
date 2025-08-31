@@ -18,6 +18,7 @@ Last updated: 2025-01-06
 ### Abilities
 - Overview: gas/abilities/overview.md
 - Base Ability and Startup Grant: gas/abilities/base-ability-and-startup-grant.md
+- Ability Tags and Policies: gas/abilities/ability-tags-and-policies.md
 
 ### Attributes
 - Attribute Clamping: gas/attributes/attribute-clamping.md
