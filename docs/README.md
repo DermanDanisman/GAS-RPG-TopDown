@@ -56,6 +56,8 @@ Last updated: 2025-01-06
 
 ## Guides
 - Course Notes mapping: guides/course-notes.md
+- Gameplay Abilities — Concepts and Practice (Deep Dive): guides/GameplayAbilities_Concepts_And_Practice.md
+- BaseGameplayAbility Pattern and Startup Grant (Deep Dive): guides/BaseGameplayAbility_Pattern_StartupGrant.md
 
 ## Game Design Documents
 - gdd/attribute_formulas.cpp
