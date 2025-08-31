@@ -30,7 +30,8 @@ Last updated: 2025-08-31
 - GAS Attribute Callbacks: gas/cheatsheets/gas-attribute-callbacks.md
 
 ### Input
-- Enhanced Input → Ability Mapping (Aura Input Config): gas/input/enhanced-input-to-abilities.md
+- Enhanced Input → Ability Mapping (TD Input Config): gas/input/enhanced-input-to-abilities.md
+- Binding callbacks with UTDEnhancedInputComponent (Ability Inputs): gas/input/td-enhanced-input-component.md
 
 ## UI
 - UI & Widget Controller: ui/ui-widget-controller.md
