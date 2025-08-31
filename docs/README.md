@@ -1,6 +1,6 @@
 # Documentation Index
 
-Last updated: 2025-08-25
+Last updated: 2025-01-06
 
 > This documentation is a living document. If anything is outdated or unclear, please open a "Docs Update" issue or a small PR.
 
@@ -14,6 +14,10 @@ Last updated: 2025-08-25
 ## Gameplay Ability System (GAS)
 - Gameplay Effects: gas/gameplay-effects.md
 - Gameplay Tags: gas/gameplay-tags.md
+
+### Abilities
+- Overview: gas/abilities/overview.md
+- Base Ability and Startup Grant: gas/abilities/base-ability-and-startup-grant.md
 
 ### Attributes
 - Attribute Clamping: gas/attributes/attribute-clamping.md
