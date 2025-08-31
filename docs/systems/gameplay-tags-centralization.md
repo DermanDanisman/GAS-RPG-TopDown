@@ -287,15 +287,16 @@ Scope: Semantic inputs for routing Enhanced Input to abilities and UI.
 Examples (register natively):
 - InputTag.LMB — Left Mouse Button
 - InputTag.RMB — Right Mouse Button
-- InputTag.1 — Number key 1
-- InputTag.2 — Number key 2
-- InputTag.3 — Number key 3
-- InputTag.4 — Number key 4
+- InputTag.QuickSlot1 — Number key 1
+- InputTag.QuickSlot2 — Number key 2
+- InputTag.QuickSlot3 — Number key 3
+- InputTag.QuickSlot4 — Number key 4
 
 Guidelines:
 - Reserve the InputTag.* namespace strictly for input semantics.
+- Prefer QuickSlot names (QuickSlot1..4) over numeric root tags to avoid parser or readability issues.
 - Use Ability.Input.* (or similar) for ability-side classification, if needed, to keep concerns separate.
-- Add new input tags here first; then use them in the AuraInputConfig data asset.
+- Add new input tags here first; then use them in the TD/Aura Input Config data asset.
 
 ## Integration with Existing Systems
 
