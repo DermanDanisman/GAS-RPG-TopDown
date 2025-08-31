@@ -78,4 +78,25 @@ void FTDGameplayTags::InitializeNativeGameplayTags()
 	
 	TDGameplayTags.Attributes_Vital_Stamina = UGameplayTagsManager::Get().AddNativeGameplayTag(FName(TEXT("Attributes.Vital.Stamina")),
 		TEXT(""));
+
+	// -----------------------------------------------------------------------------
+	// Input Tags
+	// -----------------------------------------------------------------------------
+	TDGameplayTags.InputTag_LMB = UGameplayTagsManager::Get().AddNativeGameplayTag(FName(TEXT("InputTag.LMB")),
+		TEXT("Input Tag for Left Mouse Button"));
+
+	TDGameplayTags.InputTag_RMB = UGameplayTagsManager::Get().AddNativeGameplayTag(FName(TEXT("InputTag.RMB")),
+	TEXT("Input Tag for Right Mouse Button"));
+
+	TDGameplayTags.InputTag_QuickSlot_1 = UGameplayTagsManager::Get().AddNativeGameplayTag(FName(TEXT("InputTag.QuickSlot1")),
+	TEXT("Input Tag for 1 key"));
+
+	TDGameplayTags.InputTag_QuickSlot_2 = UGameplayTagsManager::Get().AddNativeGameplayTag(FName(TEXT("InputTag.QuickSlot2")),
+	TEXT("Input Tag for 2 key"));
+
+	TDGameplayTags.InputTag_QuickSlot_3 = UGameplayTagsManager::Get().AddNativeGameplayTag(FName(TEXT("InputTag.QuickSlot3")),
+	TEXT("Input Tag for 3 key"));
+
+	TDGameplayTags.InputTag_QuickSlot_4 = UGameplayTagsManager::Get().AddNativeGameplayTag(FName(TEXT("InputTag.QuickSlot4")),
+	TEXT("Input Tag for 4 key"));
 }

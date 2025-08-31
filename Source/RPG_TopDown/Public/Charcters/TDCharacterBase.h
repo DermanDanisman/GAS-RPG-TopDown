@@ -14,6 +14,7 @@
 
 #include "TDCharacterBase.generated.h"
 
+class UTDAbilityInitComponent;
 // ===== Forward Declarations =====
 class UTDDefaultAttributeInitComponent;
 class UAttributeSet;
@@ -68,8 +69,8 @@ protected:
 	TObjectPtr<USkeletalMeshComponent> WeaponMesh;
 
 	/** Ability System Component for this actor.
-	  * For players, often owned by the PlayerState; for AI, by the Character.
-	  */
+	 * For players, often owned by the PlayerState; for AI, by the Character.
+	 */
 	UPROPERTY()
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 
@@ -78,6 +79,10 @@ protected:
 	TObjectPtr<UAttributeSet> AttributeSet;
 
 	/** Component responsible for applying default attribute GameplayEffects. */
-	UPROPERTY(EditAnywhere, Category="GAS|Attributes")
+	UPROPERTY(VisibleAnywhere, Category="GAS|Attributes")
 	TObjectPtr<UTDDefaultAttributeInitComponent> DefaultAttributeInitComponent;
+
+	/** Handles granting abilities and startup logic. */
+	UPROPERTY(VisibleAnywhere, Category="GAS|Abilities")
+	TObjectPtr<UTDAbilityInitComponent> AbilityInitComponent;
 };

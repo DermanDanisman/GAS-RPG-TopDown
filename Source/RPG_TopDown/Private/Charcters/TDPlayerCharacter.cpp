@@ -5,6 +5,7 @@
 #include "Charcters/TDPlayerCharacter.h"
 
 #include "AbilitySystem/Attributes/TDAttributeSet.h"
+#include "AbilitySystem/Components/TDAbilityInitComponent.h"
 #include "AbilitySystem/Components/TDAbilitySystemComponent.h"
 #include "AbilitySystem/Components/TDDefaultAttributeInitComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -36,6 +37,12 @@ void ATDPlayerCharacter::PossessedBy(AController* NewController)
 
 	// Initialize Ability System Actor Info for the server context (PlayerState owner, this avatar).
 	InitializeAbilityActorInfo();
+	
+	// Give startup abilities to this character (server only).
+	if (AbilityInitComponent)
+	{
+		AbilityInitComponent->AddCharacterAbilities();
+	}
 }
 
 void ATDPlayerCharacter::OnRep_PlayerState()

@@ -35,3 +35,14 @@ void UGASCoreAbilitySystemComponent::HandleGameplayEffectAppliedToSelf(
 	// GameplayEffectSpec.CapturedSourceTags.GetSpecTags();
 	// or GameplayEffectSpec.Def->InheritableGameplayEffectTags.CombinedTags;
 }
+
+void UGASCoreAbilitySystemComponent::AddCharacterAbilities(
+	const TArray<TSubclassOf<UGameplayAbility>>& InStartupAbilities)
+{
+	for (const TSubclassOf<UGameplayAbility> AbilityClass : InStartupAbilities)
+	{
+		FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(AbilityClass, 1);
+		//GiveAbility(AbilitySpec);
+		GiveAbilityAndActivateOnce(AbilitySpec);
+	}
+}

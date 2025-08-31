@@ -4,6 +4,7 @@
 
 #include "Charcters/TDCharacterBase.h" // NOTE: Path as per project include; ensure module path is correct.
 
+#include "AbilitySystem/Components/TDAbilityInitComponent.h"
 #include "AbilitySystem/Components/TDDefaultAttributeInitComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 
@@ -14,6 +15,7 @@ ATDCharacterBase::ATDCharacterBase()
 
 	// Optionally create default attribute init component in derived classes or via BP.
 	DefaultAttributeInitComponent = CreateDefaultSubobject<UTDDefaultAttributeInitComponent>("DefaultAttributeInitComponent");
+	AbilityInitComponent = CreateDefaultSubobject<UTDAbilityInitComponent>("AbilityInitComponent");
 
 	// Create the skeletal mesh component for the weapon and attach to character mesh.
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>("Weapon");

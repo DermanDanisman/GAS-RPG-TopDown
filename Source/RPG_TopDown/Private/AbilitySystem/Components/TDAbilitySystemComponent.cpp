@@ -16,10 +16,10 @@ void UTDAbilitySystemComponent::BindASCDelegates()
 	Super::BindASCDelegates();
 
 	const FTDGameplayTags& GameplayTags = FTDGameplayTags::Get();
-	GEngine->AddOnScreenDebugMessage(-1,
+	/*GEngine->AddOnScreenDebugMessage(-1,
 		10.f,
 		FColor::Orange,
-		FString::Printf(TEXT("Tag: %s"), *GameplayTags.Attributes_Secondary_Armor.ToString()));
+		FString::Printf(TEXT("Tag: %s"), *GameplayTags.Attributes_Secondary_Armor.ToString()));*/
 }
 
 void UTDAbilitySystemComponent::HandleGameplayEffectAppliedToSelf(UAbilitySystemComponent* AbilitySystemComponent,

@@ -50,6 +50,16 @@ public:
 	FGameplayTag Attributes_Vital_Stamina;
 	FGameplayTag Attributes_Vital_MaxStamina;
 
+	// -----------------------------------------------------------------------------
+	// Inputs
+	// -----------------------------------------------------------------------------
+	FGameplayTag InputTag_LMB;
+	FGameplayTag InputTag_RMB;
+	FGameplayTag InputTag_QuickSlot_1;
+	FGameplayTag InputTag_QuickSlot_2;
+	FGameplayTag InputTag_QuickSlot_3;
+	FGameplayTag InputTag_QuickSlot_4;
+
 private:
 	static FTDGameplayTags TDGameplayTags;
 };

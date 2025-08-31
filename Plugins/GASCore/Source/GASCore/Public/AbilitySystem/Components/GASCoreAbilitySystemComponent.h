@@ -45,6 +45,12 @@ public:
 	virtual void BindASCDelegates();
 
 	/**
+	 * Grants all startup abilities to this character.
+	 * @param InStartupAbilities Array of GameplayAbility classes to grant.
+	 */
+	virtual void AddCharacterAbilities(const TArray<TSubclassOf<UGameplayAbility>>& InStartupAbilities);
+
+	/**
 	 * Fires whenever a GameplayEffect is applied to this ASC (self), providing the asset tag container
 	 * extracted from the effect spec. Consumers can filter by tag families (e.g., "UI.Message").
 	 */
