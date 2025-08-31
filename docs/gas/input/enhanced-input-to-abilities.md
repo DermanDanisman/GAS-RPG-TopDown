@@ -1,10 +1,13 @@
-# Enhanced Input → Ability Mapping (Data-Driven) — Aura/TD Input Config
+# Enhanced Input → Ability Mapping (Data-Driven) — TD Input Config
 
 Last updated: 2025-08-31
+
+[Note] A ready-made component helper exists: see Binding callbacks with UTDEnhancedInputComponent for a one-call setup that binds Pressed/Released/Held and forwards the InputTag to your handlers.
 
 Goal: Activate abilities via Enhanced Input without hard-wiring enums or rigid input IDs. Use a data-driven UDataAsset that pairs UInputAction assets with Gameplay Tags (InputTag.*), so mappings can be swapped or edited at runtime.
 
 Related:
+- Binding callbacks with UTDEnhancedInputComponent: ./td-enhanced-input-component.md
 - Abilities Overview: ../../gas/abilities/overview.md
 - Ability Tags & Policies: ../../gas/abilities/ability-tags-and-policies.md
 - Base Ability and Startup Grant: ../../gas/abilities/base-ability-and-startup-grant.md
@@ -15,7 +18,7 @@ Related:
 ## Approach overview
 
 - Enhanced Input binds keys/mouse/gamepad to UInputAction assets via an Input Mapping Context.
-- A lightweight UDataAsset (TD/Aura Input Config) stores an array of pairs: [UInputAction*, GameplayTag].
+- A lightweight UDataAsset (UTDInputConfig) stores an array of pairs: [UInputAction*, GameplayTag].
 - Each input in your scheme gets a tag in the InputTag.* namespace (e.g., InputTag.LMB, InputTag.RMB, InputTag.QuickSlot1..4).
 - At runtime, you can:
   - Look up the UInputAction for a given InputTag (e.g., to verify or display bindings),
@@ -115,7 +118,7 @@ Guideline: Prefer InputTag.QuickSlot1..4 over numeric root tags (InputTag.1..4).
 - Add mappings: IA_QuickSlot1→Key 1, IA_QuickSlot2→Key 2, IA_QuickSlot3→Key 3, IA_QuickSlot4→Key 4, IA_LMB→Mouse Left, IA_RMB→Mouse Right.
 
 3) Create the Input Config data asset
-- Assets → Miscellaneous → Data Asset → TDInputConfig (or AuraInputConfig)
+- Assets → Miscellaneous → Data Asset → UTDInputConfig
 - Fill AbilityInputActions with pairs:
   - IA_LMB ↔ InputTag.LMB
   - IA_RMB ↔ InputTag.RMB
