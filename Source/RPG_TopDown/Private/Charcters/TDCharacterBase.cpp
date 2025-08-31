@@ -5,6 +5,7 @@
 #include "Charcters/TDCharacterBase.h" // NOTE: Path as per project include; ensure module path is correct.
 
 #include "AbilitySystem/Components/TDDefaultAttributeInitComponent.h"
+#include "AbilitySystem/Abilities/TDGameplayAbility.h"
 #include "Components/SkeletalMeshComponent.h"
 
 ATDCharacterBase::ATDCharacterBase()
@@ -37,6 +38,32 @@ void ATDCharacterBase::InitializeAbilityActorInfo()
 	// - Call ASC->InitAbilityActorInfo(OwnerActor, AvatarActor)
 	// - Apply default attributes (DefaultAttributeInitComponent->InitializeDefaultAttributes)
 	// - Grant startup abilities
+}
+
+void ATDCharacterBase::GrantStartupAbilities()
+{
+	// Only grant abilities on the server (authority required for ability granting)
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	if (!AbilitySystemComponent)
+	{
+		return;
+	}
+
+	// Grant each ability in the StartupAbilities array
+	for (const TSubclassOf<UTDGameplayAbility>& AbilityClass : StartupAbilities)
+	{
+		if (AbilityClass)
+		{
+			// Grant the ability to the ASC
+			// The ability level defaults to 1, and InputID defaults to INDEX_NONE (no input binding)
+			FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(AbilityClass, 1, INDEX_NONE, this);
+			AbilitySystemComponent->GiveAbility(AbilitySpec);
+		}
+	}
 }
 
 UAbilitySystemComponent* ATDCharacterBase::GetAbilitySystemComponent() const

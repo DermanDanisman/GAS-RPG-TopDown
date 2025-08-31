@@ -47,6 +47,15 @@ void ATDEnemyCharacter::InitializeAbilityActorInfo()
 
 		// Bind ASC delegates (e.g., attribute change broadcasts) for this component type.
 		Cast<UTDAbilitySystemComponent>(AbilitySystemComponent)->BindASCDelegates();
+
+		// Apply default attribute initialization once ASC and AttributeSet are valid.
+		if (AttributeSet && DefaultAttributeInitComponent && DefaultAttributeInitComponent->DefaultPrimaryAttributes)
+		{
+			DefaultAttributeInitComponent->InitializeDefaultAttributes(AbilitySystemComponent);
+		}
+
+		// Grant startup abilities after ASC and attributes are initialized
+		GrantStartupAbilities();
 	}
 }
 

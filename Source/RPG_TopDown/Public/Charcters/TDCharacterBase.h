@@ -18,6 +18,7 @@
 class UTDDefaultAttributeInitComponent;
 class UAttributeSet;
 class UAbilitySystemComponent;
+class UTDGameplayAbility;
 
 /**
  * ATDCharacterBase
@@ -61,6 +62,13 @@ protected:
 	 */
 	virtual void InitializeAbilityActorInfo();
 
+	/**
+	 * GrantStartupAbilities
+	 * Grants all abilities in the StartupAbilities array to the character's ASC.
+	 * Should be called after InitializeAbilityActorInfo when ASC is ready.
+	 */
+	virtual void GrantStartupAbilities();
+
 	// ===== Components & GAS References =====
 
 	/** Skeletal mesh for the character's weapon. Exposed to the editor for assignment and setup. */
@@ -80,4 +88,8 @@ protected:
 	/** Component responsible for applying default attribute GameplayEffects. */
 	UPROPERTY(EditAnywhere, Category="GAS|Attributes")
 	TObjectPtr<UTDDefaultAttributeInitComponent> DefaultAttributeInitComponent;
+
+	/** Array of abilities to grant to this character on initialization. */
+	UPROPERTY(EditAnywhere, Category="GAS|Abilities")
+	TArray<TSubclassOf<UTDGameplayAbility>> StartupAbilities;
 };

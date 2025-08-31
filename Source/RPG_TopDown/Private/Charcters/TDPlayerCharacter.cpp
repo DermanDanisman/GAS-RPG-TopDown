@@ -99,6 +99,9 @@ void ATDPlayerCharacter::InitializeAbilityActorInfo()
 			{
 				DefaultAttributeInitComponent->InitializeDefaultAttributes(AbilitySystemComponent);
 			}
+
+			// Grant startup abilities after ASC and attributes are initialized
+			GrantStartupAbilities();
 		}
 	}
 }
