@@ -280,6 +280,23 @@ Attributes
 - **Consistent Prefixes**: All attributes start with "Attributes"
 - **Logical Grouping**: Group related concepts (Primary vs Secondary)
 
+## Input tags (InputTag.*)
+
+Scope: Semantic inputs for routing Enhanced Input to abilities and UI.
+
+Examples (register natively):
+- InputTag.LMB — Left Mouse Button
+- InputTag.RMB — Right Mouse Button
+- InputTag.1 — Number key 1
+- InputTag.2 — Number key 2
+- InputTag.3 — Number key 3
+- InputTag.4 — Number key 4
+
+Guidelines:
+- Reserve the InputTag.* namespace strictly for input semantics.
+- Use Ability.Input.* (or similar) for ability-side classification, if needed, to keep concerns separate.
+- Add new input tags here first; then use them in the AuraInputConfig data asset.
+
 ## Integration with Existing Systems
 
 ### Compatibility with GAS

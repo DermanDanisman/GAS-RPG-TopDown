@@ -1,6 +1,6 @@
 # Documentation Index
 
-Last updated: 2025-01-06
+Last updated: 2025-08-31
 
 > This documentation is a living document. If anything is outdated or unclear, please open a "Docs Update" issue or a small PR.
 
@@ -28,6 +28,9 @@ Last updated: 2025-01-06
 
 ### Cheatsheets
 - GAS Attribute Callbacks: gas/cheatsheets/gas-attribute-callbacks.md
+
+### Input
+- Enhanced Input → Ability Mapping (Aura Input Config): gas/input/enhanced-input-to-abilities.md
 
 ## UI
 - UI & Widget Controller: ui/ui-widget-controller.md
