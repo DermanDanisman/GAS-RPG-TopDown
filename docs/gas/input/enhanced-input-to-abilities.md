@@ -4,6 +4,11 @@ Last updated: 2025-08-31
 
 [Note] A ready-made component helper exists: see Binding callbacks with UTDEnhancedInputComponent for a one-call setup that binds Pressed/Released/Held and forwards the InputTag to your handlers.
 
+Reminders for this project:
+- Set Project Settings → Input → Default Input Component Class to UTDEnhancedInputComponent.
+- Assign your UTDInputConfig asset on the PlayerController Blueprint before running.
+- Input tags: InputTag.LMB, InputTag.RMB, InputTag.QuickSlot1..4 (defined in FTDGameplayTags)
+
 Goal: Activate abilities via Enhanced Input without hard-wiring enums or rigid input IDs. Use a data-driven UDataAsset that pairs UInputAction assets with Gameplay Tags (InputTag.*), so mappings can be swapped or edited at runtime.
 
 Related:
