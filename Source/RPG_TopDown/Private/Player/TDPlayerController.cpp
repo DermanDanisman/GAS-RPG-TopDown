@@ -2,20 +2,19 @@
 // and is protected by copyright law. Unauthorized reproduction, distribution, or use of this material is strictly prohibited.
 // Unreal Engine and its associated trademarks are used under license from Epic Games.
 
-
 #include "Player/TDPlayerController.h"
 
-#include "EnhancedInputComponent.h"
-#include "EnhancedInputSubsystems.h"
-#include "Interaction/HighlightInteraction.h"
+#include "EnhancedInputSubsystems.h"              // UEnhancedInputLocalPlayerSubsystem
+#include "Input/TDEnhancedInputComponent.h"       // UTDEnhancedInputComponent for binding with tags
+#include "Interaction/HighlightInteraction.h"     // UHighlightInteraction
 
 ATDPlayerController::ATDPlayerController()
 {
-	// Set this controller to replicate (so it exists on server and all clients).
+	// Replicate this controller so it exists on server and relevant clients.
 	bReplicates = true;
 
 	// Create the highlight interaction component as a default subobject.
-	// This allows Blueprint/UI to handle highlighting (e.g. mouseover outlines).
+	// Enables BP/UI to manage interactable highlighting (e.g., outlines on hover).
 	HighlightInteraction = CreateDefaultSubobject<UHighlightInteraction>(TEXT("HighlightInteraction"));
 }
 
@@ -23,23 +22,23 @@ void ATDPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// Early assert to catch missing input mapping context setup in BP/defaults.
-	checkf(GASInputMappingContext, TEXT("GASPlayerController -> GASInputContext ptr is null!"));
-
 	// Only local player controllers have a valid ULocalPlayer pointer.
+	// Mapping contexts are a client/local concern (do not assert on server).
 	const ULocalPlayer* LocalPlayer = Cast<ULocalPlayer>(Player);
-	if(LocalPlayer)
+	if (LocalPlayer)
 	{
-		// Get the Enhanced Input subsystem for this local player.
-		UEnhancedInputLocalPlayerSubsystem* InputSystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
-		if (InputSystem && GASInputMappingContext)
+		// Early assert to catch missing input mapping context setup in BP/defaults.
+		checkf(GASInputMappingContext, TEXT("ATDPlayerController: GASInputMappingContext is null on [%s]. Set it in defaults/BP."), *GetNameSafe(this));
+
+		// Get the Enhanced Input subsystem for this local player and register the mapping context.
+		if (UEnhancedInputLocalPlayerSubsystem* InputSystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
 		{
-			// Register the input mapping context (priority 0 = highest).
-			InputSystem->AddMappingContext(GASInputMappingContext, 0);
+			// Priority 0 (higher is higher priority, but 0 is fine for a primary context).
+			InputSystem->AddMappingContext(GASInputMappingContext, /*Priority=*/0);
 		}
 	}
 
-	// Enable mouse cursor for top-down/RTS control.
+	// Configure mouse for top-down/RTS-like control.
 	bShowMouseCursor = true;
 	DefaultMouseCursor = EMouseCursor::Default;
 
@@ -57,11 +56,26 @@ void ATDPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 	
-	// Cast to EnhancedInputComponent (required for Enhanced Input bindings).
-	UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(InputComponent);
+	// Cast to our Enhanced Input component. Will crash if the component type is different (by design).
+	UTDEnhancedInputComponent* TDEnhancedInputComponent = CastChecked<UTDEnhancedInputComponent>(InputComponent);
 
 	// Bind the move action (must be set in BP/defaults) to the Move handler on this controller.
-	EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ThisClass::Move);
+	if (ensureMsgf(MoveAction != nullptr, TEXT("ATDPlayerController: MoveAction is null. Set it in defaults/BP.")))
+	{
+		TDEnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ThisClass::Move);
+	}
+
+	// Bind all ability input actions (Pressed/Released/Held) using the data-driven input config.
+	if (ensureMsgf(InputConfig != nullptr, TEXT("ATDPlayerController: InputConfig is null. Set it in defaults/BP.")))
+	{
+		TDEnhancedInputComponent->BindAbilityInputActions(
+			InputConfig,
+			this,
+			&ThisClass::AbilityInputActionTagPressed,
+			&ThisClass::AbilityInputActionReleased,
+			&ThisClass::AbilityInputActionHeld
+		);
+	}
 }
 
 void ATDPlayerController::Move(const FInputActionValue& InputActionValue)
@@ -69,23 +83,38 @@ void ATDPlayerController::Move(const FInputActionValue& InputActionValue)
 	// Get the 2D input vector (e.g., from WASD or analog stick).
 	const FVector2D InputAxisVector = InputActionValue.Get<FVector2D>();
 
-	// Get the current controller rotation (camera facing the direction).
+	// Use only yaw for movement orientation (ignore pitch/roll for top-down).
 	const FRotator Rotation = GetControlRotation();
-	// Only use yaw for movement (ignore pitch/roll for top-down).
 	const FRotator YawRotation(0.f, Rotation.Yaw, 0.0f);
 
-	// Calculate the forward direction (X axis) based-on-camera yaw.
+	// Build forward (X) and right (Y) vectors from yaw-only rotation.
 	const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-	// Calculate the right direction (Y axis), also relative to camera yaw.
-	const FVector RightDirection = FRotationMatrix(Rotation).GetUnitAxis(EAxis::Y);
+	const FVector RightDirection   = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
 	// Get the pawn currently possessed by this player controller.
-	APawn* ControlledPawn = GetPawn<APawn>();
-	if (ControlledPawn)
+	if (APawn* ControlledPawn = GetPawn<APawn>())
 	{
 		// Move forward/backward based on Y axis of input (W/S or up/down on stick).
 		ControlledPawn->AddMovementInput(ForwardDirection, InputAxisVector.Y);
 		// Move right/left based on X axis of input (A/D or left/right on stick).
-		ControlledPawn->AddMovementInput(RightDirection, InputAxisVector.X);
+		ControlledPawn->AddMovementInput(RightDirection,   InputAxisVector.X);
 	}
+}
+
+void ATDPlayerController::AbilityInputActionTagPressed(FGameplayTag InputTag)
+{
+	// Example: Forward to ASC or gameplay system; for now, on-screen debug.
+	GEngine->AddOnScreenDebugMessage(2, 5.f, FColor::Yellow, *InputTag.ToString());
+}
+
+void ATDPlayerController::AbilityInputActionReleased(FGameplayTag InputTag)
+{
+	// Example: Forward to ASC or gameplay system; for now, on-screen debug.
+	GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Blue, *InputTag.ToString());
+}
+
+void ATDPlayerController::AbilityInputActionHeld(FGameplayTag InputTag)
+{
+	// Example: Forward to ASC or gameplay system; for now, on-screen debug.
+	GEngine->AddOnScreenDebugMessage(3, 5.f, FColor::Emerald, *InputTag.ToString());
 }
