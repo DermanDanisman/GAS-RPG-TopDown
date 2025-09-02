@@ -1,17 +1,15 @@
 # Binding callbacks with UTDEnhancedInputComponent (Ability Inputs)
 
-Last updated: 2025-09-01
+Last updated: 2025-09-02
 
-This guide shows how to bind ability-related input callbacks using UTDEnhancedInputComponent and a data-driven UTDInputConfig. It complements the Enhanced Input → Ability Mapping guide.
+This guide shows how to bind ability-related input callbacks using UTDEnhancedInputComponent and a data-driven UTDInputConfig. It complements the Enhanced Input → Ability Mapping and the Ability Input Tags and Activation guides.
 
 Related:
 - Enhanced Input → Ability Mapping: ./enhanced-input-to-abilities.md
+- Ability Input Tags and Activation: ../abilities/ability-input-tags-and-activation.md
 - Gameplay Tags Centralization: ../../systems/gameplay-tags-centralization.md
-- Abilities Overview: ../../gas/abilities/overview.md
 
-## What it is
-
-UTDEnhancedInputComponent derives from UEnhancedInputComponent and exposes a templated helper:
+## Recap: what the helper does
 
 ```cpp
 // Signature (from TDEnhancedInputComp.h)
@@ -20,46 +18,35 @@ void BindAbilityInputActions(const UTDInputConfig* InputConfig, UserClass* Objec
                              PressedFuncType PressedFunc, ReleasedFuncType ReleasedFunc, HeldFuncType HeldFunc);
 ```
 
-The helper:
-- Iterates InputConfig->AbilityInputActions (pairs of UInputAction* + FGameplayTag).
-- Binds three callbacks per action using Enhanced Input trigger events:
-  - Pressed: ETriggerEvent::Started
-  - Released: ETriggerEvent::Completed
-  - Held/Repeat: ETriggerEvent::Triggered (fires every frame while held)
-- Forwards the entry's InputTag to your callback as an extra parameter.
+- Loops InputConfig->AbilityInputActions (UInputAction* + FGameplayTag pairs)
+- Binds:
+  - Pressed → ETriggerEvent::Started
+  - Released → ETriggerEvent::Completed
+  - Held/Repeat → ETriggerEvent::Triggered
+- Forwards the entry's InputTag to your callbacks as an extra parameter
 
-## Setup checklist (end-to-end)
+## Setup checklist
 
-1) Create/verify your Input Config asset (UTDInputConfig)
-- IA_LMB ↔ InputTag.LMB
-- IA_RMB ↔ InputTag.RMB
-- IA_QuickSlot1..4 ↔ InputTag.QuickSlot1..4
+1) Input Config (UTDInputConfig)
+- IA_LMB ↔ InputTag.LMB; IA_RMB ↔ InputTag.RMB; IA_QuickSlot1..4 ↔ InputTag.QuickSlot1..4
 
-2) Set the default input component class
-- Project Settings → Input → Default Input Component Class → select UTDEnhancedInputComponent.
+2) Project Settings
+- Input → Default Input Component Class → UTDEnhancedInputComponent
 
-3) Assign the Input Config on your PlayerController Blueprint
-- Add UPROPERTY(EditDefaultsOnly) UTDInputConfig* InputConfig to your PlayerController.
-- In BP, set InputConfig to your asset (e.g., TDInputConfig).
+3) PlayerController Blueprint
+- UPROPERTY(EditDefaultsOnly, Category=Input) UTDInputConfig* InputConfig (assign your asset)
 
-4) Define three callbacks on the PlayerController
-- Include header for FGameplayTag in your PC header if the signatures are in the header file:
-  - #include "GameplayTagContainer.h"
-- Example signatures:
+4) PlayerController callbacks and binding
 
 ```cpp
+// Header may need GameplayTagContainer.h for FGameplayTag
 void AbilityInputTagPressed(FGameplayTag InputTag);
 void AbilityInputTagReleased(FGameplayTag InputTag);
 void AbilityInputTagHeld(FGameplayTag InputTag);
-```
 
-5) Bind once in SetupInputComponent
-
-```cpp
 void AMyPlayerController::SetupInputComponent()
 {
     Super::SetupInputComponent();
-
     UTDEnhancedInputComponent* EIC = CastChecked<UTDEnhancedInputComponent>(InputComponent);
     
     if (InputConfig)
@@ -72,61 +59,50 @@ void AMyPlayerController::SetupInputComponent()
 }
 ```
 
-Notes:
-- The order of callback parameters is Pressed, then Released, then Held.
-- If your function pointer types are wrappers (delegates), ensure they are valid; the implementation guards with IsValid() before binding.
+Order matters: Pressed, Released, then Held.
 
-## Quick verification with on-screen debug messages
+## Caching the ASC (recommended)
 
-Add temporary logging to confirm the correct tag flows through. Using different keys prevents messages from overriding one another:
+Avoid casting every frame during Held by caching the ASC once it becomes valid:
 
 ```cpp
-void AMyPlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
+// Forward declare UAuraAbilitySystemComponent; store a TObjectPtr<UAuraAbilitySystemComponent> CachedASC;
+
+UAuraAbilitySystemComponent* GetASC()
 {
-    if (GEngine)
+    if (CachedASC.IsValid())
     {
-        GEngine->AddOnScreenDebugMessage(/*Key*/ 1, /*Time*/ 3.f, FColor::Red,
-            FString::Printf(TEXT("Pressed: %s"), *InputTag.ToString()));
+        return CachedASC.Get();
     }
+    if (GetPawn())
+    {
+        CachedASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetPawn());
+    }
+    return CachedASC.Get();
 }
 
-void AMyPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
+void AbilityInputTagHeld(FGameplayTag InputTag)
 {
-    if (GEngine)
+    if (UAuraAbilitySystemComponent* ASC = GetASC())
     {
-        GEngine->AddOnScreenDebugMessage(/*Key*/ 2, /*Time*/ 3.f, FColor::Blue,
-            FString::Printf(TEXT("Released: %s"), *InputTag.ToString()));
-    }
-}
-
-void AMyPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
-{
-    if (GEngine)
-    {
-        GEngine->AddOnScreenDebugMessage(/*Key*/ 3, /*Time*/ 3.f, FColor::Green,
-            FString::Printf(TEXT("Held: %s"), *InputTag.ToString()));
+        ASC->AbilityInputTagHeld(InputTag);
     }
 }
 ```
 
-Expected behavior when you click LMB or press 1..4:
-- Red appears immediately (Pressed)
-- Green repeats while held (Held)
-- Blue shows when released (Released)
+## Quick verification (on-screen debug)
 
-## Blueprint notes
+Use distinct keys/colors so messages don't overwrite each other:
 
-- Expose equivalent handlers in Blueprint that accept a Gameplay Tag and call Try Activate Abilities By Tag on your Ability System Component.
-- Ensure your Input Mapping Context is applied and active on the local player.
+```cpp
+if (GEngine) GEngine->AddOnScreenDebugMessage(1, 3.f, FColor::Red, FString::Printf(TEXT("Pressed: %s"), *InputTag.ToString()));
+if (GEngine) GEngine->AddOnScreenDebugMessage(2, 3.f, FColor::Blue, FString::Printf(TEXT("Released: %s"), *InputTag.ToString()));
+if (GEngine) GEngine->AddOnScreenDebugMessage(3, 3.f, FColor::Green, FString::Printf(TEXT("Held: %s"), *InputTag.ToString()));
+```
 
 ## Troubleshooting
-
-- Hit a check/assert on InputConfig? Assign the InputConfig asset on your PlayerController BP.
-- No callbacks firing? Confirm Project Settings → Input → Default Input Component Class is set to UTDEnhancedInputComponent and your IMC is active.
-- Wrong tag? Verify the UTDInputConfig entry's InputTag matches centralized names exactly (InputTag.LMB, InputTag.RMB, InputTag.QuickSlot1..4).
-- Held not repeating? Ensure the binding for Held uses ETriggerEvent::Triggered and the UInputAction isn't gated by triggers/modifiers.
-
-## See also
-
-- Data-driven mapping pattern: Enhanced Input → Ability Mapping
-- Centralized tags and conventions: Gameplay Tags Centralization
+- Ensure Default Input Component Class is UTDEnhancedInputComponent
+- Assign InputConfig on the PlayerController BP
+- Input Mapping Context must be applied/active
+- Use exact tag names (InputTag.LMB/RMB/QuickSlot1..4)
+- Guard null ASC in early frame calls
