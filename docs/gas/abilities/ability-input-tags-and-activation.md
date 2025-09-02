@@ -2,89 +2,44 @@
 
 Last updated: 2025-09-02
 
-This guide covers how abilities are matched and activated by input tag, based on the AuraGameplayAbility and ASC patterns.
+This guide covers how abilities are matched and activated by input tag, based on the GASCore + TD patterns in this project.
 
 ## Quick-reference diagram
 
-Sequence view
+(See sequence/flowchart visuals at the top of this file; labels now match: UTDEnhancedInputComponent, PlayerController, ASC, TryActivateAbility.)
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant User as Player Input
-    participant EIC as UTDEnhancedInputComponent
-    participant PC as PlayerController
-    participant ASC as Ability System Component
-    participant GA as Gameplay Ability Instance(s)
+## Startup Input Tag on Gameplay Abilities
 
-    Note over User,EIC: Enhanced Input fires UInputAction (InputTag.LMB/RMB/QuickSlot1..4)
-    User->>EIC: ETriggerEvent Started/Triggered/Completed
-    EIC->>PC: AbilityInputTagPressed/Released/Held(InputTag)
+- Base class: UGASCoreGameplayAbility
+- Add UPROPERTY(EditDefaultsOnly, Category=Input) FGameplayTag StartupInputTag
+- Configure on the CDO (class defaults) or derived BP. Used for initial mapping when granting startup abilities.
 
-    rect rgb(245,245,245)
-    PC->>ASC: AbilityInputTagHeld(InputTag)
-    ASC->>ASC: if (!InputTag.IsValid()) return
-    ASC->>ASC: for Spec in GetActivatableAbilities()
-    ASC->>ASC: if Spec.DynamicAbilityTags.HasTagExact(InputTag)
-    ASC->>ASC: if not active → TryActivateAbility(Spec.Handle)
-    ASC->>ASC: AbilitySpecInputPressed(Spec)
-    ASC-->>GA: InputPressed propagated to instances
-    end
+## Add StartupInputTag to the AbilitySpec (dynamic source tags)
 
-    PC->>ASC: AbilityInputTagReleased(InputTag)
-    ASC->>ASC: for matching Spec → AbilitySpecInputReleased(Spec)
-    ASC-->>GA: InputReleased propagated
-```
+When granting startup abilities (authority) in your Ability System Component or init component:
+- Create FGameplayAbilitySpec for the ability.
+- If the ability is UGASCoreGameplayAbility and StartupInputTag is valid, add it to Spec.GetDynamicSpecSourceTags().
+- GiveAbility(Spec) to register the ability.
 
-Flowchart view
-
-```mermaid
-flowchart TD
-    A[Player input (LMB/1–4)] --> B[Enhanced Input triggers UInputAction]
-    B --> C[UTDEnhancedInputComponent<br>BindAbilityInputActions]
-    C --> D[PlayerController callbacks<br>(Pressed/Held/Released with FGameplayTag)]
-    D -->|Held| E[ASC.AbilityInputTagHeld(InputTag)]
-    D -->|Released| F[ASC.AbilityInputTagReleased(InputTag)]
-    E --> G{Spec.DynamicAbilityTags<br>HasTagExact(InputTag)?}
-    G -->|No| H[Skip]
-    G -->|Yes| I{Spec Active?}
-    I -->|No| J[TryActivateAbility(Spec.Handle)]
-    I -->|Yes| K[Already Active]
-    J --> L[AbilitySpecInputPressed(Spec)]
-    K --> L
-    F --> M[AbilitySpecInputReleased(Spec)]
-    L --> N[Ability instance(s): InputPressed]
-    M --> O[Ability instance(s): InputReleased]
-```
-
-## Startup Input Tag on AuraGameplayAbility
-
-- Add a public UPROPERTY(EditDefaultsOnly, Category=Input) FGameplayTag StartupInputTag to your AuraGameplayAbility subclass.
-- Set StartupInputTag on the CDO (class defaults) or in a derived BP.
-- This value is for initial mapping when abilities are granted at game start.
-
-## Add StartupInputTag to the AbilitySpec (dynamic tags)
-
-When granting startup abilities in your Ability System Component (ASC):
-- Create the FGameplayAbilitySpec for the ability.
-- If the underlying ability is an AuraGameplayAbility and StartupInputTag is valid, add it to Spec.DynamicAbilityTags.
-- Use dynamic tags so you can remap inputs at runtime (remove one tag, add another) without touching the ability class.
-
-Pseudo-code sketch:
+Code sketch (from GASCore):
 
 ```cpp
-for (FGameplayAbilitySpec& Spec : StartupSpecs)
+for (const TSubclassOf<UGameplayAbility>& StartupAbility : StartupAbilities)
 {
-    if (const UAuraGameplayAbility* AuraGA = Cast<UAuraGameplayAbility>(Spec.Ability))
+    FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(StartupAbility, 1);
+    if (const UGASCoreGameplayAbility* GASCoreAbility = Cast<UGASCoreGameplayAbility>(AbilitySpec.Ability))
     {
-        if (AuraGA->StartupInputTag.IsValid())
+        if (GASCoreAbility->StartupInputTag.IsValid())
         {
-            Spec.DynamicAbilityTags.AddTag(AuraGA->StartupInputTag);
+            AbilitySpec.GetDynamicSpecSourceTags().AddTag(GASCoreAbility->StartupInputTag);
         }
     }
-    GiveAbility(Spec);
+    GiveAbility(AbilitySpec);
 }
 ```
+
+Why dynamic source tags?
+- They're intended for runtime add/remove, enabling remapping (e.g., move an ability from LMB to RMB) without touching the ability class.
 
 ## Handling input in the ASC
 
@@ -93,42 +48,45 @@ Implement two methods on your ASC and call them from your PlayerController's Hel
 - AbilityInputTagHeld(const FGameplayTag& InputTag)
 - AbilityInputTagReleased(const FGameplayTag& InputTag)
 
-Key steps (Held):
-- if (!InputTag.IsValid()) return;  // note the negation
+Held flow (aligned to code):
+- if (!InputTag.IsValid()) return
 - Iterate GetActivatableAbilities()
-- For each Spec with Spec.DynamicAbilityTags.HasTagExact(InputTag):
+- For each Spec where Spec.GetDynamicSpecSourceTags().HasTagExact(InputTag):
+  - AbilitySpecInputPressed(Spec)
   - If not active: TryActivateAbility(Spec.Handle)
-  - Signal input pressed each tick while held: AbilitySpecInputPressed(Spec)
 
-Key steps (Released):
-- if (!InputTag.IsValid()) return;
+Released flow:
+- if (!InputTag.IsValid()) return
 - Iterate GetActivatableAbilities()
-- For each Spec with Spec.DynamicAbilityTags.HasTagExact(InputTag):
-  - Signal input released: AbilitySpecInputReleased(Spec)
+- For each Spec where Spec.GetDynamicSpecSourceTags().HasTagExact(InputTag):
+  - AbilitySpecInputReleased(Spec)
 
 Notes:
-- TryActivateAbility respects cooldowns/costs and may fail; that's expected.
-- Input pressed/released toggles an internal flag and forwards to ability instances (override InputPressed/InputReleased in your abilities as needed).
-- Do not forcibly end abilities on release unless that's your design; let each ability decide.
+- TryActivateAbility respects costs/cooldowns and may fail; that's expected.
+- AbilitySpecInputPressed/Released toggles an internal input flag and forwards to instances (override InputPressed/InputReleased in your abilities if needed).
+- Do not forcibly end on release unless that's your design; let abilities decide.
 
-## PlayerController integration recap
+## PlayerController integration recap (TD layer)
 
-- Three callbacks receive FGameplayTag and forward to ASC (Held/Released), optional behavior on Pressed.
-- Cache ASC via UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetPawn()) to avoid per-frame casts.
+- ATDPlayerController handlers: AbilityInputActionTagPressed/Released/Held(FGameplayTag)
+- Cache ASC: UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetPawn<APawn>()) cast to UTDAbilitySystemComponent
+- Forward Held/Released to ASC; optional behavior on Pressed
+
+## Ability initialization (authority-only)
+
+- Components: UGASCoreAbilityInitComponent (base), UTDAbilityInitComponent (game layer)
+- At startup on authority, AddCharacterAbilities() collects StartupAbilities and calls ASC->AddCharacterAbilities()
+- ASC adds UGASCoreGameplayAbility::StartupInputTag to Spec.GetDynamicSpecSourceTags() then GiveAbility(Spec)
+
+## Tag matching semantics (important)
+
+- In ASC input handling, we use HasTagExact on Spec.GetDynamicSpecSourceTags() for precise matching.
+- In Input Config lookups (FindAbilityInputActionByTag), UGASCoreAbilityInputConfig uses MatchesTag to allow parent/child relationships in your tag hierarchy.
 
 ## Debugging tips
-
-- Use on-screen debug messages to confirm tags.
-- Inspect ActivatableAbilities during a breakpoint to verify your StartupInputTag is present in Spec.DynamicAbilityTags.
-- If abilities re-activate every frame, ensure they aren't ending instantly (try adding a small duration) or adjust Held behavior.
+- Use on-screen debug to confirm tags reaching the controller
+- Break in ASC and inspect ActivatableAbilities; verify StartupInputTag is present in Spec.GetDynamicSpecSourceTags()
+- If abilities re-activate every frame, confirm they aren't ending immediately; otherwise that's expected with a Held loop
 
 ## Runtime remapping
-
-- To remap keys at runtime, remove the current InputTag from a Spec's DynamicAbilityTags and add a different InputTag. Your Held/Released routing will naturally follow the new tag.
-
-## Common pitfalls
-
-- Validity guard must be: if (!InputTag.IsValid()) return;
-- IMC not applied/active → no callbacks fire
-- Default Input Component Class not set → binding fails
-- Tag name mismatch vs centralized tags → no matches
+- Remove the current InputTag from a Spec's DynamicSpecSourceTags and add a different InputTag; Held/Released routing follows the new tag automatically
