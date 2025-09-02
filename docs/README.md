@@ -1,6 +1,6 @@
 # Documentation Index
 
-Last updated: 2025-08-31
+Last updated: 2025-09-02
 
 > This documentation is a living document. If anything is outdated or unclear, please open a "Docs Update" issue or a small PR.
 
@@ -16,6 +16,7 @@ Last updated: 2025-08-31
 - Gameplay Tags: gas/gameplay-tags.md
 
 ### Abilities
+- Ability Input Tags and Activation Flow (ASC-centric): gas/abilities/ability-input-tags-and-activation.md
 - Overview: gas/abilities/overview.md
 - Base Ability and Startup Grant: gas/abilities/base-ability-and-startup-grant.md
 - Ability Tags and Policies: gas/abilities/ability-tags-and-policies.md
