@@ -4,6 +4,59 @@ Last updated: 2025-09-02
 
 This guide covers how abilities are matched and activated by input tag, based on the AuraGameplayAbility and ASC patterns.
 
+## Quick-reference diagram
+
+Sequence view
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant User as Player Input
+    participant EIC as UTDEnhancedInputComponent
+    participant PC as PlayerController
+    participant ASC as Ability System Component
+    participant GA as Gameplay Ability Instance(s)
+
+    Note over User,EIC: Enhanced Input fires UInputAction (InputTag.LMB/RMB/QuickSlot1..4)
+    User->>EIC: ETriggerEvent Started/Triggered/Completed
+    EIC->>PC: AbilityInputTagPressed/Released/Held(InputTag)
+
+    rect rgb(245,245,245)
+    PC->>ASC: AbilityInputTagHeld(InputTag)
+    ASC->>ASC: if (!InputTag.IsValid()) return
+    ASC->>ASC: for Spec in GetActivatableAbilities()
+    ASC->>ASC: if Spec.DynamicAbilityTags.HasTagExact(InputTag)
+    ASC->>ASC: if not active → TryActivateAbility(Spec.Handle)
+    ASC->>ASC: AbilitySpecInputPressed(Spec)
+    ASC-->>GA: InputPressed propagated to instances
+    end
+
+    PC->>ASC: AbilityInputTagReleased(InputTag)
+    ASC->>ASC: for matching Spec → AbilitySpecInputReleased(Spec)
+    ASC-->>GA: InputReleased propagated
+```
+
+Flowchart view
+
+```mermaid
+flowchart TD
+    A[Player input (LMB/1–4)] --> B[Enhanced Input triggers UInputAction]
+    B --> C[UTDEnhancedInputComponent<br>BindAbilityInputActions]
+    C --> D[PlayerController callbacks<br>(Pressed/Held/Released with FGameplayTag)]
+    D -->|Held| E[ASC.AbilityInputTagHeld(InputTag)]
+    D -->|Released| F[ASC.AbilityInputTagReleased(InputTag)]
+    E --> G{Spec.DynamicAbilityTags<br>HasTagExact(InputTag)?}
+    G -->|No| H[Skip]
+    G -->|Yes| I{Spec Active?}
+    I -->|No| J[TryActivateAbility(Spec.Handle)]
+    I -->|Yes| K[Already Active]
+    J --> L[AbilitySpecInputPressed(Spec)]
+    K --> L
+    F --> M[AbilitySpecInputReleased(Spec)]
+    L --> N[Ability instance(s): InputPressed]
+    M --> O[Ability instance(s): InputReleased]
+```
+
 ## Startup Input Tag on AuraGameplayAbility
 
 - Add a public UPROPERTY(EditDefaultsOnly, Category=Input) FGameplayTag StartupInputTag to your AuraGameplayAbility subclass.
