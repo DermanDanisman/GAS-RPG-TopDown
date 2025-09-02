@@ -4,9 +4,28 @@ Last updated: 2025-09-02
 
 This guide covers how abilities are matched and activated by input tag, based on the GASCore + TD patterns in this project.
 
-## Quick-reference diagram
+## Quick-reference diagram (with legend)
+
+Legend:
+- Started = Pressed, Completed = Released, Triggered = Held (per-frame)
+- InputTag family values come from FTDGameplayTags (InputTag.LMB/RMB/QuickSlot1..4)
 
 (See sequence/flowchart visuals at the top of this file; labels now match: UTDEnhancedInputComponent, PlayerController, ASC, TryActivateAbility.)
+
+## Using FTDGameplayTags for StartupInputTag
+
+- Base ability: UGASCoreGameplayAbility has StartupInputTag
+- Set StartupInputTag to values from FTDGameplayTags (e.g., FTDGameplayTags::Get().InputTag_LMB)
+
+Checklist:
+- [ ] Initialize native tags at startup
+- [ ] Set ability CDO StartupInputTag in BP/Defaults
+- [ ] Verify Spec.GetDynamicSpecSourceTags() contains the expected InputTag.* on grant
+
+## Exact vs hierarchical matches
+
+- ASC routing: HasTagExact on Spec.GetDynamicSpecSourceTags()
+- Config lookup: MatchesTag in UTDInputConfig for flexibility
 
 ## Startup Input Tag on Gameplay Abilities
 
