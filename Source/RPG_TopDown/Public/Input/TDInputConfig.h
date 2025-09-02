@@ -7,27 +7,8 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Engine/DataAsset.h"
+#include "Input/GASCoreAbilityInputConfig.h"
 #include "TDInputConfig.generated.h"
-
-/**
- * FTDInputAction
- *
- * Data structure representing a single input action and its associated gameplay tag.
- * Used to map input actions (Enhanced Input) to GAS input tags for abilities.
- */
-USTRUCT(BlueprintType)
-struct FTDInputAction
-{
-	GENERATED_BODY()
-
-	/** The Enhanced Input Action asset used for this input. */
-	UPROPERTY(EditDefaultsOnly, Category="Input")
-	const class UInputAction* InputAction = nullptr;
-
-	/** The gameplay tag that identifies this input (used for ability mapping). */
-	UPROPERTY(EditDefaultsOnly, Category="Input")
-	FGameplayTag InputTag = FGameplayTag();
-};
 
 /**
  * UTDInputConfig
@@ -36,7 +17,7 @@ struct FTDInputAction
  * Used to configure and map input actions to ability input tags for the GAS input system.
  */
 UCLASS()
-class RPG_TOPDOWN_API UTDInputConfig : public UDataAsset
+class RPG_TOPDOWN_API UTDInputConfig : public UGASCoreAbilityInputConfig
 {
 	GENERATED_BODY()
 
@@ -50,9 +31,5 @@ public:
 	 * @param bLogNotFound If true, log an error if the input tag is not found.
 	 * @return Pointer to the matching UInputAction, or nullptr if not found.
 	 */
-	const UInputAction* FindAbilityInputActionByTag(const FGameplayTag& InputTag, bool bLogNotFound = false) const;
-
-	/** Array of input actions mapped to ability tags. Used for configuring ability input triggers. */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Input")
-	TArray<FTDInputAction> AbilityInputActions;
+	virtual const UInputAction* FindAbilityInputActionByTag(const FGameplayTag& InputTag, bool bLogNotFound = false) const override;
 };

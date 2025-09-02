@@ -50,6 +50,10 @@ public:
 	 */
 	virtual void AddCharacterAbilities(const TArray<TSubclassOf<UGameplayAbility>>& InStartupAbilities);
 
+	virtual void AbilityInputTagHeld(const FGameplayTag& InputTag);
+
+	virtual void AbilityInputTagReleased(const FGameplayTag& InputTag);
+
 	/**
 	 * Fires whenever a GameplayEffect is applied to this ASC (self), providing the asset tag container
 	 * extracted from the effect spec. Consumers can filter by tag families (e.g., "UI.Message").

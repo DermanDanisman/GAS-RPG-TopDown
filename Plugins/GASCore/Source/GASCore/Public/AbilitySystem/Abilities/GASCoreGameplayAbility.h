@@ -13,5 +13,9 @@ UCLASS()
 class GASCORE_API UGASCoreGameplayAbility : public UGameplayAbility
 {
 	GENERATED_BODY()
-	
+
+public:
+
+	UPROPERTY(EditDefaultsOnly, Category="Input")
+	FGameplayTag StartupInputTag;
 };

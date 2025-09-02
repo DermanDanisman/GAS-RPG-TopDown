@@ -11,6 +11,8 @@
 
 #include "GASCore/Public/AbilitySystem/Components/GASCoreAbilitySystemComponent.h"
 
+#include "AbilitySystem/Abilities/GASCoreGameplayAbility.h"
+
 void UGASCoreAbilitySystemComponent::BindASCDelegates()
 {
 	// Register to receive a callback whenever a GameplayEffect is applied to self.
@@ -42,7 +44,42 @@ void UGASCoreAbilitySystemComponent::AddCharacterAbilities(
 	for (const TSubclassOf<UGameplayAbility> AbilityClass : InStartupAbilities)
 	{
 		FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(AbilityClass, 1);
-		//GiveAbility(AbilitySpec);
-		GiveAbilityAndActivateOnce(AbilitySpec);
+		if (const UGASCoreGameplayAbility* CoreGameplayAbility = Cast<UGASCoreGameplayAbility>(AbilitySpec.Ability))
+		{
+			AbilitySpec.GetDynamicSpecSourceTags().AddTag(CoreGameplayAbility->StartupInputTag);
+			GiveAbility(AbilitySpec);
+		}
+	}
+}
+
+void UGASCoreAbilitySystemComponent::AbilityInputTagHeld(const FGameplayTag& InputTag)
+{
+	if (!InputTag.IsValid()) return;
+
+	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
+	{
+		FGameplayTagContainer& DynamicSpecSourceTags = AbilitySpec.GetDynamicSpecSourceTags();
+		if (DynamicSpecSourceTags.HasTagExact(InputTag))
+		{
+			AbilitySpecInputPressed(AbilitySpec);
+			if (!AbilitySpec.IsActive())
+			{
+				TryActivateAbility(AbilitySpec.Handle);
+			}
+		}
+	}
+}
+
+void UGASCoreAbilitySystemComponent::AbilityInputTagReleased(const FGameplayTag& InputTag)
+{
+	if (!InputTag.IsValid()) return;
+
+	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
+	{
+		FGameplayTagContainer& DynamicSpecSourceTags = AbilitySpec.GetDynamicSpecSourceTags();
+		if (DynamicSpecSourceTags.HasTagExact(InputTag))
+		{
+			AbilitySpecInputReleased(AbilitySpec);
+		}
 	}
 }

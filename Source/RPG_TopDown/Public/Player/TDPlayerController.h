@@ -14,6 +14,7 @@ class UHighlightInteraction;
 struct FInputActionValue;
 class UInputAction;
 class UInputMappingContext;
+class UTDAbilitySystemComponent;
 
 /**
  * ATDPlayerController
@@ -75,6 +76,11 @@ private:
 	  */
 	UPROPERTY(EditAnywhere, Category="Enhanced Input|Config")
 	TObjectPtr<UTDInputConfig> InputConfig = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<UTDAbilitySystemComponent> TDAbilitySystemComponent;
+
+	UTDAbilitySystemComponent* GetASC();
 
 	// ===== Input handlers =====
 

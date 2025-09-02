@@ -4,8 +4,11 @@
 
 #include "Player/TDPlayerController.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
 #include "EnhancedInputSubsystems.h"              // UEnhancedInputLocalPlayerSubsystem
+#include "AbilitySystem/Components/TDAbilitySystemComponent.h"
 #include "Input/TDEnhancedInputComponent.h"       // UTDEnhancedInputComponent for binding with tags
+#include "Input/TDInputConfig.h"
 #include "Interaction/HighlightInteraction.h"     // UHighlightInteraction
 
 ATDPlayerController::ATDPlayerController()
@@ -101,20 +104,29 @@ void ATDPlayerController::Move(const FInputActionValue& InputActionValue)
 	}
 }
 
+UTDAbilitySystemComponent* ATDPlayerController::GetASC()
+{
+	if (TDAbilitySystemComponent == nullptr)
+	{
+		TDAbilitySystemComponent = Cast<UTDAbilitySystemComponent>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetPawn<APawn>()));
+	}
+
+	return TDAbilitySystemComponent;
+}
+
 void ATDPlayerController::AbilityInputActionTagPressed(FGameplayTag InputTag)
 {
-	// Example: Forward to ASC or gameplay system; for now, on-screen debug.
-	GEngine->AddOnScreenDebugMessage(2, 5.f, FColor::Yellow, *InputTag.ToString());
+	
 }
 
 void ATDPlayerController::AbilityInputActionReleased(FGameplayTag InputTag)
 {
-	// Example: Forward to ASC or gameplay system; for now, on-screen debug.
-	GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Blue, *InputTag.ToString());
+	if (GetASC() == nullptr) return;
+	GetASC()->AbilityInputTagReleased(InputTag);
 }
 
 void ATDPlayerController::AbilityInputActionHeld(FGameplayTag InputTag)
 {
-	// Example: Forward to ASC or gameplay system; for now, on-screen debug.
-	GEngine->AddOnScreenDebugMessage(3, 5.f, FColor::Emerald, *InputTag.ToString());
+	if (GetASC() == nullptr) return;
+	GetASC()->AbilityInputTagHeld(InputTag);
 }
