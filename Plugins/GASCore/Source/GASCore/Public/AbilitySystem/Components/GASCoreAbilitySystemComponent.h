@@ -71,6 +71,7 @@ protected:
 	 * @param GameplayEffectSpec     The spec for the effect being applied
 	 * @param ActiveGameplayEffectHandle Handle to the active GE instance (if any)
 	 */
-	virtual void HandleGameplayEffectAppliedToSelf(UAbilitySystemComponent* AbilitySystemComponent,
+	UFUNCTION(Client, Reliable)
+	virtual void ClientHandleGameplayEffectAppliedToSelf(UAbilitySystemComponent* AbilitySystemComponent,
 		const FGameplayEffectSpec& GameplayEffectSpec, FActiveGameplayEffectHandle ActiveGameplayEffectHandle);
 };

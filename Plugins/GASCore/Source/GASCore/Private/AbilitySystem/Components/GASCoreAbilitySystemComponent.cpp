@@ -17,10 +17,10 @@ void UGASCoreAbilitySystemComponent::BindASCDelegates()
 {
 	// Register to receive a callback whenever a GameplayEffect is applied to self.
 	// Using AddUObject ties the delegate lifetime to this UObject (safe unbinding on destruction).
-	OnGameplayEffectAppliedDelegateToSelf.AddUObject(this, &UGASCoreAbilitySystemComponent::HandleGameplayEffectAppliedToSelf);
+	OnGameplayEffectAppliedDelegateToSelf.AddUObject(this, &UGASCoreAbilitySystemComponent::ClientHandleGameplayEffectAppliedToSelf);
 }
 
-void UGASCoreAbilitySystemComponent::HandleGameplayEffectAppliedToSelf(
+void UGASCoreAbilitySystemComponent::ClientHandleGameplayEffectAppliedToSelf_Implementation(
 	UAbilitySystemComponent* AbilitySystemComponent,
 	const FGameplayEffectSpec& GameplayEffectSpec,
 	FActiveGameplayEffectHandle ActiveGameplayEffectHandle)

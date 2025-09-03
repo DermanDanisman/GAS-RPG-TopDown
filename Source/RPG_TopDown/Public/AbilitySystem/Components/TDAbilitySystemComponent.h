@@ -20,7 +20,7 @@ public:
 
 protected:
 
-	virtual void HandleGameplayEffectAppliedToSelf(UAbilitySystemComponent* AbilitySystemComponent,
+	virtual void ClientHandleGameplayEffectAppliedToSelf(UAbilitySystemComponent* AbilitySystemComponent,
 		const FGameplayEffectSpec& GameplayEffectSpec, FActiveGameplayEffectHandle ActiveGameplayEffectHandle) override;
 	
 };

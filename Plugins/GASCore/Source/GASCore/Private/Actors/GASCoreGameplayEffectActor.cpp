@@ -22,6 +22,7 @@
 
 AGASCoreGameplayEffectActor::AGASCoreGameplayEffectActor()
 {
+	SetReplicates(true);
 	// Provide a neutral root so designers can add collision/visuals in BP as needed.
 	DefaultSceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultRootComponent"));
 	SetRootComponent(DefaultSceneRoot);

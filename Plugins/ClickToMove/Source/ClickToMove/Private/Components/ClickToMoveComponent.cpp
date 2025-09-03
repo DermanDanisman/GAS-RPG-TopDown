@@ -178,8 +178,8 @@ void UClickToMoveComponent::AutoRun()
 
 	// Move along the spline by taking direction at the closest point to the pawn.
 	const FVector PawnLoc = Pawn->GetActorLocation();
-	const FVector ClosestOnSpline = Spline->FindLocationClosestToWorldLocation(PawnLoc, ESplineCoordinateSpace::World);
-	const FVector Direction = Spline->FindDirectionClosestToWorldLocation(ClosestOnSpline, ESplineCoordinateSpace::World);
+	const FVector LocationOnSpline = Spline->FindLocationClosestToWorldLocation(PawnLoc, ESplineCoordinateSpace::World);
+	const FVector Direction = Spline->FindDirectionClosestToWorldLocation(LocationOnSpline, ESplineCoordinateSpace::World);
 
 	if (!Direction.IsNearlyZero())
 	{
@@ -187,7 +187,8 @@ void UClickToMoveComponent::AutoRun()
 	}
 
 	// Stop when the pawn is within AcceptanceRadius of the final destination.
-	if (FVector::DistSquared(PawnLoc, CachedDestination) <= FMath::Square(AcceptanceRadius))
+	const float DistanceToDestination = (LocationOnSpline - CachedDestination).Length();
+	if (DistanceToDestination <= AcceptanceRadius)
 	{
 		StopMovement();
 	}

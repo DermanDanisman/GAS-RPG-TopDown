@@ -22,9 +22,9 @@ void UTDAbilitySystemComponent::BindASCDelegates()
 		FString::Printf(TEXT("Tag: %s"), *GameplayTags.Attributes_Secondary_Armor.ToString()));*/
 }
 
-void UTDAbilitySystemComponent::HandleGameplayEffectAppliedToSelf(UAbilitySystemComponent* AbilitySystemComponent,
+void UTDAbilitySystemComponent::ClientHandleGameplayEffectAppliedToSelf(UAbilitySystemComponent* AbilitySystemComponent,
 	const FGameplayEffectSpec& GameplayEffectSpec, FActiveGameplayEffectHandle ActiveGameplayEffectHandle)
 {
-	Super::HandleGameplayEffectAppliedToSelf(AbilitySystemComponent, GameplayEffectSpec, ActiveGameplayEffectHandle);
+	Super::ClientHandleGameplayEffectAppliedToSelf(AbilitySystemComponent, GameplayEffectSpec, ActiveGameplayEffectHandle);
 }
 
