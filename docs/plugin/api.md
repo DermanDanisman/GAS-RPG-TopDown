@@ -1,10 +1,10 @@
 # Plugin API (Proposed)
 
-Last updated: 2025-08-17
+Last updated: 2024-12-19
 
 This is the intended surface of the plugin. Namespaces/types can be adapted to your project prefix.
 
-## UAuraAbilitySystemComponent : UAbilitySystemComponent
+## UTDAbilitySystemComponent : UAbilitySystemComponent
 
 - void AbilityActorInfoSet();
 - FEffectAssetTags EffectAssetTags; // multicast delegate with const FGameplayTagContainer&
@@ -12,21 +12,21 @@ This is the intended surface of the plugin. Namespaces/types can be adapted to y
 Binding example:
 ```cpp
 OnGameplayEffectAppliedDelegateToSelf.AddUObject(
-  this, &UAuraAbilitySystemComponent::OnEffectApplied);
+  this, &UTDAbilitySystemComponent::OnEffectApplied);
 ```
 
-## UAuraAttributeSet : UAttributeSet
+## UTDAttributeSet : UAttributeSet
 
 - ATTRIBUTE_ACCESSORS for Health/MaxHealth/Mana/MaxMana
 - Constructor initializes defaults
 - Optional clamp hooks
 
-## UAuraUserWidget : UUserWidget
+## UTDUserWidget : UUserWidget
 
 - UFUNCTION(BlueprintCallable) void SetWidgetController(UObject* InController);
 - UFUNCTION(BlueprintImplementableEvent) void WidgetControllerSet();
 
-## UAuraWidgetController : UObject
+## UTDWidgetController : UObject
 
 - UPROPERTY(BlueprintReadOnly) APlayerController* PlayerController;
 - UPROPERTY(BlueprintReadOnly) APlayerState* PlayerState;
@@ -36,7 +36,7 @@ OnGameplayEffectAppliedDelegateToSelf.AddUObject(
 - virtual void BroadcastInitialValues();
 - virtual void BindCallbacksToDependencies();
 
-## AAuraEffectActor : AActor
+## ATDEffectActor : AActor
 
 - UPROPERTY(EditAnywhere) TSubclassOf<UGameplayEffect> InstantGameplayEffectClass;
 - UPROPERTY(EditAnywhere) TSubclassOf<UGameplayEffect> DurationGameplayEffectClass;

@@ -1,6 +1,6 @@
 # Ability Input Tags and Activation Flow (ASC-centric)
 
-Last updated: 2025-09-02
+Last updated: 2024-12-19
 
 This guide covers how abilities are matched and activated by input tag, based on the GASCore + TD patterns in this project.
 

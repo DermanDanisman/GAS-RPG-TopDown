@@ -1,15 +1,15 @@
 # Attribute Menu Widget Controller (Setup)
 
-Last updated: 2025-01-26
+Last updated: 2024-12-19
 
 ## Goal
 
-Create and configure `UAuraAttributeMenuWidgetController` derived from `UAuraWidgetController`, implementing the necessary overrides for `BindCallbacksToDependencies()` and `BroadcastInitialValues()`. This controller bridges the Gameplay Ability System (GAS) and the Attribute Menu UI through a data-driven approach using centralized GameplayTag mapping and Attribute Info Data Assets.
+Create and configure `UAuraAttributeMenuWidgetController` derived from `UTDWidgetController`, implementing the necessary overrides for `BindCallbacksToDependencies()` and `BroadcastInitialValues()`. This controller bridges the Gameplay Ability System (GAS) and the Attribute Menu UI through a data-driven approach using centralized GameplayTag mapping and Attribute Info Data Assets.
 
 ## Prerequisites
 
 - Understanding of the [Widget Controller pattern](../../ui-widget-controller.md)
-- Familiarity with [FAuraGameplayTags initialization](../../../systems/attributes-gameplay-tags.md)
+- Familiarity with [FTDGameplayTags initialization](../../../systems/attributes-gameplay-tags.md)
 - Knowledge of [Attribute Info Data Asset structure](../../../data/attribute-info.md)
 - Basic GAS attribute change delegate patterns
 
@@ -19,7 +19,7 @@ Create and configure `UAuraAttributeMenuWidgetController` derived from `UAuraWid
 
 ```cpp
 UCLASS(BlueprintType, Blueprintable)
-class GASCORE_API UAuraAttributeMenuWidgetController : public UAuraWidgetController
+class GASCORE_API UAuraAttributeMenuWidgetController : public UTDWidgetController
 {
     GENERATED_BODY()
 
@@ -70,26 +70,26 @@ void UAuraAttributeMenuWidgetController::BroadcastInitialValues()
     }
 
     const UCoreAttributeSet* CoreAttributeSet = CastChecked<UCoreAttributeSet>(AttributeSet);
-    const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
+    const FTDGameplayTags& GameplayTags = FTDGameplayTags::Get();
 
     // Broadcast initial values for all primary attributes
-    BroadcastAttributeInfo(GameplayTags.Attributes_Primary_Strength, 
+    BroadcastAttributeInfo(FTDGameplayTags::Get().Attributes_Primary_Strength, 
                           CoreAttributeSet->GetStrength());
-    BroadcastAttributeInfo(GameplayTags.Attributes_Primary_Intelligence, 
+    BroadcastAttributeInfo(FTDGameplayTags::Get().Attributes_Primary_Intelligence, 
                           CoreAttributeSet->GetIntelligence());
-    BroadcastAttributeInfo(GameplayTags.Attributes_Primary_Resilience, 
+    BroadcastAttributeInfo(FTDGameplayTags::Get().Attributes_Primary_Resilience, 
                           CoreAttributeSet->GetResilience());
-    BroadcastAttributeInfo(GameplayTags.Attributes_Primary_Vigor, 
+    BroadcastAttributeInfo(FTDGameplayTags::Get().Attributes_Primary_Vigor, 
                           CoreAttributeSet->GetVigor());
 
     // Broadcast initial values for all secondary attributes
-    BroadcastAttributeInfo(GameplayTags.Attributes_Secondary_Armor, 
+    BroadcastAttributeInfo(FTDGameplayTags::Get().Attributes_Secondary_Armor, 
                           CoreAttributeSet->GetArmor());
-    BroadcastAttributeInfo(GameplayTags.Attributes_Secondary_ArmorPenetration, 
+    BroadcastAttributeInfo(FTDGameplayTags::Get().Attributes_Secondary_ArmorPenetration, 
                           CoreAttributeSet->GetArmorPenetration());
-    BroadcastAttributeInfo(GameplayTags.Attributes_Secondary_BlockChance, 
+    BroadcastAttributeInfo(FTDGameplayTags::Get().Attributes_Secondary_BlockChance, 
                           CoreAttributeSet->GetBlockChance());
-    BroadcastAttributeInfo(GameplayTags.Attributes_Secondary_CriticalHitChance, 
+    BroadcastAttributeInfo(FTDGameplayTags::Get().Attributes_Secondary_CriticalHitChance, 
                           CoreAttributeSet->GetCriticalHitChance());
 
     // Continue for all attributes...
@@ -113,7 +113,7 @@ void UAuraAttributeMenuWidgetController::BindCallbacksToDependencies()
     }
 
     const UCoreAttributeSet* CoreAttributeSet = CastChecked<UCoreAttributeSet>(AttributeSet);
-    const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
+    const FTDGameplayTags& GameplayTags = FTDGameplayTags::Get();
 
     // Bind to primary attribute change delegates
     AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(CoreAttributeSet->GetStrengthAttribute())
@@ -141,12 +141,12 @@ void UAuraAttributeMenuWidgetController::BindCallbacksToDependencies()
 // Individual attribute change handlers
 void UAuraAttributeMenuWidgetController::OnStrengthChanged(const FOnAttributeChangeData& Data)
 {
-    HandleAttributeChanged(FAuraGameplayTags::Get().Attributes_Primary_Strength, Data.NewValue);
+    HandleAttributeChanged(FTDGameplayTags::Get().Attributes_Primary_Strength, Data.NewValue);
 }
 
 void UAuraAttributeMenuWidgetController::OnIntelligenceChanged(const FOnAttributeChangeData& Data)
 {
-    HandleAttributeChanged(FAuraGameplayTags::Get().Attributes_Primary_Intelligence, Data.NewValue);
+    HandleAttributeChanged(FTDGameplayTags::Get().Attributes_Primary_Intelligence, Data.NewValue);
 }
 
 // Continue for all attribute change handlers...
@@ -657,7 +657,7 @@ When widgets aren't showing initial data:
 ## Configuration and Setup Checklist
 
 ### Class Configuration
-- [ ] Create UAuraAttributeMenuWidgetController derived from UAuraWidgetController
+- [ ] Create UAuraAttributeMenuWidgetController derived from UTDWidgetController
 - [ ] Override BroadcastInitialValues() and BindCallbacksToDependencies()
 - [ ] Define OnAttributeInfoChanged delegate
 - [ ] Add AttributeInfoDataAsset property
@@ -670,7 +670,7 @@ When widgets aren't showing initial data:
 
 ### Data Asset Configuration
 - [ ] Assign DA_AttributeInfo to AttributeInfoDataAsset property
-- [ ] Verify all attribute tags in data asset match FAuraGameplayTags
+- [ ] Verify all attribute tags in data asset match FTDGameplayTags
 - [ ] Test attribute lookup functionality
 
 ### Widget Binding Setup
@@ -697,7 +697,7 @@ Before calling `BroadcastInitialValues()`, ensure all child row widgets have the
 - [ ] **Toggle "Is Variable"**: Ensure AttributeTag properties are marked as variables in Blueprint editor
 - [ ] **Use Descriptive Names**: Name row widgets clearly (StrengthRow, IntelligenceRow, ArmorRow, etc.)
 - [ ] **Set Tags Before Controller**: Assign AttributeTags before calling `SetWidgetController` on the parent menu
-- [ ] **Validate Tag Values**: Ensure AttributeTag values exactly match tags defined in FAuraGameplayTags
+- [ ] **Validate Tag Values**: Ensure AttributeTag values exactly match tags defined in FTDGameplayTags
 - [ ] **Test Tag Matching**: Verify each widget receives only its intended attribute updates
 
 ### Implementation Pattern

@@ -1,6 +1,6 @@
 # Controller Broadcasting from Map: Iteration Walkthrough
 
-Last updated: 2025-01-02
+Last updated: 2024-12-19
 
 ## Overview
 
@@ -526,7 +526,7 @@ public:
 UTDAttributeSet::UTDAttributeSet()
 {
     // Ensure GameplayTags are available
-    const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
+    const FTDGameplayTags& GameplayTags = FTDGameplayTags::Get();
     
     // Initialize registry in constructor
     InitializeAttributeFunctionRegistry();

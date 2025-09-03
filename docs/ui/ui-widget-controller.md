@@ -1,6 +1,6 @@
 # UI and Widget Controller
 
-Last updated: 2025-08-17
+Last updated: 2024-12-19
 
 ## Pattern
 
@@ -20,7 +20,7 @@ Last updated: 2025-08-17
     - `OnHealthChanged(float NewHealth)`
     - `OnMaxHealthChanged(float NewMaxHealth)`
   - Implement `BroadcastInitialValues()`:
-    - Cast AttributeSet to your concrete type (e.g., AuraAttributeSet)
+    - Cast AttributeSet to your concrete type (e.g., TDAttributeSet)
     - Broadcast current `GetHealth()` and `GetMaxHealth()`
 
 - In Health Globe Widget (child of a base ProgressBar widget):

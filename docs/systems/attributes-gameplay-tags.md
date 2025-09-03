@@ -1,10 +1,10 @@
 # Attributes Gameplay Tags (Primary and Secondary)
 
-Last updated: 2025-01-26
+Last updated: 2024-12-19
 
 ## Goal
 
-Document the pattern for registering primary and secondary attribute tags natively in `FAuraGameplayTags::InitializeNativeGameplayTags()`, which is called by `UAuraAssetManager::StartInitialLoading()`. This provides centralized access to attribute tags through the singleton pattern, ensuring compile-time safety and consistent tag management across the attribute system.
+Document the pattern for registering primary and secondary attribute tags natively in `FTDGameplayTags::InitializeNativeGameplayTags()`, which is called by `UAuraAssetManager::StartInitialLoading()`. This provides centralized access to attribute tags through the singleton pattern, ensuring compile-time safety and consistent tag management across the attribute system.
 
 ## Native Tag Registration Pattern
 
@@ -13,55 +13,55 @@ Document the pattern for registering primary and secondary attribute tags native
 The attribute tags are registered during game startup through this call chain:
 
 1. `UAuraAssetManager::StartInitialLoading()` - Called during asset manager initialization
-2. `FAuraGameplayTags::InitializeNativeGameplayTags()` - Registers all native tags
+2. `FTDGameplayTags::InitializeNativeGameplayTags()` - Registers all native tags
 3. `UGameplayTagsManager::AddNativeGameplayTag()` - Creates and returns each tag
 
 ### Implementation Example
 
 ```cpp
-// In FAuraGameplayTags::InitializeNativeGameplayTags()
-void FAuraGameplayTags::InitializeNativeGameplayTags()
+// In FTDGameplayTags::InitializeNativeGameplayTags()
+void FTDGameplayTags::InitializeNativeGameplayTags()
 {
     UGameplayTagsManager& Manager = UGameplayTagsManager::Get();
 
-    // Primary Attributes - assign returns to FAuraGameplayTags members
-    GameplayTags.Attributes_Primary_Strength = Manager.AddNativeGameplayTag(
+    // Primary Attributes - assign returns to FTDGameplayTags members
+    FTDGameplayTags::Get().Attributes_Primary_Strength = Manager.AddNativeGameplayTag(
         FName("Attributes.Primary.Strength"),
         FString("Physical power and melee damage")
     );
 
-    GameplayTags.Attributes_Primary_Intelligence = Manager.AddNativeGameplayTag(
+    FTDGameplayTags::Get().Attributes_Primary_Intelligence = Manager.AddNativeGameplayTag(
         FName("Attributes.Primary.Intelligence"),
         FString("Mental acuity and magical power")
     );
 
-    GameplayTags.Attributes_Primary_Resilience = Manager.AddNativeGameplayTag(
+    FTDGameplayTags::Get().Attributes_Primary_Resilience = Manager.AddNativeGameplayTag(
         FName("Attributes.Primary.Resilience"),
         FString("Physical and magical resistance")
     );
 
-    GameplayTags.Attributes_Primary_Vigor = Manager.AddNativeGameplayTag(
+    FTDGameplayTags::Get().Attributes_Primary_Vigor = Manager.AddNativeGameplayTag(
         FName("Attributes.Primary.Vigor"),
         FString("Health and stamina capacity")
     );
 
     // Secondary Attributes - derived from primary attributes
-    GameplayTags.Attributes_Secondary_Armor = Manager.AddNativeGameplayTag(
+    FTDGameplayTags::Get().Attributes_Secondary_Armor = Manager.AddNativeGameplayTag(
         FName("Attributes.Secondary.Armor"),
         FString("Physical damage reduction")
     );
 
-    GameplayTags.Attributes_Secondary_ArmorPenetration = Manager.AddNativeGameplayTag(
+    FTDGameplayTags::Get().Attributes_Secondary_ArmorPenetration = Manager.AddNativeGameplayTag(
         FName("Attributes.Secondary.ArmorPenetration"),
         FString("Bypasses enemy armor")
     );
 
-    GameplayTags.Attributes_Secondary_BlockChance = Manager.AddNativeGameplayTag(
+    FTDGameplayTags::Get().Attributes_Secondary_BlockChance = Manager.AddNativeGameplayTag(
         FName("Attributes.Secondary.BlockChance"),
         FString("Probability of blocking incoming attacks")
     );
 
-    GameplayTags.Attributes_Secondary_CriticalHitChance = Manager.AddNativeGameplayTag(
+    FTDGameplayTags::Get().Attributes_Secondary_CriticalHitChance = Manager.AddNativeGameplayTag(
         FName("Attributes.Secondary.CriticalHitChance"),
         FString("Probability of dealing critical damage")
     );
@@ -79,7 +79,7 @@ All attribute tags follow a consistent hierarchical naming pattern:
 - **Primary Attributes**: `Attributes.Primary.<AttributeName>`
 - **Secondary Attributes**: `Attributes.Secondary.<AttributeName>`
 
-### FAuraGameplayTags Member Names
+### FTDGameplayTags Member Names
 
 The singleton members use underscore-separated naming to match the tag hierarchy:
 
@@ -143,9 +143,9 @@ FGameplayTag UGameplayTagsManager::AddNativeGameplayTag(
 
 ```cpp
 // Get the singleton instance and access tags
-const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
-FGameplayTag StrengthTag = GameplayTags.Attributes_Primary_Strength;
-FGameplayTag ArmorTag = GameplayTags.Attributes_Secondary_Armor;
+const FTDGameplayTags& GameplayTags = FTDGameplayTags::Get();
+FGameplayTag StrengthTag = FTDGameplayTags::Get().Attributes_Primary_Strength;
+FGameplayTag ArmorTag = FTDGameplayTags::Get().Attributes_Secondary_Armor;
 ```
 
 ### Integration with Data Assets
@@ -155,7 +155,7 @@ These tags serve as keys in the `UAttributeInfo` data asset for attribute metada
 ```cpp
 // In AttributeMenuWidgetController
 FAuraAttributeInfo AttributeInfo = AttributeInfoDataAsset->FindAttributeInfoForTag(
-    FAuraGameplayTags::Get().Attributes_Primary_Strength
+    FTDGameplayTags::Get().Attributes_Primary_Strength
 );
 ```
 
@@ -167,7 +167,7 @@ FAuraAttributeInfo AttributeInfo = AttributeInfoDataAsset->FindAttributeInfoForT
 
 ```cpp
 // Typo risk - string literals not checked at compile time
-GameplayTags.Attributes_Primary_Strength = Manager.AddNativeGameplayTag(
+FTDGameplayTags::Get().Attributes_Primary_Strength = Manager.AddNativeGameplayTag(
     FName("Attributes.Primary.Strenght"), // Typo: "Strenght" instead of "Strength"
     FString("Physical power")
 );
@@ -202,7 +202,7 @@ void UAuraAssetManager::StartInitialLoading()
     Super::StartInitialLoading();
     
     // Initialize native gameplay tags early in the loading process
-    FAuraGameplayTags::InitializeNativeGameplayTags();
+    FTDGameplayTags::InitializeNativeGameplayTags();
     
     // Continue with other initialization...
 }

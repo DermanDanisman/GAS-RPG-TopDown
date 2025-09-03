@@ -42,15 +42,15 @@ public:
 // AttributeSet.cpp - Delegate registry initialization
 void UTDAttributeSet::InitializeAttributeDelegateRegistry()
 {
-    const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
+    const FTDGameplayTags& GameplayTags = FTDGameplayTags::Get();
     
     FAttributeSignature StrengthDelegate;
     StrengthDelegate.BindStatic(&UTDAttributeSet::GetStrengthAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Primary_Strength, StrengthDelegate);
+    TagsToAttributes.Add(FTDGameplayTags::Get().Attributes_Primary_Strength, StrengthDelegate);
     
     FAttributeSignature IntelligenceDelegate;
     IntelligenceDelegate.BindStatic(&UTDAttributeSet::GetIntelligenceAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Primary_Intelligence, IntelligenceDelegate);
+    TagsToAttributes.Add(FTDGameplayTags::Get().Attributes_Primary_Intelligence, IntelligenceDelegate);
     
     // Continue for all attributes...
 }
@@ -176,33 +176,33 @@ public:
 // AttributeSet.cpp
 void UTDAttributeSet::InitializeAttributeFunctionRegistry()
 {
-    const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
+    const FTDGameplayTags& GameplayTags = FTDGameplayTags::Get();
     
     // Direct function pointer assignment (no parentheses → pointer to function)
-    TagsToAttributes.Add(GameplayTags.Attributes_Primary_Strength, &UTDAttributeSet::GetStrengthAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Primary_Intelligence, &UTDAttributeSet::GetIntelligenceAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Primary_Dexterity, &UTDAttributeSet::GetDexterityAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Primary_Vigor, &UTDAttributeSet::GetVigorAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Primary_Endurance, &UTDAttributeSet::GetEnduranceAttribute);
+    TagsToAttributes.Add(FTDGameplayTags::Get().Attributes_Primary_Strength, &UTDAttributeSet::GetStrengthAttribute);
+    TagsToAttributes.Add(FTDGameplayTags::Get().Attributes_Primary_Intelligence, &UTDAttributeSet::GetIntelligenceAttribute);
+    TagsToAttributes.Add(FTDGameplayTags::Get().Attributes_Primary_Dexterity, &UTDAttributeSet::GetDexterityAttribute);
+    TagsToAttributes.Add(FTDGameplayTags::Get().Attributes_Primary_Vigor, &UTDAttributeSet::GetVigorAttribute);
+    TagsToAttributes.Add(FTDGameplayTags::Get().Attributes_Primary_Endurance, &UTDAttributeSet::GetEnduranceAttribute);
     
     // Secondary Attributes
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_Armor, &UTDAttributeSet::GetArmorAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_ArmorPenetration, &UTDAttributeSet::GetArmorPenetrationAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_BlockChance, &UTDAttributeSet::GetBlockChanceAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_CriticalHitChance, &UTDAttributeSet::GetCriticalHitChanceAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_CriticalHitDamage, &UTDAttributeSet::GetCriticalHitDamageAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_CriticalHitResistance, &UTDAttributeSet::GetCriticalHitResistanceAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_HealthRegeneration, &UTDAttributeSet::GetHealthRegenerationAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_ManaRegeneration, &UTDAttributeSet::GetManaRegenerationAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_MaxHealth, &UTDAttributeSet::GetMaxHealthAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_MaxMana, &UTDAttributeSet::GetMaxManaAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_MaxStamina, &UTDAttributeSet::GetMaxStaminaAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Secondary_StaminaRegeneration, &UTDAttributeSet::GetStaminaRegenerationAttribute);
+    TagsToAttributes.Add(FTDGameplayTags::Get().Attributes_Secondary_Armor, &UTDAttributeSet::GetArmorAttribute);
+    TagsToAttributes.Add(FTDGameplayTags::Get().Attributes_Secondary_ArmorPenetration, &UTDAttributeSet::GetArmorPenetrationAttribute);
+    TagsToAttributes.Add(FTDGameplayTags::Get().Attributes_Secondary_BlockChance, &UTDAttributeSet::GetBlockChanceAttribute);
+    TagsToAttributes.Add(FTDGameplayTags::Get().Attributes_Secondary_CriticalHitChance, &UTDAttributeSet::GetCriticalHitChanceAttribute);
+    TagsToAttributes.Add(FTDGameplayTags::Get().Attributes_Secondary_CriticalHitDamage, &UTDAttributeSet::GetCriticalHitDamageAttribute);
+    TagsToAttributes.Add(FTDGameplayTags::Get().Attributes_Secondary_CriticalHitResistance, &UTDAttributeSet::GetCriticalHitResistanceAttribute);
+    TagsToAttributes.Add(FTDGameplayTags::Get().Attributes_Secondary_HealthRegeneration, &UTDAttributeSet::GetHealthRegenerationAttribute);
+    TagsToAttributes.Add(FTDGameplayTags::Get().Attributes_Secondary_ManaRegeneration, &UTDAttributeSet::GetManaRegenerationAttribute);
+    TagsToAttributes.Add(FTDGameplayTags::Get().Attributes_Secondary_MaxHealth, &UTDAttributeSet::GetMaxHealthAttribute);
+    TagsToAttributes.Add(FTDGameplayTags::Get().Attributes_Secondary_MaxMana, &UTDAttributeSet::GetMaxManaAttribute);
+    TagsToAttributes.Add(FTDGameplayTags::Get().Attributes_Secondary_MaxStamina, &UTDAttributeSet::GetMaxStaminaAttribute);
+    TagsToAttributes.Add(FTDGameplayTags::Get().Attributes_Secondary_StaminaRegeneration, &UTDAttributeSet::GetStaminaRegenerationAttribute);
     
     // Vital Attributes
-    TagsToAttributes.Add(GameplayTags.Attributes_Vital_Health, &UTDAttributeSet::GetHealthAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Vital_Mana, &UTDAttributeSet::GetManaAttribute);
-    TagsToAttributes.Add(GameplayTags.Attributes_Vital_Stamina, &UTDAttributeSet::GetStaminaAttribute);
+    TagsToAttributes.Add(FTDGameplayTags::Get().Attributes_Vital_Health, &UTDAttributeSet::GetHealthAttribute);
+    TagsToAttributes.Add(FTDGameplayTags::Get().Attributes_Vital_Mana, &UTDAttributeSet::GetManaAttribute);
+    TagsToAttributes.Add(FTDGameplayTags::Get().Attributes_Vital_Stamina, &UTDAttributeSet::GetStaminaAttribute);
     
     // ... Continue for all attributes
 }
@@ -514,7 +514,7 @@ void UTDAttributeMenuWidgetController::BroadcastInitialValues()
 
 ```cpp
 // WRONG: Mismatched tag and function
-TagsToAttributes.Add(GameplayTags.Attributes_Primary_Strength, &UTDAttributeSet::GetIntelligenceAttribute);
+TagsToAttributes.Add(FTDGameplayTags::Get().Attributes_Primary_Strength, &UTDAttributeSet::GetIntelligenceAttribute);
 
 // Solution: Unit test validation
 UTEST_FUNCTION(ValidateAttributeRegistry)

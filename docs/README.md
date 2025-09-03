@@ -1,6 +1,6 @@
 # Documentation Index
 
-Last updated: 2025-09-02
+Last updated: 2024-12-19
 
 > This documentation is a living document. If anything is outdated or unclear, please open a "Docs Update" issue or a small PR.
 
@@ -47,6 +47,7 @@ Last updated: 2025-09-02
 - Attribute Menu Button: ui/attribute-menu/attribute-menu-button.md
 - Attribute Menu Widget Controller: ui/attribute-menu/attribute-menu-controller.md
 - Attribute Menu Widget Controller Setup: ui/attribute-menu/attribute-menu-widget-controller-setup.md
+- Attribute Menu Broadcasting: ui/attribute-menu/AttributeMenu_Broadcasting.md
 - Framed Value: ui/attribute-menu/framed-value.md
 - Text Value Row: ui/attribute-menu/text-value-row.md
 - Text Value Button Row: ui/attribute-menu/text-value-button-row.md
@@ -56,9 +57,11 @@ Last updated: 2025-09-02
 
 ## Data
 - Attribute Info: data/attribute-info.md
+- Secondary Attributes Tags CSV: data/Content_GASCore_GameplayTags_DT_SecondaryAttributesTags_Version3.csv
 
 ## Systems
 - Gameplay Tags Centralization: systems/gameplay-tags-centralization.md
+- TD Gameplay Tags: systems/td-gameplay-tags.md
 - Attributes Gameplay Tags: systems/attributes-gameplay-tags.md
 
 ## Plugin
@@ -68,6 +71,7 @@ Last updated: 2025-09-02
 - Course Notes mapping: guides/course-notes.md
 - Gameplay Abilities — Concepts and Practice (Deep Dive): guides/GameplayAbilities_Concepts_And_Practice.md
 - BaseGameplayAbility Pattern and Startup Grant (Deep Dive): guides/BaseGameplayAbility_Pattern_StartupGrant.md
+- Instructor's Implementation Deep Dive: guides/Instructor_Implementation_DeepDive.md
 
 ## Game Design Documents
 - gdd/attribute_formulas.cpp

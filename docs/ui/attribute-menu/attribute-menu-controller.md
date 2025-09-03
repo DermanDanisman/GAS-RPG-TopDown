@@ -1,6 +1,6 @@
 # Attribute Menu Widget Controller
 
-Last updated: 2025-08-27
+Last updated: 2024-12-19
 
 ## Goal
 
@@ -19,7 +19,7 @@ For detailed setup instructions on creating and configuring the `UAuraAttributeM
 
 ### Required Overrides Summary
 
-The implementation requires overriding two key methods from `UAuraWidgetController`:
+The implementation requires overriding two key methods from `UTDWidgetController`:
 
 - **`BindCallbacksToDependencies()`**: Subscribe to ASC attribute change delegates for all primary and secondary attributes
 - **`BroadcastInitialValues()`**: Push initial attribute values to the UI when the controller is first set up
@@ -132,7 +132,7 @@ When an attribute change is detected, the controller maps it to the appropriate 
 void UAttributeMenuWidgetController::OnStrengthChanged(const FOnAttributeChangeData& Data)
 {
     // Map attribute to tag using centralized registry
-    const FGameplayTag AttributeTag = FAuraGameplayTags::Get().Attributes_Primary_Strength;
+    const FGameplayTag AttributeTag = FTDGameplayTags::Get().Attributes_Primary_Strength;
     HandleAttributeChanged(AttributeTag, Data.NewValue);
 }
 ```

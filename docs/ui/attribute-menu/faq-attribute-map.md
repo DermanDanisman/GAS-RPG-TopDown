@@ -1,6 +1,6 @@
 # Attribute Map FAQ: Common Questions and Solutions
 
-Last updated: 2025-01-02
+Last updated: 2024-12-19
 
 ## Overview
 
@@ -249,7 +249,7 @@ class UTDAttributeSet : public UGASCoreAttributeSet
 private:
     void ValidateRegistryCompleteness()
     {
-        const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
+        const FTDGameplayTags& GameplayTags = FTDGameplayTags::Get();
         
         // Use static_assert to verify critical attributes
         static_assert(std::is_same_v<decltype(GetStrengthAttribute()), FGameplayAttribute>, 
@@ -258,10 +258,10 @@ private:
         // Runtime validation for development builds
 #if UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
         TArray<FGameplayTag> ExpectedTags = {
-            GameplayTags.Attributes_Primary_Strength,
-            GameplayTags.Attributes_Primary_Intelligence,
-            GameplayTags.Attributes_Primary_Dexterity,
-            GameplayTags.Attributes_Primary_Vigor
+            FTDGameplayTags::Get().Attributes_Primary_Strength,
+            FTDGameplayTags::Get().Attributes_Primary_Intelligence,
+            FTDGameplayTags::Get().Attributes_Primary_Dexterity,
+            FTDGameplayTags::Get().Attributes_Primary_Vigor
         };
         
         for (const FGameplayTag& ExpectedTag : ExpectedTags)
@@ -285,7 +285,7 @@ private:
 
 void UTDAttributeSet::InitializeAttributeFunctionRegistry()
 {
-    const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
+    const FTDGameplayTags& GameplayTags = FTDGameplayTags::Get();
     
     // Macro ensures consistency between tag and accessor names
     REGISTER_ATTRIBUTE(Attributes_Primary_Strength, Strength);
@@ -723,9 +723,9 @@ void UTextValueButtonRow::OnAttributeInfoReceived(const FTDAttributeInfo& Attrib
 void ValidateTagConsistency()
 {
     // Check tag string representations
-    const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
+    const FTDGameplayTags& GameplayTags = FTDGameplayTags::Get();
     
-    FGameplayTag RegistryTag = GameplayTags.Attributes_Primary_Strength;
+    FGameplayTag RegistryTag = FTDGameplayTags::Get().Attributes_Primary_Strength;
     FGameplayTag WidgetTag = MyAttributeTag; // Set in widget
     
     UE_LOG(LogTemp, Warning, TEXT("Registry tag: '%s'"), *RegistryTag.ToString());

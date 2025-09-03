@@ -1,10 +1,10 @@
 # Aura Asset Manager (Startup and Native Tags Initialization)
 
-Last updated: 2025-08-27
+Last updated: 2024-12-19
 
 ## Goal
 
-Create a `UAuraAssetManager` subclass that extends Unreal Engine's `UAssetManager` to handle startup initialization tasks, specifically calling `FAuraGameplayTags::InitializeNativeGameplayTags()` during the engine's asset loading phase.
+Create a `UAuraAssetManager` subclass that extends Unreal Engine's `UAssetManager` to handle startup initialization tasks, specifically calling `FTDGameplayTags::InitializeNativeGameplayTags()` during the engine's asset loading phase.
 
 ## Why Use Asset Manager for Initialization
 
@@ -17,7 +17,7 @@ While you could initialize native gameplay tags in your game module's `StartupMo
 void FAuraModule::StartupModule()
 {
     // May run before gameplay tag system is ready
-    FAuraGameplayTags::InitializeNativeGameplayTags();
+    FTDGameplayTags::InitializeNativeGameplayTags();
 }
 ```
 
@@ -98,7 +98,7 @@ void UAuraAssetManager::StartInitialLoading()
     
     // Initialize our native gameplay tags
     // This happens after core systems are ready but before game content loads
-    FAuraGameplayTags::InitializeNativeGameplayTags();
+    FTDGameplayTags::InitializeNativeGameplayTags();
     
     // Add other startup initialization here as needed:
     // - Custom asset registry setup
@@ -132,7 +132,7 @@ To verify the Asset Manager is properly configured:
 
 1. **Check Logs**: Look for initialization messages during startup
 2. **Debug Access**: Use `UAuraAssetManager::Get()` in code to verify casting works
-3. **Tag Availability**: Ensure `FAuraGameplayTags::Get()` returns valid tags after initialization
+3. **Tag Availability**: Ensure `FTDGameplayTags::Get()` returns valid tags after initialization
 
 ```cpp
 // Example verification code
@@ -143,8 +143,8 @@ void AMyActor::VerifyAssetManager()
         UE_LOG(LogTemp, Log, TEXT("Aura Asset Manager is active"));
         
         // Test that tags were initialized
-        const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
-        if (GameplayTags.Attributes_Primary_Strength.IsValid())
+        const FTDGameplayTags& GameplayTags = FTDGameplayTags::Get();
+        if (FTDGameplayTags::Get().Attributes_Primary_Strength.IsValid())
         {
             UE_LOG(LogTemp, Log, TEXT("Native gameplay tags initialized successfully"));
         }
@@ -166,7 +166,7 @@ The startup sequence ensures proper timing:
 2. **Asset Manager Created**: Engine creates `UAuraAssetManager` instance
 3. **StartInitialLoading Called**: Our override executes
 4. **Super Called**: Base asset manager initialization
-5. **Tags Initialized**: `FAuraGameplayTags::InitializeNativeGameplayTags()` executes
+5. **Tags Initialized**: `FTDGameplayTags::InitializeNativeGameplayTags()` executes
 6. **Asset Loading**: Engine continues with asset discovery and loading
 7. **Game Ready**: Game systems can now safely use centralized tags
 
@@ -188,7 +188,7 @@ void UAuraAssetManager::StartInitialLoading()
     Super::StartInitialLoading();
     
     // Initialize native gameplay tags first
-    FAuraGameplayTags::InitializeNativeGameplayTags();
+    FTDGameplayTags::InitializeNativeGameplayTags();
     
     // Example: Initialize global data assets
     LoadGlobalDataAssets();
@@ -226,7 +226,7 @@ void UAuraAssetManager::StartInitialLoading()
 {
     Super::StartInitialLoading();
     
-    FAuraGameplayTags::InitializeNativeGameplayTags();
+    FTDGameplayTags::InitializeNativeGameplayTags();
     
 #if UE_BUILD_DEVELOPMENT || UE_BUILD_DEBUG
     // Development-only initialization
@@ -254,7 +254,7 @@ void UAuraAssetManager::StartInitialLoading()
 **Tags Not Initialized:**
 - Add logging to verify `StartInitialLoading` is called
 - Check for exceptions during tag registration
-- Verify `FAuraGameplayTags::InitializeNativeGameplayTags()` implementation
+- Verify `FTDGameplayTags::InitializeNativeGameplayTags()` implementation
 
 **Blueprint Integration Issues:**
 - Ensure tags are marked `BlueprintReadOnly`
@@ -273,7 +273,7 @@ void UAuraAssetManager::StartInitialLoading()
     Super::StartInitialLoading();
     
     UE_LOG(LogTemp, Log, TEXT("Initializing native gameplay tags..."));
-    FAuraGameplayTags::InitializeNativeGameplayTags();
+    FTDGameplayTags::InitializeNativeGameplayTags();
     UE_LOG(LogTemp, Log, TEXT("Native gameplay tags initialized"));
     
     UE_LOG(LogTemp, Log, TEXT("UAuraAssetManager::StartInitialLoading - Complete"));
@@ -302,7 +302,7 @@ void UAuraAssetManager::StartInitialLoading()
     
     try
     {
-        FAuraGameplayTags::InitializeNativeGameplayTags();
+        FTDGameplayTags::InitializeNativeGameplayTags();
     }
     catch (const std::exception& e)
     {

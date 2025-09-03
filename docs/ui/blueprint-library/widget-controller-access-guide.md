@@ -1,6 +1,6 @@
 # Widget Controller Access Guide (Blueprint Function Library)
 
-Last updated: 2025-01-26
+Last updated: 2024-12-19
 
 ## Overview
 
