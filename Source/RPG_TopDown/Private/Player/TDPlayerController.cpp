@@ -6,7 +6,9 @@
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "EnhancedInputSubsystems.h"              // UEnhancedInputLocalPlayerSubsystem
+#include "TDGameplayTags.h"
 #include "AbilitySystem/Components/TDAbilitySystemComponent.h"
+#include "Components/ClickToMoveComponent.h"
 #include "Input/TDEnhancedInputComponent.h"       // UTDEnhancedInputComponent for binding with tags
 #include "Input/TDInputConfig.h"
 #include "Interaction/HighlightInteraction.h"     // UHighlightInteraction
@@ -19,6 +21,9 @@ ATDPlayerController::ATDPlayerController()
 	// Create the highlight interaction component as a default subobject.
 	// Enables BP/UI to manage interactable highlighting (e.g., outlines on hover).
 	HighlightInteraction = CreateDefaultSubobject<UHighlightInteraction>(TEXT("HighlightInteraction"));
+	
+	ClickToMoveComponent = CreateDefaultSubobject<UClickToMoveComponent>(TEXT("ClickToMoveComponent"));
+	
 }
 
 void ATDPlayerController::BeginPlay()
@@ -110,23 +115,69 @@ UTDAbilitySystemComponent* ATDPlayerController::GetASC()
 	{
 		TDAbilitySystemComponent = Cast<UTDAbilitySystemComponent>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetPawn<APawn>()));
 	}
-
 	return TDAbilitySystemComponent;
 }
 
-void ATDPlayerController::AbilityInputActionTagPressed(FGameplayTag InputTag)
+void ATDPlayerController::AbilityInputActionTagPressed(const FGameplayTag InputTag)
 {
-	
+	// LMB is shared by abilities and movement; gate movement when targeting.
+	if (InputTag.MatchesTagExact(FTDGameplayTags::Get().InputTag_LMB))
+	{
+		const bool bIsTargeting = HighlightInteraction && (HighlightInteraction->GetHighlightedActor() != nullptr);
+		ClickToMoveComponent->SetIsTargeting(bIsTargeting);
+		ClickToMoveComponent->OnClickPressed();
+	}
 }
 
-void ATDPlayerController::AbilityInputActionReleased(FGameplayTag InputTag)
+void ATDPlayerController::AbilityInputActionReleased(const FGameplayTag InputTag)
 {
-	if (GetASC() == nullptr) return;
-	GetASC()->AbilityInputTagReleased(InputTag);
+	// Non-LMB: forward to ASC.
+	if (!InputTag.MatchesTagExact(FTDGameplayTags::Get().InputTag_LMB))
+	{
+		if (GetASC())
+		{
+			GetASC()->AbilityInputTagReleased(InputTag);
+		}
+		return;
+	}
+
+	// LMB: if targeting, forward to ASC; otherwise ask the movement component to finalize (build a path if short press).
+	if (HighlightInteraction->GetHighlightedActor())
+	{
+		if (GetASC())
+		{
+			GetASC()->AbilityInputTagReleased(InputTag);
+		}
+	}
+	else
+	{
+		ClickToMoveComponent->OnClickReleased();
+	}
 }
 
-void ATDPlayerController::AbilityInputActionHeld(FGameplayTag InputTag)
+void ATDPlayerController::AbilityInputActionHeld(const FGameplayTag InputTag)
 {
-	if (GetASC() == nullptr) return;
-	GetASC()->AbilityInputTagHeld(InputTag);
+	// Non-LMB: forward to ASC.
+	if (!InputTag.MatchesTagExact(FTDGameplayTags::Get().InputTag_LMB))
+	{
+		if (GetASC())
+		{
+			GetASC()->AbilityInputTagHeld(InputTag);
+		}
+		return;
+	}
+
+	// LMB: if targeting, allow ASC to drive held behavior. Otherwise, feed the latest cursor hit to movement.
+	if (HighlightInteraction->GetHighlightedActor())
+	{
+		if (GetASC())
+		{
+			GetASC()->AbilityInputTagHeld(InputTag);
+		}
+	}
+	else
+	{
+		// Use external hit result from HighlightInteraction to avoid double tracing.
+		ClickToMoveComponent->OnClickHeld(false, HighlightInteraction->GetCursorHitResult());
+	}
 }

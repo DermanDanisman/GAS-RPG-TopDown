@@ -9,6 +9,7 @@
 #include "GameFramework/PlayerController.h"
 #include "TDPlayerController.generated.h"
 
+class UClickToMoveComponent;
 class UTDInputConfig;
 class UHighlightInteraction;
 struct FInputActionValue;
@@ -50,11 +51,15 @@ protected:
 	// ===== Components =====
 
 	/** Component handling highlighting logic for the player (e.g., interactable outlines).
-	  * Automatically created and registered as a subobject.
-	  * Exposed to Blueprints for easy access from UI or interaction systems.
-	  */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Highlight")
+	 * Automatically created and registered as a subobject.
+	 * Exposed to Blueprints for easy access from UI or interaction systems.
+	 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<UHighlightInteraction> HighlightInteraction;
+
+	/** Click-to-move logic; movement driven by this component when not targeting. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
+	TObjectPtr<UClickToMoveComponent> ClickToMoveComponent;
 
 private:
 	// ===== Enhanced Input assets and config =====
@@ -77,9 +82,11 @@ private:
 	UPROPERTY(EditAnywhere, Category="Enhanced Input|Config")
 	TObjectPtr<UTDInputConfig> InputConfig = nullptr;
 
+	/** Cached pointer to the pawn's ASC (looked up on first use). */
 	UPROPERTY()
-	TObjectPtr<UTDAbilitySystemComponent> TDAbilitySystemComponent;
+	TObjectPtr<UTDAbilitySystemComponent> TDAbilitySystemComponent = nullptr;
 
+	/** Lazy getter for the controller's ASC. */
 	UTDAbilitySystemComponent* GetASC();
 
 	// ===== Input handlers =====
@@ -98,4 +105,5 @@ private:
 
 	/** Ability input handler for "Held" (ETriggerEvent::Triggered). */
 	void AbilityInputActionHeld(FGameplayTag InputTag);
+	
 };

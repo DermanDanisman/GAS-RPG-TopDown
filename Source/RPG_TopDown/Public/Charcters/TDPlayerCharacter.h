@@ -46,4 +46,6 @@ protected:
 
 	/** Initialize GAS owner/avatar references (PlayerState owner, this character as avatar). */
 	virtual void InitializeAbilityActorInfo() override;
+
+	
 };

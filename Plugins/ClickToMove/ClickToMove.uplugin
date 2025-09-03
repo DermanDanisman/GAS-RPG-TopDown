@@ -1,0 +1,24 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "0.1.0",
+	"FriendlyName": "ClickToMove",
+	"Description": "Multiplayer ready, reusable click-to-move component with short-press autorun and hold-to-move support.",
+	"Category": "Gameplay",
+	"CreatedBy": "Heathrow",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"CanContainContent": false,
+	"IsBetaVersion": true,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "ClickToMove",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	],
+	"SupportURL": ""
+}
