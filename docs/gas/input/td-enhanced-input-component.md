@@ -9,6 +9,24 @@ Related:
 - Ability Input Tags and Activation: ../abilities/ability-input-tags-and-activation.md
 - Gameplay Tags Centralization: ../../systems/gameplay-tags-centralization.md
 
+## Input tags used by this project
+
+From FTDGameplayTags (centralized):
+- InputTag.LMB, InputTag.RMB
+- InputTag.QuickSlot1, InputTag.QuickSlot2, InputTag.QuickSlot3, InputTag.QuickSlot4
+
+Access in code:
+
+```cpp
+const FTDGameplayTags& Tags = FTDGameplayTags::Get();
+// Example: pass exact LMB to ASC
+ASC->AbilityInputTagHeld(Tags.InputTag_LMB);
+```
+
+Notes:
+- UTDInputConfig lookup uses MatchesTag (hierarchy-friendly)
+- ASC activation uses HasTagExact (precise match on Spec.GetDynamicSpecSourceTags())
+
 ## What the helper does
 
 ```cpp
@@ -112,5 +130,5 @@ if (GEngine) GEngine->AddOnScreenDebugMessage(3, 3.f, FColor::Green, FString::Pr
 - Default Input Component Class must be UTDEnhancedInputComponent
 - GASInputMappingContext must be assigned and added in BeginPlay
 - MoveAction and InputConfig must be set in BP/defaults
-- Tags must match centralized names (e.g., InputTag.LMB/RMB/QuickSlot1..4)
+- Tags must match centralized names from FTDGameplayTags (InputTag.LMB/RMB/QuickSlot1..4)
 - Guard null ASC in early frame calls
