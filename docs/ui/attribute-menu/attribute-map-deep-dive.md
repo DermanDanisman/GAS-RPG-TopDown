@@ -1,6 +1,6 @@
 # Attribute Map Deep Dive: Centralizing Broadcasting with Tag → Attribute Mapping
 
-Last updated: 2025-01-02
+Last updated: 2024-12-19
 
 ## Overview
 
@@ -39,26 +39,26 @@ void UTDAttributeMenuWidgetController::BroadcastInitialValues()
     }
     
     const UTDAttributeSet* TDAttributeSet = CastChecked<UTDAttributeSet>(AttributeSet);
-    const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
+    const FTDGameplayTags& GameplayTags = FTDGameplayTags::Get();
 
     // Primary Attributes - Manual broadcast for each
-    BroadcastAttributeInfo(GameplayTags.Attributes_Primary_Strength, 
+    BroadcastAttributeInfo(FTDGameplayTags::Get().Attributes_Primary_Strength, 
                           TDAttributeSet->GetStrength());
-    BroadcastAttributeInfo(GameplayTags.Attributes_Primary_Intelligence, 
+    BroadcastAttributeInfo(FTDGameplayTags::Get().Attributes_Primary_Intelligence, 
                           TDAttributeSet->GetIntelligence());
-    BroadcastAttributeInfo(GameplayTags.Attributes_Primary_Dexterity, 
+    BroadcastAttributeInfo(FTDGameplayTags::Get().Attributes_Primary_Dexterity, 
                           TDAttributeSet->GetDexterity());
-    BroadcastAttributeInfo(GameplayTags.Attributes_Primary_Vigor, 
+    BroadcastAttributeInfo(FTDGameplayTags::Get().Attributes_Primary_Vigor, 
                           TDAttributeSet->GetVigor());
 
     // Secondary Attributes - More manual broadcasts
-    BroadcastAttributeInfo(GameplayTags.Attributes_Secondary_Armor, 
+    BroadcastAttributeInfo(FTDGameplayTags::Get().Attributes_Secondary_Armor, 
                           TDAttributeSet->GetArmor());
-    BroadcastAttributeInfo(GameplayTags.Attributes_Secondary_ArmorPenetration, 
+    BroadcastAttributeInfo(FTDGameplayTags::Get().Attributes_Secondary_ArmorPenetration, 
                           TDAttributeSet->GetArmorPenetration());
-    BroadcastAttributeInfo(GameplayTags.Attributes_Secondary_BlockChance, 
+    BroadcastAttributeInfo(FTDGameplayTags::Get().Attributes_Secondary_BlockChance, 
                           TDAttributeSet->GetBlockChance());
-    BroadcastAttributeInfo(GameplayTags.Attributes_Secondary_CriticalHitChance, 
+    BroadcastAttributeInfo(FTDGameplayTags::Get().Attributes_Secondary_CriticalHitChance, 
                           TDAttributeSet->GetCriticalHitChance());
     
     // ... Continue for 18+ attributes
@@ -182,22 +182,22 @@ public:
 // Example pseudocode - In UTDAttributeSet implementation
 void UTDAttributeSet::InitializeAttributeRegistry()
 {
-    const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
+    const FTDGameplayTags& GameplayTags = FTDGameplayTags::Get();
     
     // Bind member functions to delegates for primary attributes
-    AttributeAccessorRegistry.Add(GameplayTags.Attributes_Primary_Strength, 
+    AttributeAccessorRegistry.Add(FTDGameplayTags::Get().Attributes_Primary_Strength, 
         FAttributeAccessorDelegate::CreateUObject(this, &UTDAttributeSet::GetStrengthAttribute));
-    AttributeAccessorRegistry.Add(GameplayTags.Attributes_Primary_Intelligence, 
+    AttributeAccessorRegistry.Add(FTDGameplayTags::Get().Attributes_Primary_Intelligence, 
         FAttributeAccessorDelegate::CreateUObject(this, &UTDAttributeSet::GetIntelligenceAttribute));
-    AttributeAccessorRegistry.Add(GameplayTags.Attributes_Primary_Dexterity, 
+    AttributeAccessorRegistry.Add(FTDGameplayTags::Get().Attributes_Primary_Dexterity, 
         FAttributeAccessorDelegate::CreateUObject(this, &UTDAttributeSet::GetDexterityAttribute));
-    AttributeAccessorRegistry.Add(GameplayTags.Attributes_Primary_Vigor, 
+    AttributeAccessorRegistry.Add(FTDGameplayTags::Get().Attributes_Primary_Vigor, 
         FAttributeAccessorDelegate::CreateUObject(this, &UTDAttributeSet::GetVigorAttribute));
     
     // Bind member functions to delegates for secondary attributes
-    AttributeAccessorRegistry.Add(GameplayTags.Attributes_Secondary_Armor, 
+    AttributeAccessorRegistry.Add(FTDGameplayTags::Get().Attributes_Secondary_Armor, 
         FAttributeAccessorDelegate::CreateUObject(this, &UTDAttributeSet::GetArmorAttribute));
-    AttributeAccessorRegistry.Add(GameplayTags.Attributes_Secondary_ArmorPenetration, 
+    AttributeAccessorRegistry.Add(FTDGameplayTags::Get().Attributes_Secondary_ArmorPenetration, 
         FAttributeAccessorDelegate::CreateUObject(this, &UTDAttributeSet::GetArmorPenetrationAttribute));
     // ... Continue for all attributes
 }
@@ -343,17 +343,17 @@ public:
 // Example pseudocode - In UTDAttributeSet implementation  
 void UTDAttributeSet::InitializeAttributeFunctionRegistry()
 {
-    const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
+    const FTDGameplayTags& GameplayTags = FTDGameplayTags::Get();
     
     // Register function pointers for primary attributes
-    AttributeFunctionRegistry.Add(GameplayTags.Attributes_Primary_Strength, &GetStrengthAttributeStatic);
-    AttributeFunctionRegistry.Add(GameplayTags.Attributes_Primary_Intelligence, &GetIntelligenceAttributeStatic);
-    AttributeFunctionRegistry.Add(GameplayTags.Attributes_Primary_Dexterity, &GetDexterityAttributeStatic);
-    AttributeFunctionRegistry.Add(GameplayTags.Attributes_Primary_Vigor, &GetVigorAttributeStatic);
+    AttributeFunctionRegistry.Add(FTDGameplayTags::Get().Attributes_Primary_Strength, &GetStrengthAttributeStatic);
+    AttributeFunctionRegistry.Add(FTDGameplayTags::Get().Attributes_Primary_Intelligence, &GetIntelligenceAttributeStatic);
+    AttributeFunctionRegistry.Add(FTDGameplayTags::Get().Attributes_Primary_Dexterity, &GetDexterityAttributeStatic);
+    AttributeFunctionRegistry.Add(FTDGameplayTags::Get().Attributes_Primary_Vigor, &GetVigorAttributeStatic);
     
     // Register function pointers for secondary attributes  
-    AttributeFunctionRegistry.Add(GameplayTags.Attributes_Secondary_Armor, &GetArmorAttributeStatic);
-    AttributeFunctionRegistry.Add(GameplayTags.Attributes_Secondary_ArmorPenetration, &GetArmorPenetrationAttributeStatic);
+    AttributeFunctionRegistry.Add(FTDGameplayTags::Get().Attributes_Secondary_Armor, &GetArmorAttributeStatic);
+    AttributeFunctionRegistry.Add(FTDGameplayTags::Get().Attributes_Secondary_ArmorPenetration, &GetArmorPenetrationAttributeStatic);
     
     // ... Continue for all attributes
 }
@@ -762,23 +762,23 @@ void UAttributeMenuWidget::NativeConstruct()
     
     // Assign specific AttributeTags to each row widget
     // These must match tags used in the AttributeSet registry
-    const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
+    const FTDGameplayTags& GameplayTags = FTDGameplayTags::Get();
     
     if (StrengthRow)
     {
-        StrengthRow->SetAttributeTag(GameplayTags.Attributes_Primary_Strength);
+        StrengthRow->SetAttributeTag(FTDGameplayTags::Get().Attributes_Primary_Strength);
     }
     if (IntelligenceRow) 
     {
-        IntelligenceRow->SetAttributeTag(GameplayTags.Attributes_Primary_Intelligence);
+        IntelligenceRow->SetAttributeTag(FTDGameplayTags::Get().Attributes_Primary_Intelligence);
     }
     if (DexterityRow)
     {
-        DexterityRow->SetAttributeTag(GameplayTags.Attributes_Primary_Dexterity);
+        DexterityRow->SetAttributeTag(FTDGameplayTags::Get().Attributes_Primary_Dexterity);
     }
     if (VigorRow)
     {
-        VigorRow->SetAttributeTag(GameplayTags.Attributes_Primary_Vigor);
+        VigorRow->SetAttributeTag(FTDGameplayTags::Get().Attributes_Primary_Vigor);
     }
     
     // Continue for all attribute rows...
@@ -1040,20 +1040,20 @@ UTDAttributeSet::UTDAttributeSet()
 
 void UTDAttributeSet::InitializeAttributeFunctionRegistry()
 {
-    const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
+    const FTDGameplayTags& GameplayTags = FTDGameplayTags::Get();
     
     // Clear existing entries (safety measure)
     AttributeFunctionRegistry.Empty();
     
     // Primary Attributes
-    AttributeFunctionRegistry.Add(GameplayTags.Attributes_Primary_Strength, &GetStrengthAttributeStatic);
-    AttributeFunctionRegistry.Add(GameplayTags.Attributes_Primary_Intelligence, &GetIntelligenceAttributeStatic);
-    AttributeFunctionRegistry.Add(GameplayTags.Attributes_Primary_Dexterity, &GetDexterityAttributeStatic);
-    AttributeFunctionRegistry.Add(GameplayTags.Attributes_Primary_Vigor, &GetVigorAttributeStatic);
+    AttributeFunctionRegistry.Add(FTDGameplayTags::Get().Attributes_Primary_Strength, &GetStrengthAttributeStatic);
+    AttributeFunctionRegistry.Add(FTDGameplayTags::Get().Attributes_Primary_Intelligence, &GetIntelligenceAttributeStatic);
+    AttributeFunctionRegistry.Add(FTDGameplayTags::Get().Attributes_Primary_Dexterity, &GetDexterityAttributeStatic);
+    AttributeFunctionRegistry.Add(FTDGameplayTags::Get().Attributes_Primary_Vigor, &GetVigorAttributeStatic);
     
     // Secondary Attributes
-    AttributeFunctionRegistry.Add(GameplayTags.Attributes_Secondary_Armor, &GetArmorAttributeStatic);
-    AttributeFunctionRegistry.Add(GameplayTags.Attributes_Secondary_ArmorPenetration, &GetArmorPenetrationAttributeStatic);
+    AttributeFunctionRegistry.Add(FTDGameplayTags::Get().Attributes_Secondary_Armor, &GetArmorAttributeStatic);
+    AttributeFunctionRegistry.Add(FTDGameplayTags::Get().Attributes_Secondary_ArmorPenetration, &GetArmorPenetrationAttributeStatic);
     
     UE_LOG(LogTemp, Log, TEXT("Initialized attribute function registry with %d entries"), 
            AttributeFunctionRegistry.Num());
@@ -1193,15 +1193,15 @@ void UTDAttributeMenuWidgetController::BroadcastAttributeInfo(const FGameplayTag
 void UTDAttributeMenuWidgetController::BroadcastInitialValues()
 {
     const UTDAttributeSet* TDAttributeSet = CastChecked<UTDAttributeSet>(AttributeSet);
-    const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
+    const FTDGameplayTags& GameplayTags = FTDGameplayTags::Get();
 
     // 50+ lines of repetitive manual broadcasts
-    BroadcastAttributeInfo(GameplayTags.Attributes_Primary_Strength, TDAttributeSet->GetStrength());
-    BroadcastAttributeInfo(GameplayTags.Attributes_Primary_Intelligence, TDAttributeSet->GetIntelligence());
-    BroadcastAttributeInfo(GameplayTags.Attributes_Primary_Dexterity, TDAttributeSet->GetDexterity());
-    BroadcastAttributeInfo(GameplayTags.Attributes_Primary_Vigor, TDAttributeSet->GetVigor());
-    BroadcastAttributeInfo(GameplayTags.Attributes_Secondary_Armor, TDAttributeSet->GetArmor());
-    BroadcastAttributeInfo(GameplayTags.Attributes_Secondary_ArmorPenetration, TDAttributeSet->GetArmorPenetration());
+    BroadcastAttributeInfo(FTDGameplayTags::Get().Attributes_Primary_Strength, TDAttributeSet->GetStrength());
+    BroadcastAttributeInfo(FTDGameplayTags::Get().Attributes_Primary_Intelligence, TDAttributeSet->GetIntelligence());
+    BroadcastAttributeInfo(FTDGameplayTags::Get().Attributes_Primary_Dexterity, TDAttributeSet->GetDexterity());
+    BroadcastAttributeInfo(FTDGameplayTags::Get().Attributes_Primary_Vigor, TDAttributeSet->GetVigor());
+    BroadcastAttributeInfo(FTDGameplayTags::Get().Attributes_Secondary_Armor, TDAttributeSet->GetArmor());
+    BroadcastAttributeInfo(FTDGameplayTags::Get().Attributes_Secondary_ArmorPenetration, TDAttributeSet->GetArmorPenetration());
     // ... 20+ more similar lines
     
     // Problems:
@@ -1272,10 +1272,10 @@ UTDAttributeSet::UTDAttributeSet()
 ```cpp
 // Example pseudocode - Mismatched tags
 // In registry:
-AttributeFunctionRegistry.Add(GameplayTags.Attributes_Primary_Strength, &GetStrengthAttributeStatic);
+AttributeFunctionRegistry.Add(FTDGameplayTags::Get().Attributes_Primary_Strength, &GetStrengthAttributeStatic);
 
 // In widget:
-StrengthRow->SetAttributeTag(GameplayTags.Attributes_Secondary_Armor);  // WRONG TAG!
+StrengthRow->SetAttributeTag(FTDGameplayTags::Get().Attributes_Secondary_Armor);  // WRONG TAG!
 
 // Result: Widget never receives updates because tags don't match
 ```

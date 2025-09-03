@@ -916,14 +916,14 @@ namespace RobustTemplateMMC
 {
     // Primary attribute capture (e.g., Vigor for MaxHealth)
     static FGameplayEffectAttributeCaptureDefinition PrimaryAttributeDef(
-        UCoreAttributeSet::GetVigorAttribute(),
+        UTDAttributeSet::GetVigorAttribute(),
         EGameplayEffectAttributeCaptureSource::Target,
         false // bSnapshot = false for live tracking
     );
     
     // Secondary attribute capture (e.g., Endurance for additional scaling)
     static FGameplayEffectAttributeCaptureDefinition SecondaryAttributeDef(
-        UCoreAttributeSet::GetEnduranceAttribute(), 
+        UTDAttributeSet::GetEnduranceAttribute(), 
         EGameplayEffectAttributeCaptureSource::Target,
         false // bSnapshot = false for live tracking
     );
@@ -1447,14 +1447,14 @@ void ApplyEffect(TSubclassOf<UGameplayEffect> GE)
 ```cpp
 // ❌ WRONG: Snapshot prevents live updates
 static FGameplayEffectAttributeCaptureDefinition VigorDef(
-    UCoreAttributeSet::GetVigorAttribute(),
+    UTDAttributeSet::GetVigorAttribute(),
     EGameplayEffectAttributeCaptureSource::Target,
     true  // bSnapshot=true freezes the value - derived attributes won't update!
 );
 
 // ✅ CORRECT: Live tracking for derived attributes
 static FGameplayEffectAttributeCaptureDefinition VigorDef(
-    UCoreAttributeSet::GetVigorAttribute(),
+    UTDAttributeSet::GetVigorAttribute(),
     EGameplayEffectAttributeCaptureSource::Target,
     false // bSnapshot=false allows live updates when Vigor changes
 );
@@ -1628,7 +1628,7 @@ static FGameplayEffectAttributeCaptureDefinition VigorDef(
 
 // ✅ CORRECT: Use CoreAttributeSet from this repository
 static FGameplayEffectAttributeCaptureDefinition VigorDef(
-    UCoreAttributeSet::GetVigorAttribute(), // Correct attribute set
+    UTDAttributeSet::GetVigorAttribute(), // Correct attribute set
     EGameplayEffectAttributeCaptureSource::Target,
     false
 );
@@ -1837,7 +1837,7 @@ class UMMC_ElementalDamage : public UGameplayModMagnitudeCalculation
 #### **Plugin Integration Points**
 
 This repository's MMC patterns integrate with:
-- **GASCore Plugin**: `UCoreAttributeSet`, `ICombatInterface`, `UCoreAbilitySystemComponent`
+- **GASCore Plugin**: `UTDAttributeSet`, `ICombatInterface`, `UCoreAbilitySystemComponent`
 - **HighlightActor Plugin**: Visual feedback for attribute changes
 - **Custom GameplayTag hierarchies**: Effect classification and conditional logic
 

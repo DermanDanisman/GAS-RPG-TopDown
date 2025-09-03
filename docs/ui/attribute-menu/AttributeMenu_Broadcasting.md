@@ -140,7 +140,7 @@ void UTDAttributeMenuWidgetController::BindCallbacksToDependencies()
             // For each attribute, bind to its change delegate
             // This requires extending the approach to map tags to FGameplayAttribute accessors
             // Example for Health:
-            if (AttributeInfoRow.AttributeTag.MatchesTagExact(GameplayTags.Attributes_Vital_Health))
+            if (AttributeInfoRow.AttributeTag.MatchesTagExact(FTDGameplayTags::Get().Attributes_Vital_Health))
             {
                 AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(TDAttributeSet->GetHealthAttribute())
                     .AddLambda([this, AttributeTag = AttributeInfoRow.AttributeTag](const FOnAttributeChangeData& Data)
@@ -165,11 +165,11 @@ void UTDAttributeMenuWidgetController::BroadcastAttributeInfo(const FGameplayTag
     FTDAttributeInfo Info = AttributeInfoDataAsset->FindAttributeInfoForTag(AttributeTag);
     
     // Get current value based on the attribute tag
-    if (AttributeTag.MatchesTagExact(GameplayTags.Attributes_Vital_Health))
+    if (AttributeTag.MatchesTagExact(FTDGameplayTags::Get().Attributes_Vital_Health))
     {
         Info.AttributeValue = TDAttributeSet->GetHealth();
     }
-    else if (AttributeTag.MatchesTagExact(GameplayTags.Attributes_Primary_Strength))
+    else if (AttributeTag.MatchesTagExact(FTDGameplayTags::Get().Attributes_Primary_Strength))
     {
         Info.AttributeValue = TDAttributeSet->GetStrength();
     }

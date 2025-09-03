@@ -1,31 +1,31 @@
 # GAS Utility Plugin (Design)
 
-Last updated: 2025-08-17
+Last updated: 2024-12-19
 
 Goal: package common GAS patterns into a reusable plugin to speed up integration in new projects.
 
 ## Included Patterns
 
-- AuraAbilitySystemComponent (ASC subclass)
+- TDAbilitySystemComponent (ASC subclass)
   - Hook: `AbilityActorInfoSet()`
   - Delegate: `FEffectAssetTags` broadcasting effect asset tags on apply
   - Helper: replication mode setup
 
-- AuraAttributeSet (AttributeSet base)
+- TDAttributeSet (AttributeSet base)
   - ATTRIBUTE_ACCESSORS macro and ready-to-use template
   - Common attributes: Health/MaxHealth/Mana/MaxMana
   - Debug utilities
 
-- AuraUserWidget (UUserWidget base)
+- TDUserWidget (UUserWidget base)
   - `SetWidgetController(UObject*)` (BlueprintCallable)
   - `WidgetControllerSet()` (BlueprintImplementableEvent)
 
-- AuraWidgetController (UObject base)
+- TDWidgetController (UObject base)
   - BlueprintReadOnly refs: PlayerController, PlayerState, ASC, AttributeSet
   - Virtual `BroadcastInitialValues()`
   - `BindCallbacksToDependencies()` pattern
 
-- AuraEffectActor (AActor)
+- TDEffectActor (AActor)
   - TSubclassOf<UGameplayEffect>: Instant/Duration/Infinite
   - Application policy (ApplyOnOverlap/ApplyOnEndOverlap/DoNotApply)
   - Removal policy (RemoveOnEndOverlap/DoNotRemove) for Infinite

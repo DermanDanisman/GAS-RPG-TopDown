@@ -27,7 +27,7 @@ Attribute clamping is critical for maintaining game balance and preventing explo
 
 **Example:**
 ```cpp
-void UCoreAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
+void UTDAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
 {
     if (Attribute == GetHealthAttribute())
     {
@@ -50,7 +50,7 @@ void UCoreAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, 
 
 **Example:**
 ```cpp
-void UCoreAttributeSet::PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const
+void UTDAttributeSet::PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const
 {
     if (Attribute == GetHealthAttribute())
     {
@@ -73,7 +73,7 @@ void UCoreAttributeSet::PreAttributeBaseChange(const FGameplayAttribute& Attribu
 
 **Example:**
 ```cpp
-void UCoreAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
+void UTDAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
 {
     // Final clamping when Max attributes change
     if (Data.EvaluatedData.Attribute == GetMaxHealthAttribute())

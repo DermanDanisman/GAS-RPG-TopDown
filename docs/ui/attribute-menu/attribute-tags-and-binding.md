@@ -1,6 +1,6 @@
 # Attribute Tags and Binding Pattern
 
-Last updated: 2025-01-02
+Last updated: 2024-12-19
 
 ## Overview
 
@@ -297,7 +297,7 @@ Event Construct
 **Solutions**:
 - **Use MatchesTagExact()**: Ensures only exact tag matches, not parent tags
 - **Verify Tag Strings**: Check for typos in tag names
-- **Test Tag Registration**: Ensure tags are properly registered in FAuraGameplayTags
+- **Test Tag Registration**: Ensure tags are properly registered in FTDGameplayTags
 - **Debug Tag Comparison**: Log both tags as strings to compare visually
 
 ### Issue 5: WorldContext Resolution Errors

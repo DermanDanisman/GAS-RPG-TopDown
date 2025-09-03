@@ -1,10 +1,10 @@
-# Aura Gameplay Tags (Singleton, Native Tags)
+# TD Gameplay Tags (Singleton, Native Tags)
 
-Last updated: 2025-08-27
+Last updated: 2024-12-19
 
 ## Goal
 
-Centralize gameplay tag access in C++ and expose a single source of truth for all gameplay tags through the `FAuraGameplayTags` singleton pattern. This provides compile-time safety, performance benefits, and eliminates scattered `RequestGameplayTag` calls throughout the codebase.
+Centralize gameplay tag access in C++ and expose a single source of truth for all gameplay tags through the `FTDGameplayTags` singleton pattern. This provides compile-time safety, performance benefits, and eliminates scattered `RequestGameplayTag` calls throughout the codebase.
 
 ## Why Centralize Gameplay Tags
 
@@ -62,11 +62,11 @@ FGameplayTag StrengthTag = TAG_Attributes_Primary_Strength;
 Runtime registration of native tags through the gameplay tag manager:
 
 ```cpp
-void FAuraGameplayTags::InitializeNativeGameplayTags()
+void FTDGameplayTags::InitializeNativeGameplayTags()
 {
     UGameplayTagsManager& Manager = UGameplayTagsManager::Get();
     
-    GameplayTags.Attributes_Primary_Strength = Manager.AddNativeGameplayTag(
+    TDTDFTDGameplayTags::Get().Attributes_Primary_Strength = Manager.AddNativeGameplayTag(
         FName("Attributes.Primary.Strength"),
         FString("Physical power attribute")
     );
@@ -83,18 +83,18 @@ void FAuraGameplayTags::InitializeNativeGameplayTags()
 - Requires runtime initialization
 - Must ensure proper startup order
 
-## FAuraGameplayTags Singleton Pattern
+## FTDGameplayTags Singleton Pattern
 
-### Header Definition (FAuraGameplayTags.h)
+### Header Definition (FTDTDGameplayTags.h)
 
 ```cpp
 USTRUCT(BlueprintType)
-struct GASCORE_API FAuraGameplayTags
+struct GASCORE_API FTDGameplayTags
 {
     GENERATED_BODY()
 
     // Singleton access - returns the single instance
-    static const FAuraGameplayTags& Get() { return GameplayTags; }
+    static const FTDGameplayTags& Get() { return GameplayTags; }
     
     // Initialize all native gameplay tags - call once at startup
     static void InitializeNativeGameplayTags();
@@ -129,58 +129,58 @@ struct GASCORE_API FAuraGameplayTags
 
 private:
     // Single static instance
-    static FAuraGameplayTags GameplayTags;
+    static FTDGameplayTags GameplayTags;
 };
 ```
 
-### Implementation (FAuraGameplayTags.cpp)
+### Implementation (FTDTDGameplayTags.cpp)
 
 ```cpp
 // Static instance definition
-FAuraGameplayTags FAuraGameplayTags::GameplayTags;
+FTDGameplayTags FTDGameplayTags::GameplayTags;
 
-void FAuraGameplayTags::InitializeNativeGameplayTags()
+void FTDGameplayTags::InitializeNativeGameplayTags()
 {
     UGameplayTagsManager& Manager = UGameplayTagsManager::Get();
 
     // Primary Attributes - AddNativeGameplayTag returns the created tag
-    GameplayTags.Attributes_Primary_Strength = Manager.AddNativeGameplayTag(
+    TDFTDGameplayTags::Get().Attributes_Primary_Strength = Manager.AddNativeGameplayTag(
         FName("Attributes.Primary.Strength"),
         FString("Physical power attribute")
     );
 
-    GameplayTags.Attributes_Primary_Dexterity = Manager.AddNativeGameplayTag(
+    TDFTDGameplayTags::Get().Attributes_Primary_Dexterity = Manager.AddNativeGameplayTag(
         FName("Attributes.Primary.Dexterity"),
         FString("Agility and precision attribute")
     );
 
-    GameplayTags.Attributes_Primary_Intelligence = Manager.AddNativeGameplayTag(
+    TDFTDGameplayTags::Get().Attributes_Primary_Intelligence = Manager.AddNativeGameplayTag(
         FName("Attributes.Primary.Intelligence"),
         FString("Mental acuity and mana capacity")
     );
 
-    GameplayTags.Attributes_Primary_Willpower = Manager.AddNativeGameplayTag(
+    TDFTDGameplayTags::Get().Attributes_Primary_Willpower = Manager.AddNativeGameplayTag(
         FName("Attributes.Primary.Willpower"),
         FString("Mental fortitude and mana regeneration")
     );
 
     // Secondary Attributes
-    GameplayTags.Attributes_Secondary_Armor = Manager.AddNativeGameplayTag(
+    TDFTDGameplayTags::Get().Attributes_Secondary_Armor = Manager.AddNativeGameplayTag(
         FName("Attributes.Secondary.Armor"),
         FString("Physical damage reduction")
     );
 
-    GameplayTags.Attributes_Secondary_ArmorPenetration = Manager.AddNativeGameplayTag(
+    TDFTDGameplayTags::Get().Attributes_Secondary_ArmorPenetration = Manager.AddNativeGameplayTag(
         FName("Attributes.Secondary.ArmorPenetration"),
         FString("Armor bypass capability")
     );
 
-    GameplayTags.Attributes_Secondary_BlockChance = Manager.AddNativeGameplayTag(
+    TDFTDGameplayTags::Get().Attributes_Secondary_BlockChance = Manager.AddNativeGameplayTag(
         FName("Attributes.Secondary.BlockChance"),
         FString("Probability of blocking attacks")
     );
 
-    GameplayTags.Attributes_Secondary_CriticalHitChance = Manager.AddNativeGameplayTag(
+    TDFTDGameplayTags::Get().Attributes_Secondary_CriticalHitChance = Manager.AddNativeGameplayTag(
         FName("Attributes.Secondary.CriticalHitChance"),
         FString("Probability of critical strikes")
     );
@@ -197,17 +197,17 @@ void FAuraGameplayTags::InitializeNativeGameplayTags()
 // In any C++ class - clean, compile-time safe access
 void UAttributeMenuWidgetController::BindCallbacksToDependencies()
 {
-    const UCoreAttributeSet* CoreAttributeSet = CastChecked<UCoreAttributeSet>(AttributeSet);
+    const UTDAttributeSet* CoreAttributeSet = CastChecked<UTDAttributeSet>(AttributeSet);
     
     // Use the singleton to get tag references
     AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(CoreAttributeSet->GetStrengthAttribute())
         .AddLambda([this](const FOnAttributeChangeData& Data) {
-            HandleAttributeChanged(FAuraGameplayTags::Get().Attributes_Primary_Strength, Data.NewValue);
+            HandleAttributeChanged(FTDGameplayTags::Get().Attributes_Primary_Strength, Data.NewValue);
         });
         
     AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(CoreAttributeSet->GetArmorAttribute())
         .AddLambda([this](const FOnAttributeChangeData& Data) {
-            HandleAttributeChanged(FAuraGameplayTags::Get().Attributes_Secondary_Armor, Data.NewValue);
+            HandleAttributeChanged(FTDGameplayTags::Get().Attributes_Secondary_Armor, Data.NewValue);
         });
 }
 ```
@@ -218,9 +218,9 @@ void UAttributeMenuWidgetController::BindCallbacksToDependencies()
 void AMyActor::PrintAttributeInfo()
 {
     // Access centralized tags and print to screen
-    const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
+    const FTDGameplayTags& GameplayTags = FTDGameplayTags::Get();
     
-    FString TagName = GameplayTags.Attributes_Secondary_Armor.ToString();
+    FString TagName = TDFTDGameplayTags::Get().Attributes_Secondary_Armor.ToString();
     GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, 
         FString::Printf(TEXT("Armor Tag: %s"), *TagName));
 }
@@ -261,9 +261,9 @@ The `UPROPERTY(BlueprintReadOnly)` tags make the centralized tags available in B
 - Localization-dependent tag descriptions
 - Tags that change frequently during development
 
-**Example Config (DefaultGameplayTags.ini):**
+**Example Config (DefaultTDGameplayTags.ini):**
 ```ini
-[/Script/GameplayTags.GameplayTagsList]
+[/Script/TDGameplayTags.GameplayTagsList]
 GameplayTagList=(Tag="Items.Weapons.Sword",DevComment="Sword weapon type")
 GameplayTagList=(Tag="Items.Armor.Helmet",DevComment="Helmet armor piece")
 ```
@@ -290,7 +290,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Attributes_Primary_Strength, "Attributes.Primary.Stre
 // vs
 
 // Runtime validation - typos only caught at runtime
-GameplayTags.Attributes_Primary_Strength = Manager.AddNativeGameplayTag(
+TDFTDGameplayTags::Get().Attributes_Primary_Strength = Manager.AddNativeGameplayTag(
     FName("Attributes.Primary.Strength"), // Typo here would only be caught at runtime
     FString("Physical power attribute")
 );

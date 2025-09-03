@@ -1,6 +1,6 @@
 # Contributing
 
-Last updated: 2025-08-17
+Last updated: 2024-12-19
 
 Thanks for helping improve the project and its documentation. This repo is in active learning mode; please treat docs as living and iterative.
 

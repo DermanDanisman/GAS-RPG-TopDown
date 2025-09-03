@@ -1,6 +1,6 @@
 # Attribute Info Data Asset
 
-Last updated: 2025-01-02
+Last updated: 2024-12-19
 
 ## What: Data Asset Structure for Attribute Metadata
 
@@ -68,7 +68,7 @@ struct GASCORE_API FAuraAttributeInfo
 - **Purpose**: Unique identifier linking this metadata to actual gameplay attributes
 - **Usage**: Used by Widget Controller to map attribute changes to display information  
 - **Examples**: `Attributes.Primary.Strength`, `Attributes.Secondary.CriticalHitChance`
-- **Requirements**: Must match tags defined in `FAuraGameplayTags::InitializeNativeGameplayTags()`
+- **Requirements**: Must match tags defined in `FTDGameplayTags::InitializeNativeGameplayTags()`
 
 #### AttributeName (FText)
 - **Purpose**: Human-readable, localized name for UI display
@@ -303,15 +303,15 @@ Array Element [5]:
 
 ### Step 3: GameplayTag Configuration
 
-**Critical**: Ensure all `AttributeTag` values exactly match the tags defined in your `FAuraGameplayTags` implementation:
+**Critical**: Ensure all `AttributeTag` values exactly match the tags defined in your `FTDGameplayTags` implementation:
 
 ```cpp
-// In FAuraGameplayTags::InitializeNativeGameplayTags()
-GameplayTags.Attributes_Primary_Strength = UGameplayTagsManager::Get()
+// In FTDGameplayTags::InitializeNativeGameplayTags()
+FTDGameplayTags::Get().Attributes_Primary_Strength = UGameplayTagsManager::Get()
     .AddNativeGameplayTag(FName("Attributes.Primary.Strength"), 
                          FString("Primary Attribute: Strength"));
                          
-GameplayTags.Attributes_Primary_Intelligence = UGameplayTagsManager::Get()
+FTDGameplayTags::Get().Attributes_Primary_Intelligence = UGameplayTagsManager::Get()
     .AddNativeGameplayTag(FName("Attributes.Primary.Intelligence"), 
                          FString("Primary Attribute: Intelligence"));
 // etc...
@@ -456,7 +456,7 @@ void UAttributeMenuWidgetController::BroadcastInitialValues()
     }
     
     const UTDAttributeSet* TDAttributeSet = CastChecked<UTDAttributeSet>(AttributeSet);
-    const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
+    const FTDGameplayTags& GameplayTags = FTDGameplayTags::Get();
     
     // Broadcast all primary attributes
     TArray<FAuraAttributeInfo> PrimaryAttributes = AttributeInfoDataAsset->GetPrimaryAttributes();
@@ -514,7 +514,7 @@ FAuraAttributeInfo UAttributeMenuWidgetController::GetSafeAttributeInfo(const FG
 FAuraAttributeInfo AttributeInfo = AttributeInfoDataAsset->FindAttributeInfoForTag(AttributeTag, true);
 
 // Validate tag matches
-const FAuraGameplayTags& Tags = FAuraGameplayTags::Get();
+const FTDGameplayTags& Tags = FTDGameplayTags::Get();
 if (AttributeTag != Tags.Attributes_Primary_Strength)
 {
     UE_LOG(LogTemp, Warning, TEXT("Tag mismatch: Expected %s, got %s"), 
@@ -561,7 +561,7 @@ void UAttributeMenuWidgetController::BeginPlay()
 // Debug tag validation
 void UAttributeInfo::ValidateTags() const
 {
-    const FAuraGameplayTags& NativeTags = FAuraGameplayTags::Get();
+    const FTDGameplayTags& NativeTags = FTDGameplayTags::Get();
     
     for (const FAuraAttributeInfo& Info : AttributeInformation)
     {

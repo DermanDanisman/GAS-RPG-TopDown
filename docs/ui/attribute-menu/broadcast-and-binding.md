@@ -1,6 +1,6 @@
 # Attribute Menu Broadcast and Binding System
 
-Last updated: 2025-01-02
+Last updated: 2024-12-19
 
 ## What: Delegate-Based Broadcast Pattern
 
@@ -86,8 +86,8 @@ The `FAuraAttributeInfo.AttributeValue` field is populated from the AttributeSet
 
 ```cpp
 // Example: Broadcasting initial Strength value
-const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
-BroadcastAttributeInfo(GameplayTags.Attributes_Primary_Strength, 
+const FTDGameplayTags& GameplayTags = FTDGameplayTags::Get();
+BroadcastAttributeInfo(FTDGameplayTags::Get().Attributes_Primary_Strength, 
                       TDAttributeSet->GetStrength());
 ```
 
@@ -229,10 +229,10 @@ During initial development, you might have all widgets show the same attribute f
 // Temporary: All rows show Strength for testing
 void UTextValueButtonRow::OnAttributeInfoReceived(const FAuraAttributeInfo& AttributeInfo)
 {
-    const FAuraGameplayTags& GameplayTags = FAuraGameplayTags::Get();
+    const FTDGameplayTags& GameplayTags = FTDGameplayTags::Get();
     
     // Naive: Only respond to Strength updates (for testing)
-    if (AttributeInfo.AttributeTag.MatchesTagExact(GameplayTags.Attributes_Primary_Strength))
+    if (AttributeInfo.AttributeTag.MatchesTagExact(FTDGameplayTags::Get().Attributes_Primary_Strength))
     {
         UpdateUI(AttributeInfo);
     }

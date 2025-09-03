@@ -1,6 +1,6 @@
 # Attribute Info Data Asset
 
-Last updated: 2025-08-27
+Last updated: 2024-12-19
 
 ## Goal
 
@@ -300,7 +300,7 @@ bIsPrimary: false
 
 1. **GameplayTag Selection**: 
    - Use the GameplayTag picker to select the appropriate tags
-   - Ensure tags match those defined in FAuraGameplayTags::InitializeNativeGameplayTags()
+   - Ensure tags match those defined in FTDGameplayTags::InitializeNativeGameplayTags()
 
 2. **Text Localization**:
    - For AttributeName and AttributeDescription, consider using String Tables for localization
@@ -312,7 +312,7 @@ bIsPrimary: false
 
 ### Step 4: Validation and Testing
 
-1. **Tag Consistency**: Verify all AttributeTag values match the native tags in FAuraGameplayTags
+1. **Tag Consistency**: Verify all AttributeTag values match the native tags in FTDGameplayTags
 2. **Completeness**: Ensure all game attributes have corresponding entries
 3. **Format Strings**: Test ValueFormat strings render correctly with sample values
 4. **Localization**: Verify text displays correctly in different languages if applicable

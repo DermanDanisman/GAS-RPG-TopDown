@@ -1,6 +1,6 @@
 # Architecture Overview
 
-Last updated: 2025-08-17
+Last updated: 2024-12-19
 
 This project follows a clear separation of concerns:
 

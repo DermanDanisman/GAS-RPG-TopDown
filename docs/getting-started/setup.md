@@ -1,6 +1,6 @@
 # Setup
 
-Last updated: 2025-08-17
+Last updated: 2024-12-19
 
 ## Engine and Plugins
 
@@ -23,7 +23,7 @@ PrivateDependencyModuleNames.AddRange(new string[] {
 
 ## Player Architecture
 
-- PlayerState (e.g., AuraPlayerState)
+- PlayerState (e.g., TDPlayerState)
   - Owns ASC + AttributeSet
   - Benefits:
     - Survives Pawn destruction (respawns retain stats/abilities)

@@ -1,6 +1,6 @@
 # Binding callbacks with UTDEnhancedInputComponent (Ability Inputs)
 
-Last updated: 2025-09-02
+Last updated: 2024-12-19
 
 This guide shows how to bind ability-related input callbacks using UTDEnhancedInputComponent (extends GASCore's UGASCoreEnhancedInputComponent) and a data-driven UTDInputConfig (extends UGASCoreAbilityInputConfig). It complements the Enhanced Input → Ability Mapping and the Ability Input Tags and Activation guides.
 

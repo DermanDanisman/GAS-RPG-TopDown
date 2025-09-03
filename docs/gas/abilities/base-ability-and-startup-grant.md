@@ -1,6 +1,6 @@
 # Base Ability and Startup Grant
 
-Last updated: 2025-01-06
+Last updated: 2024-12-19
 
 ## Rationale for Base Ability Class
 

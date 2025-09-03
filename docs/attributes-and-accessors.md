@@ -1,6 +1,6 @@
 # Attributes and Accessors
 
-Last updated: 2025-08-17
+Last updated: 2024-12-19
 
 ## Defining Attributes
 
@@ -30,10 +30,10 @@ Add to AttributeSet header:
 
 Use per attribute:
 ```cpp
-ATTRIBUTE_ACCESSORS(UAuraAttributeSet, Health);
-ATTRIBUTE_ACCESSORS(UAuraAttributeSet, MaxHealth);
-ATTRIBUTE_ACCESSORS(UAuraAttributeSet, Mana);
-ATTRIBUTE_ACCESSORS(UAuraAttributeSet, MaxMana);
+ATTRIBUTE_ACCESSORS(UTDAttributeSet, Health);
+ATTRIBUTE_ACCESSORS(UTDAttributeSet, MaxHealth);
+ATTRIBUTE_ACCESSORS(UTDAttributeSet, Mana);
+ATTRIBUTE_ACCESSORS(UTDAttributeSet, MaxMana);
 ```
 
 ## Initialization
