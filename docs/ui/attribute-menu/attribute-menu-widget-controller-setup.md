@@ -69,7 +69,7 @@ void UAuraAttributeMenuWidgetController::BroadcastInitialValues()
         return;
     }
 
-    const UCoreAttributeSet* CoreAttributeSet = CastChecked<UCoreAttributeSet>(AttributeSet);
+    const UTDAttributeSet* CoreAttributeSet = CastChecked<UTDAttributeSet>(AttributeSet);
     const FTDGameplayTags& GameplayTags = FTDGameplayTags::Get();
 
     // Broadcast initial values for all primary attributes
@@ -112,7 +112,7 @@ void UAuraAttributeMenuWidgetController::BindCallbacksToDependencies()
         return;
     }
 
-    const UCoreAttributeSet* CoreAttributeSet = CastChecked<UCoreAttributeSet>(AttributeSet);
+    const UTDAttributeSet* CoreAttributeSet = CastChecked<UTDAttributeSet>(AttributeSet);
     const FTDGameplayTags& GameplayTags = FTDGameplayTags::Get();
 
     // Bind to primary attribute change delegates

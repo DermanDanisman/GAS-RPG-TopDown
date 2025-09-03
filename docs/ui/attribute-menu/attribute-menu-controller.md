@@ -99,7 +99,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttributeInfoChanged, const FAura
 When an attribute changes in the GAS, the AbilitySystemComponent emits its standard attribute change notifications:
 
 ```cpp
-// In UCoreAttributeSet or similar
+// In UTDAttributeSet or similar
 AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(StrengthAttribute)
     .AddLambda([this](const FOnAttributeChangeData& Data) {
         // Attribute changed, now notify controllers
@@ -114,7 +114,7 @@ The controller binds to the ASC's attribute change delegates during initializati
 void UAttributeMenuWidgetController::BindCallbacksToDependencies()
 {
     // Bind to all relevant attribute change delegates
-    const UCoreAttributeSet* CoreAttributeSet = CastChecked<UCoreAttributeSet>(AttributeSet);
+    const UTDAttributeSet* CoreAttributeSet = CastChecked<UTDAttributeSet>(AttributeSet);
     
     // Bind to primary attributes
     AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(CoreAttributeSet->GetStrengthAttribute())

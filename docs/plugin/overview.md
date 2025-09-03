@@ -25,7 +25,7 @@ Goal: package common GAS patterns into a reusable plugin to speed up integration
   - Virtual `BroadcastInitialValues()`
   - `BindCallbacksToDependencies()` pattern
 
-- AuraEffectActor (AActor)
+- TDEffectActor (AActor)
   - TSubclassOf<UGameplayEffect>: Instant/Duration/Infinite
   - Application policy (ApplyOnOverlap/ApplyOnEndOverlap/DoNotApply)
   - Removal policy (RemoveOnEndOverlap/DoNotRemove) for Infinite

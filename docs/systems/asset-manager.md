@@ -1,10 +1,10 @@
-# Aura Asset Manager (Startup and Native Tags Initialization)
+# TD Asset Manager (Startup and Native Tags Initialization)
 
 Last updated: 2024-12-19
 
 ## Goal
 
-Create a `UAuraAssetManager` subclass that extends Unreal Engine's `UAssetManager` to handle startup initialization tasks, specifically calling `FTDGameplayTags::InitializeNativeGameplayTags()` during the engine's asset loading phase.
+Create a `UTDAssetManager` subclass that extends Unreal Engine's `UAssetManager` to handle startup initialization tasks, specifically calling `FTDGameplayTags::InitializeNativeGameplayTags()` during the engine's asset loading phase.
 
 ## Why Use Asset Manager for Initialization
 
@@ -14,7 +14,7 @@ While you could initialize native gameplay tags in your game module's `StartupMo
 
 ```cpp
 // Less reliable - module startup timing can vary
-void FAuraModule::StartupModule()
+void FRPGModule::StartupModule()
 {
     // May run before gameplay tag system is ready
     FTDGameplayTags::InitializeNativeGameplayTags();
@@ -28,7 +28,7 @@ void FAuraModule::StartupModule()
 - **Project-Specific**: Cleanly separates game logic from engine concerns
 - **Extensible**: Easy to add more startup tasks as needed
 
-## UAuraAssetManager Implementation
+## UTDAssetManager Implementation
 
 ### Header Definition (AuraAssetManager.h)
 
@@ -40,7 +40,7 @@ void FAuraModule::StartupModule()
 #include "AuraAssetManager.generated.h"
 
 /**
- * UAuraAssetManager
+ * UTDAssetManager
  * 
  * Custom Asset Manager for the Aura project that handles startup initialization
  * tasks including native gameplay tag registration.
@@ -49,17 +49,17 @@ void FAuraModule::StartupModule()
  * to ensure proper initialization order during engine startup.
  */
 UCLASS()
-class AURA_API UAuraAssetManager : public UAssetManager
+class AURA_API UTDAssetManager : public UAssetManager
 {
     GENERATED_BODY()
 
 public:
     /**
-     * Get the project's asset manager instance, cast to UAuraAssetManager.
+     * Get the project's asset manager instance, cast to UTDAssetManager.
      * 
      * @return Pointer to the Aura asset manager, or nullptr if not properly configured
      */
-    static UAuraAssetManager* Get();
+    static UTDAssetManager* Get();
 
 protected:
     /**
@@ -80,18 +80,18 @@ protected:
 #include "AuraAssetManager.h"
 #include "AuraGameplayTags.h"
 
-UAuraAssetManager* UAuraAssetManager::Get()
+UTDAssetManager* UTDAssetManager::Get()
 {
     // Get the global asset manager and cast to our custom type
     if (UAssetManager* AssetManager = UAssetManager::GetIfValid())
     {
-        return Cast<UAuraAssetManager>(AssetManager);
+        return Cast<UTDAssetManager>(AssetManager);
     }
     
     return nullptr;
 }
 
-void UAuraAssetManager::StartInitialLoading()
+void UTDAssetManager::StartInitialLoading()
 {
     // Always call the parent implementation first
     Super::StartInitialLoading();
@@ -123,7 +123,7 @@ AssetManagerClassName="/Script/Aura.AuraAssetManager"
 
 - Replace `Aura` with your actual module name if different
 - The path format is `/Script/[ModuleName].[ClassName]`
-- This setting tells Unreal to instantiate `UAuraAssetManager` instead of the default `UAssetManager`
+- This setting tells Unreal to instantiate `UTDAssetManager` instead of the default `UAssetManager`
 - The change requires an editor restart to take effect
 
 ### Verification
@@ -131,14 +131,14 @@ AssetManagerClassName="/Script/Aura.AuraAssetManager"
 To verify the Asset Manager is properly configured:
 
 1. **Check Logs**: Look for initialization messages during startup
-2. **Debug Access**: Use `UAuraAssetManager::Get()` in code to verify casting works
+2. **Debug Access**: Use `UTDAssetManager::Get()` in code to verify casting works
 3. **Tag Availability**: Ensure `FTDGameplayTags::Get()` returns valid tags after initialization
 
 ```cpp
 // Example verification code
 void AMyActor::VerifyAssetManager()
 {
-    if (UAuraAssetManager* AuraAssetManager = UAuraAssetManager::Get())
+    if (UTDAssetManager* AuraAssetManager = UTDAssetManager::Get())
     {
         UE_LOG(LogTemp, Log, TEXT("Aura Asset Manager is active"));
         
@@ -163,7 +163,7 @@ void AMyActor::VerifyAssetManager()
 The startup sequence ensures proper timing:
 
 1. **Engine Core**: Unreal initializes core systems
-2. **Asset Manager Created**: Engine creates `UAuraAssetManager` instance
+2. **Asset Manager Created**: Engine creates `UTDAssetManager` instance
 3. **StartInitialLoading Called**: Our override executes
 4. **Super Called**: Base asset manager initialization
 5. **Tags Initialized**: `FTDGameplayTags::InitializeNativeGameplayTags()` executes
@@ -183,7 +183,7 @@ The startup sequence ensures proper timing:
 The Asset Manager is an ideal place for other startup initialization:
 
 ```cpp
-void UAuraAssetManager::StartInitialLoading()
+void UTDAssetManager::StartInitialLoading()
 {
     Super::StartInitialLoading();
     
@@ -222,7 +222,7 @@ virtual int32 GetStreamingPriority(const FSoftObjectPath& AssetPath) const overr
 Consider different behavior for development builds:
 
 ```cpp
-void UAuraAssetManager::StartInitialLoading()
+void UTDAssetManager::StartInitialLoading()
 {
     Super::StartInitialLoading();
     
@@ -266,9 +266,9 @@ void UAuraAssetManager::StartInitialLoading()
 Add logging to track initialization:
 
 ```cpp
-void UAuraAssetManager::StartInitialLoading()
+void UTDAssetManager::StartInitialLoading()
 {
-    UE_LOG(LogTemp, Log, TEXT("UAuraAssetManager::StartInitialLoading - Begin"));
+    UE_LOG(LogTemp, Log, TEXT("UTDAssetManager::StartInitialLoading - Begin"));
     
     Super::StartInitialLoading();
     
@@ -276,7 +276,7 @@ void UAuraAssetManager::StartInitialLoading()
     FTDGameplayTags::InitializeNativeGameplayTags();
     UE_LOG(LogTemp, Log, TEXT("Native gameplay tags initialized"));
     
-    UE_LOG(LogTemp, Log, TEXT("UAuraAssetManager::StartInitialLoading - Complete"));
+    UE_LOG(LogTemp, Log, TEXT("UTDAssetManager::StartInitialLoading - Complete"));
 }
 ```
 
@@ -296,7 +296,7 @@ Avoid game-specific logic that belongs in other systems.
 Add robust error handling for production builds:
 
 ```cpp
-void UAuraAssetManager::StartInitialLoading()
+void UTDAssetManager::StartInitialLoading()
 {
     Super::StartInitialLoading();
     
@@ -319,7 +319,7 @@ Consider exposing configuration options:
 
 ```cpp
 UCLASS()
-class AURA_API UAuraAssetManager : public UAssetManager
+class AURA_API UTDAssetManager : public UAssetManager
 {
     // ... other code ...
 

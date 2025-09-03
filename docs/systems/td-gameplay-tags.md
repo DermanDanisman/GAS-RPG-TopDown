@@ -197,7 +197,7 @@ void FTDGameplayTags::InitializeNativeGameplayTags()
 // In any C++ class - clean, compile-time safe access
 void UAttributeMenuWidgetController::BindCallbacksToDependencies()
 {
-    const UCoreAttributeSet* CoreAttributeSet = CastChecked<UCoreAttributeSet>(AttributeSet);
+    const UTDAttributeSet* CoreAttributeSet = CastChecked<UTDAttributeSet>(AttributeSet);
     
     // Use the singleton to get tag references
     AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(CoreAttributeSet->GetStrengthAttribute())

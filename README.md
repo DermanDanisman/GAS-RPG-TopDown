@@ -18,11 +18,13 @@ If you notice anything outdated or unclear, please open a “Docs Update” issu
 
 1) Enable plugins:
    - GameplayAbilities
-   - GameplayTags
+   - GameplayTags  
    - GameplayTasks
+   - CommonUI (already enabled in the project)
+   - ClickToMove (already enabled in the project)
 2) Add dependencies in your Build.cs:
    ```csharp
-   PrivateDependencyModuleNames.AddRange(new string[] {
+   PublicDependencyModuleNames.AddRange(new string[] {
      "GameplayAbilities", "GameplayTags", "GameplayTasks"
    });
    ```
@@ -179,4 +181,4 @@ Small, focused PRs are welcome, especially for docs clarity and examples. Please
 
 ## License
 
-Choose a license that fits your project goals and add it to the repository.
+This project does not currently have a formal license. Please contact the project maintainer for usage permissions.

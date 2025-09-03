@@ -28,6 +28,10 @@
 		{
 			"Name": "ClickToMove",
 			"Enabled": true
+		},
+		{
+			"Name": "GameplayAbilities",
+			"Enabled": true
 		}
 	]
 }
