@@ -15,6 +15,11 @@ Last updated: 2025-09-02
 - Gameplay Effects: gas/gameplay-effects.md
 - Gameplay Tags: gas/gameplay-tags.md
 
+### How-to Guides (Step-by-step)
+- End-to-end Setup (Input tags → ASC → Ability activation): gas/howto/end-to-end-setup.md
+- Runtime Remapping of Ability Input Tags: gas/howto/runtime-remapping.md  
+- Troubleshooting Input Tags → Ability Activation: gas/howto/troubleshooting.md
+
 ### Abilities
 - Ability Input Tags and Activation Flow (ASC-centric): gas/abilities/ability-input-tags-and-activation.md
 - Overview: gas/abilities/overview.md

@@ -36,16 +36,24 @@ void BindAbilityInputActions(const UGASCoreAbilityInputConfig* InputConfig, User
                              PressedFuncType PressedFunc, ReleasedFuncType ReleasedFunc, HeldFuncType HeldFunc);
 ```
 
+**Binding logic:**
 - Loops InputConfig->AbilityInputActions (UInputAction + FGameplayTag pairs)
 - Binds on Enhanced Input events:
   - Pressed → ETriggerEvent::Started
-  - Released → ETriggerEvent::Completed
+  - Released → ETriggerEvent::Completed  
   - Held/Repeat → ETriggerEvent::Triggered (fires every tick while held)
 - Forwards the entry's InputTag to your callbacks as an extra parameter
 
-Implementation notes from GASCore:
-- Function pointer null checks use simple pointer checks (PressedFunc/ReleasedFunc/HeldFunc), not .IsValid().
-- UTDInputConfig overrides UGASCoreAbilityInputConfig and inherits FindAbilityInputActionByTag behavior (MatchesTag).
+**Enhanced Input event mapping:**
+- `Started`: Triggered when input first becomes active (key down, mouse press)
+- `Triggered`: Triggered every frame while input remains active (continuous hold)  
+- `Completed`: Triggered when input becomes inactive (key up, mouse release)
+
+**Implementation details:**
+- Function pointer null checks use simple pointer checks (PressedFunc/ReleasedFunc/HeldFunc), not .IsValid()
+- UTDInputConfig overrides UGASCoreAbilityInputConfig and inherits FindAbilityInputActionByTag behavior (MatchesTag)
+- Each bound callback receives the InputTag from the config entry, not the raw input event
+- Bindings persist until component is destroyed or explicitly unbound
 
 ## Setup checklist
 
@@ -114,17 +122,93 @@ UTDAbilitySystemComponent* GetASC()
     }
     return TDAbilitySystemComponent;
 }
+
+// Implementation examples
+void ATDPlayerController::AbilityInputActionTagPressed(FGameplayTag InputTag)
+{
+    // Optional: Handle press-specific logic here
+    UE_LOG(LogTemp, Log, TEXT("Ability input pressed: %s"), *InputTag.ToString());
+}
+
+void ATDPlayerController::AbilityInputActionReleased(FGameplayTag InputTag)
+{
+    if (UTDAbilitySystemComponent* ASC = GetASC())
+    {
+        ASC->AbilityInputTagReleased(InputTag);
+    }
+}
+
+void ATDPlayerController::AbilityInputActionHeld(FGameplayTag InputTag)
+{
+    if (UTDAbilitySystemComponent* ASC = GetASC())
+    {
+        ASC->AbilityInputTagHeld(InputTag);
+    }
+}
 ```
 
-## Quick verification (on-screen debug)
+**Key points:**
+- Pressed callback is optional - many setups only use Held/Released
+- Always null-check the ASC before forwarding calls  
+- GetASC() caches the component reference for performance
+- InputTag parameter contains the exact tag from your UTDInputConfig
 
+## Verification steps
+
+### Quick on-screen debug
 Use distinct keys/colors so messages don't overwrite each other:
 
 ```cpp
-if (GEngine) GEngine->AddOnScreenDebugMessage(1, 3.f, FColor::Red,   FString::Printf(TEXT("Pressed: %s"),  *InputTag.ToString()));
-if (GEngine) GEngine->AddOnScreenDebugMessage(2, 3.f, FColor::Blue,  FString::Printf(TEXT("Released: %s"), *InputTag.ToString()));
-if (GEngine) GEngine->AddOnScreenDebugMessage(3, 3.f, FColor::Green, FString::Printf(TEXT("Held: %s"),     *InputTag.ToString()));
+void ATDPlayerController::AbilityInputActionTagPressed(FGameplayTag InputTag)
+{
+    if (GEngine) 
+    {
+        GEngine->AddOnScreenDebugMessage(1, 3.f, FColor::Red, 
+            FString::Printf(TEXT("Pressed: %s"), *InputTag.ToString()));
+    }
+}
+
+void ATDPlayerController::AbilityInputActionReleased(FGameplayTag InputTag)
+{
+    if (GEngine) 
+    {
+        GEngine->AddOnScreenDebugMessage(2, 3.f, FColor::Blue, 
+            FString::Printf(TEXT("Released: %s"), *InputTag.ToString()));
+    }
+    
+    if (UTDAbilitySystemComponent* ASC = GetASC())
+    {
+        ASC->AbilityInputTagReleased(InputTag);
+    }
+}
+
+void ATDPlayerController::AbilityInputActionHeld(FGameplayTag InputTag)
+{
+    if (GEngine) 
+    {
+        GEngine->AddOnScreenDebugMessage(3, 1.f, FColor::Green, 
+            FString::Printf(TEXT("Held: %s"), *InputTag.ToString()));
+    }
+    
+    if (UTDAbilitySystemComponent* ASC = GetASC())
+    {
+        ASC->AbilityInputTagHeld(InputTag);
+    }
+}
 ```
+
+### Step-by-step verification
+1. **Test input mapping**: Press LMB/RMB/1-4 and verify on-screen messages show correct InputTag values
+2. **Check ASC connectivity**: Add logs in ASC methods to confirm calls are reaching the ability system  
+3. **Verify tag matching**: Use breakpoints to inspect Spec.GetDynamicSpecSourceTags() in ASC
+4. **Test ability activation**: Confirm abilities with matching StartupInputTag activate when inputs are pressed
+
+### Common verification points
+- InputConfig asset is assigned and populated in ATDPlayerController Blueprint
+- GASInputMappingContext is assigned and added in BeginPlay
+- Enhanced Input actions exist and are mapped to correct keys
+- Ability StartupInputTags match the exact values in InputConfig
+- Default Input Component Class is set to UTDEnhancedInputComponent
 
 ## Troubleshooting
 - Default Input Component Class must be UTDEnhancedInputComponent
