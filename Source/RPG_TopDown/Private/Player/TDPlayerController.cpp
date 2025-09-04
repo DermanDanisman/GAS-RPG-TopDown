@@ -88,6 +88,8 @@ void ATDPlayerController::SetupInputComponent()
 
 void ATDPlayerController::Move(const FInputActionValue& InputActionValue)
 {
+	ClickToMoveComponent->SetAutoRunActive(false);
+	
 	// Get the 2D input vector (e.g., from WASD or analog stick).
 	const FVector2D InputAxisVector = InputActionValue.Get<FVector2D>();
 
@@ -141,7 +143,7 @@ void ATDPlayerController::AbilityInputActionReleased(const FGameplayTag InputTag
 		return;
 	}
 
-	// LMB: if targeting, forward to ASC; otherwise ask the movement component to finalize (build a path if short press).
+	// LMB: if targeting, forward to ASC; otherwise finalize click-to-move (build a path on short press).
 	if (HighlightInteraction->GetHighlightedActor())
 	{
 		if (GetASC())
@@ -167,7 +169,7 @@ void ATDPlayerController::AbilityInputActionHeld(const FGameplayTag InputTag)
 		return;
 	}
 
-	// LMB: if targeting, allow ASC to drive held behavior. Otherwise, feed the latest cursor hit to movement.
+	// LMB: when targeting, let ASC handle. Otherwise, let ClickToMove do its own NAVIGATION-channel trace.
 	if (HighlightInteraction->GetHighlightedActor())
 	{
 		if (GetASC())
@@ -177,7 +179,7 @@ void ATDPlayerController::AbilityInputActionHeld(const FGameplayTag InputTag)
 	}
 	else
 	{
-		// Use external hit result from HighlightInteraction to avoid double tracing.
-		ClickToMoveComponent->OnClickHeld(false, HighlightInteraction->GetCursorHitResult());
+		// Use internal nav-channel trace to get a ground point (avoids mixing highlight hits with nav hits).
+		ClickToMoveComponent->OnClickHeld(/*bUseInternalHitResult=*/true, FHitResult());
 	}
 }

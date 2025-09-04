@@ -4,6 +4,8 @@
 
 #include "Modules/ModuleManager.h"
 
+#define NAVIGATION ECC_GameTraceChannel2
+
 class FClickToMoveModule : public IModuleInterface
 {
 public:
