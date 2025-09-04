@@ -1,24 +1,49 @@
 {
 	"FileVersion": 3,
 	"Version": 1,
-	"VersionName": "0.1.0",
-	"FriendlyName": "ClickToMove",
-	"Description": "Multiplayer ready, reusable click-to-move component with short-press autorun and hold-to-move support.",
+	"VersionName": "1.0.0",
+	"FriendlyName": "ClickToMove - Professional Point-and-Click Movement",
+	"Description": "A complete, production-ready click-to-move solution for Unreal Engine 5. Features dual movement modes (hold-to-move and autorun), multiplayer networking, advanced pathfinding with corner-cutting, and seamless integration with Enhanced Input and Gameplay Ability System. Perfect for top-down RPGs, strategy games, and isometric adventures.",
 	"Category": "Gameplay",
-	"CreatedBy": "Heathrow",
-	"CreatedByURL": "",
-	"DocsURL": "",
+	"CreatedBy": "Heathrow (Derman)",
+	"CreatedByURL": "https://github.com/DermanDanisman",
+	"DocsURL": "https://github.com/DermanDanisman/GAS-RPG-TopDown/tree/main/Plugins/ClickToMove/Documentation",
 	"MarketplaceURL": "",
+	"SupportURL": "https://github.com/DermanDanisman/GAS-RPG-TopDown/issues",
+	"EngineVersion": "5.0.0",
 	"CanContainContent": false,
-	"IsBetaVersion": true,
+	"IsBetaVersion": false,
 	"IsExperimentalVersion": false,
 	"Installed": false,
+	"RequiresBuildPlatform": false,
+	"SupportedTargetPlatforms": [
+		"Win64",
+		"Mac",
+		"Linux",
+		"Android",
+		"IOS"
+	],
 	"Modules": [
 		{
 			"Name": "ClickToMove",
 			"Type": "Runtime",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine",
+				"NavigationSystem"
+			]
 		}
 	],
-	"SupportURL": ""
+	"Plugins": [
+		{
+			"Name": "EnhancedInput",
+			"Enabled": true,
+			"Optional": true
+		},
+		{
+			"Name": "GameplayAbilities",
+			"Enabled": true,
+			"Optional": true
+		}
+	]
 }
