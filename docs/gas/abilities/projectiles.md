@@ -538,6 +538,5 @@ if (DistanceToPlayer > MaxDetailDistance)
 
 - [Gameplay Abilities Overview](overview.md)
 - [Gameplay Effects](../gameplay-effects.md)
-- [Ability Tasks and Async Operations](ability-tasks.md)
+- [Gameplay Abilities Concepts and Practice](../../guides/GameplayAbilities_Concepts_And_Practice.md)
 - [Replication and Multiplayer](../../architecture/replication-and-multiplayer.md)
-- [Performance Optimization](../../guides/performance-optimization.md)
