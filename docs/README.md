@@ -1,6 +1,6 @@
 # Documentation Index
 
-Last updated: 2024-12-19
+Last updated: 2025-01-16
 
 > This documentation is a living document. If anything is outdated or unclear, please open a "Docs Update" issue or a small PR.
 
@@ -10,6 +10,12 @@ Last updated: 2024-12-19
 ## Architecture
 - Overview: architecture/overview.md
 - Replication & Multiplayer: architecture/replication-and-multiplayer.md
+
+## Actors
+- Overview: actors/README.md
+
+### Projectile Actors
+- TDProjectileActor: actors/projectile/td-projectile-actor.md
 
 ## Gameplay Ability System (GAS)
 - Gameplay Effects: gas/gameplay-effects.md
