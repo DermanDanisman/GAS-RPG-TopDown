@@ -10,7 +10,7 @@
 	"DocsURL": "https://github.com/DermanDanisman/GAS-RPG-TopDown/tree/main/Plugins/ClickToMove/Documentation",
 	"MarketplaceURL": "",
 	"SupportURL": "https://github.com/DermanDanisman/GAS-RPG-TopDown/issues",
-	"EngineVersion": "5.0.0",
+	"EngineVersion": "5.6.0",
 	"CanContainContent": false,
 	"IsBetaVersion": false,
 	"IsExperimentalVersion": false,
