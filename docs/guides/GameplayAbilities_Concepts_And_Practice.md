@@ -161,6 +161,18 @@ EndAbility
 5. Projectile spawns, travels, applies damage effect
 6. Ability ends naturally
 
+### Projectile Implementation Details
+
+The fireball projectile follows the patterns described in [Projectiles in GAS Abilities](../gas/abilities/projectiles.md):
+
+- **Spawning**: Server-authoritative spawning after cast animation completes
+- **Movement**: Physics-based projectile movement with collision detection
+- **Damage**: Applies instant fire damage GameplayEffect on hit
+- **VFX**: Fire trail during flight, explosion particle effect on impact
+- **Network**: Projectile replicates to all clients for visual consistency
+
+For detailed implementation examples, see the [Projectiles documentation](../gas/abilities/projectiles.md).
+
 ---
 
 ## 7) Debugging Your Abilities

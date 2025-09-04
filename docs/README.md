@@ -25,6 +25,7 @@ Last updated: 2024-12-19
 - Overview: gas/abilities/overview.md
 - Base Ability and Startup Grant: gas/abilities/base-ability-and-startup-grant.md
 - Ability Tags and Policies: gas/abilities/ability-tags-and-policies.md
+- Projectiles in GAS Abilities: gas/abilities/projectiles.md
 
 ### Attributes
 - Attribute Clamping: gas/attributes/attribute-clamping.md

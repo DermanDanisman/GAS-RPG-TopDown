@@ -17,3 +17,4 @@ This file maps course transcripts to implemented patterns in this project.
 - gameplay_effect_stacking.cpp — Stacking types and policies
 - infinite_gameplay_effect.cpp — Infinite effects; removal policies; area-of-effect fire example
 - gameplay_tags_intro.cpp / effect_applied_callback.cpp / effect_asset_tags_delegate.cpp — Gameplay tags; ASC delegate binding; broadcasting asset tags to Widget Controller
+- aura_projectile.cpp — Projectile actor implementation; spawning from abilities; collision detection; movement patterns; damage application through gameplay effects → [Lecture: Aura Projectile Implementation](../lectures/aura-projectile-implementation.md)
