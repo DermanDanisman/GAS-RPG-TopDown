@@ -13,11 +13,5 @@ UCLASS()
 class RPG_TOPDOWN_API UTDProjectileAbility : public UGASCoreProjectileAbility
 {
 	GENERATED_BODY()
-
-protected:
-
-	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle,
-		const FGameplayAbilityActorInfo* ActorInfo,
-		const FGameplayAbilityActivationInfo ActivationInfo,
-		const FGameplayEventData* TriggerEventData) override;
+	
 };

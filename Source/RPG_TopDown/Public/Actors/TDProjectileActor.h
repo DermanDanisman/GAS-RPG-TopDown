@@ -3,11 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Actors/GASCoreProjectileActor.h"
+#include "Actors/GASCoreSpawnedActorByGameplayAbility.h"
 #include "TDProjectileActor.generated.h"
 
 UCLASS()
-class RPG_TOPDOWN_API ATDProjectileActor : public AGASCoreProjectileActor
+class RPG_TOPDOWN_API ATDProjectileActor : public AGASCoreSpawnedActorByGameplayAbility
 {
 	GENERATED_BODY()
 

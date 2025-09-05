@@ -6,7 +6,7 @@
 #include "GASCoreGameplayAbility.h"
 #include "GASCoreProjectileAbility.generated.h"
 
-class AGASCoreProjectileActor;
+class AGASCoreSpawnedActorByGameplayAbility;
 /**
  * 
  */
@@ -15,18 +15,14 @@ class GASCORE_API UGASCoreProjectileAbility : public UGASCoreGameplayAbility
 {
 	GENERATED_BODY()
 
-public:
-
-	UFUNCTION(BlueprintPure, Category = "GASCore|Projectile Ability")
-	TSubclassOf<AGASCoreProjectileActor> GetProjectileActorClass() { return ProjectileActorClass; }
-
 protected:
 
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		const FGameplayAbilityActorInfo* ActorInfo,
 		const FGameplayAbilityActivationInfo ActivationInfo,
 		const FGameplayEventData* TriggerEventData) override;
+	
+	virtual void SpawnActorFromGameplayAbility() override;
 
-	UPROPERTY(EditAnywhere, Category = "GASCore|Projectile Ability|Spawn Actor")
-	TSubclassOf<AGASCoreProjectileActor> ProjectileActorClass;
+
 };

@@ -3,7 +3,7 @@
 
 #include "AbilitySystem/Abilities/GASCoreProjectileAbility.h"
 
-#include "Actors/GASCoreProjectileActor.h"
+#include "Actors/GASCoreSpawnedActorByGameplayAbility.h"
 #include "Interfaces/GASCoreCombatInterface.h"
 
 void UGASCoreProjectileAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
@@ -11,32 +11,9 @@ void UGASCoreProjectileAbility::ActivateAbility(const FGameplayAbilitySpecHandle
                                                 const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+}
 
-	const bool bIsServer = HasAuthority(&ActivationInfo);
-	if (!bIsServer) return;
-
-	IGASCoreCombatInterface* CombatInterface = Cast<IGASCoreCombatInterface>(GetAvatarActorFromActorInfo());
-	if (CombatInterface)
-	{
-		const FVector SpawnLocation = CombatInterface->GetAbilitySpawnLocation();
-
-		FTransform SpawnTransform;
-		SpawnTransform.SetLocation(SpawnLocation);
-		// TODO: Set the projectile rotation.
-
-		AActor* OwnerActor = GetOwningActorFromActorInfo();
-		APawn* InstigatorPawn = Cast<APawn>(GetAvatarActorFromActorInfo());
-		
-		AGASCoreProjectileActor* Projectile = GetWorld()->SpawnActorDeferred<AGASCoreProjectileActor>(
-			ProjectileActorClass,
-			SpawnTransform,
-			OwnerActor,
-			InstigatorPawn,
-			ESpawnActorCollisionHandlingMethod::AlwaysSpawn
-		);
-
-		// TODO: Give the projectile a gameplay effect spec for causing damage.
-		
-		Projectile->FinishSpawning(SpawnTransform);
-	}
+void UGASCoreProjectileAbility::SpawnActorFromGameplayAbility()
+{
+	Super::SpawnActorFromGameplayAbility();
 }

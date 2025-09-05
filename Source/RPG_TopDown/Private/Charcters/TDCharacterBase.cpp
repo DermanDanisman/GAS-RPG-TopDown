@@ -4,6 +4,7 @@
 
 #include "Charcters/TDCharacterBase.h" // NOTE: Path as per project include; ensure module path is correct.
 
+#include "AbilitySystem/AbilityTasks/GASCoreTargetDataFromAimTrace.h"
 #include "AbilitySystem/Components/TDAbilityInitComponent.h"
 #include "AbilitySystem/Components/TDDefaultAttributeInitComponent.h"
 #include "Components/SkeletalMeshComponent.h"
