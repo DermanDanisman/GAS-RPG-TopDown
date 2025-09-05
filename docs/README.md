@@ -8,6 +8,7 @@ Last updated: 2024-12-19
 - Setup: getting-started/setup.md
 
 ## Architecture
+- Character Base Implementation: architecture/character-base.md
 - Overview: architecture/overview.md
 - Replication & Multiplayer: architecture/replication-and-multiplayer.md
 
@@ -63,15 +64,20 @@ Last updated: 2024-12-19
 - Gameplay Tags Centralization: systems/gameplay-tags-centralization.md
 - TD Gameplay Tags: systems/td-gameplay-tags.md
 - Attributes Gameplay Tags: systems/attributes-gameplay-tags.md
+- Projectile System Overview: systems/projectile-system-overview.md
 
 ## Plugin
 - Plugin API (Proposed): plugin/api.md
+- Projectile Actors: plugin/projectile-actors.md
+- Projectile Abilities Pattern: plugin/projectile-abilities.md
+- Combat Interface: plugin/combat-interface.md
 
 ## Guides
 - Course Notes mapping: guides/course-notes.md
 - Gameplay Abilities — Concepts and Practice (Deep Dive): guides/GameplayAbilities_Concepts_And_Practice.md
 - BaseGameplayAbility Pattern and Startup Grant (Deep Dive): guides/BaseGameplayAbility_Pattern_StartupGrant.md
 - Instructor's Implementation Deep Dive: guides/Instructor_Implementation_DeepDive.md
+- Projectile System Implementation Guide: guides/projectile-implementation-guide.md
 
 ## Game Design Documents
 - gdd/attribute_formulas.cpp
