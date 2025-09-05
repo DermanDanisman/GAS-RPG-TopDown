@@ -44,6 +44,10 @@ public:
 	/** Returns the owned Ability System Component (ASC). Required by IAbilitySystemInterface. */
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
+	// ===== IGASCoreCombatInterface =====
+
+	virtual FVector GetAbilitySpawnLocation() override;
+	
 	// ===== Project Convenience =====
 
 	/** Returns the owned Attribute Set for this character (used for GAS stats). */
@@ -67,6 +71,9 @@ protected:
 	/** Skeletal mesh for the character's weapon. Exposed to the editor for assignment and setup. */
 	UPROPERTY(EditAnywhere, Category="Combat")
 	TObjectPtr<USkeletalMeshComponent> WeaponMesh;
+
+	UPROPERTY(EditAnywhere, Category="Combat")
+	FName WeaponAbilitySpawnSocketName;
 
 	/** Ability System Component for this actor.
 	 * For players, often owned by the PlayerState; for AI, by the Character.

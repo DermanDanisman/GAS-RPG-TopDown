@@ -3,21 +3,22 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Abilities/GameplayAbility.h"
-#include "GASCoreGameplayAbility.generated.h"
+#include "GASCoreGameplayAbility.h"
+#include "GASCoreProjectileAbility.generated.h"
 
+class AGASCoreProjectileActor;
 /**
  * 
  */
 UCLASS()
-class GASCORE_API UGASCoreGameplayAbility : public UGameplayAbility
+class GASCORE_API UGASCoreProjectileAbility : public UGASCoreGameplayAbility
 {
 	GENERATED_BODY()
 
 public:
 
-	UPROPERTY(EditDefaultsOnly, Category="GASCore|Gameplay Ability|Tag")
-	FGameplayTag StartupInputTag;
+	UFUNCTION(BlueprintPure, Category = "GASCore|Projectile Ability")
+	TSubclassOf<AGASCoreProjectileActor> GetProjectileActorClass() { return ProjectileActorClass; }
 
 protected:
 
@@ -25,4 +26,7 @@ protected:
 		const FGameplayAbilityActorInfo* ActorInfo,
 		const FGameplayAbilityActivationInfo ActivationInfo,
 		const FGameplayEventData* TriggerEventData) override;
+
+	UPROPERTY(EditAnywhere, Category = "GASCore|Projectile Ability|Spawn Actor")
+	TSubclassOf<AGASCoreProjectileActor> ProjectileActorClass;
 };

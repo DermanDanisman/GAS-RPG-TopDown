@@ -35,4 +35,6 @@ public:
 	// Implementation can fetch from PlayerState (players) or the Character itself (AI).
 	// Contract: Must be fast and safe to call during effect evaluation (no blocking).
 	virtual int32 GetActorLevel();
+
+	virtual FVector GetAbilitySpawnLocation();
 };

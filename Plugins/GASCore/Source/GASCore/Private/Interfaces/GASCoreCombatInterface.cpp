@@ -8,3 +8,8 @@ int32 IGASCoreCombatInterface::GetActorLevel()
 {
 	return 0;
 }
+
+FVector IGASCoreCombatInterface::GetAbilitySpawnLocation()
+{
+	return FVector();
+}

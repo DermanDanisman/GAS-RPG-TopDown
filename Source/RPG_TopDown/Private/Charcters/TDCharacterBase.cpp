@@ -46,6 +46,12 @@ UAbilitySystemComponent* ATDCharacterBase::GetAbilitySystemComponent() const
 	return AbilitySystemComponent;
 }
 
+FVector ATDCharacterBase::GetAbilitySpawnLocation()
+{
+	check(WeaponMesh)
+	return WeaponMesh->GetSocketLocation(WeaponAbilitySpawnSocketName);
+}
+
 UAttributeSet* ATDCharacterBase::GetAttributeSet() const
 {
 	return AttributeSet;

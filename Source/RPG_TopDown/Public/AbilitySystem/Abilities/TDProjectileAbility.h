@@ -3,21 +3,16 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Abilities/GameplayAbility.h"
-#include "GASCoreGameplayAbility.generated.h"
+#include "AbilitySystem/Abilities/GASCoreProjectileAbility.h"
+#include "TDProjectileAbility.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class GASCORE_API UGASCoreGameplayAbility : public UGameplayAbility
+class RPG_TOPDOWN_API UTDProjectileAbility : public UGASCoreProjectileAbility
 {
 	GENERATED_BODY()
-
-public:
-
-	UPROPERTY(EditDefaultsOnly, Category="GASCore|Gameplay Ability|Tag")
-	FGameplayTag StartupInputTag;
 
 protected:
 
